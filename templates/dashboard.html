@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="/static/js/modules/jquery-3.7.1.min.js"></script>
+    <script src="/static/js/modules/axios.min.js"></script>
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/apiService.js"></script>
+
+</head>
+<body>
+  <div id="app-container">
+  <!-- Dynamic content loading -->
+  <div id="header"></div>
+  <div id="menubar-container"></div>
+  <div id="quick-menu-container"></div>
+  <div id="project-container">
+    <div id="left-sidebar-container"></div>
+  </div>
+
+  </div>
+
+    <script>
+        const components = {
+            header: "{{ url_for('static', filename='components/header.html') }}",
+            menubar: "{{ url_for('static', filename='components/menubar.html') }}",
+            quickMenu: "{{ url_for('static', filename='components/quickmenu.html') }}",
+            leftSideBar: "{{ url_for('static', filename='components/leftsidebar.html') }}",
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    
+</body>
+</html>

@@ -1,0 +1,105 @@
+* { 
+    margin: 0; 
+    padding: 0;
+}
+  
+body { 
+  font-family: sans-serif;
+  font-size: 10pt;
+  background-color: #000000;
+} 
+
+#app-container { 
+  display: flex;
+  flex-direction: column;
+  background-color: black;
+}
+  
+#app-header {
+  border-bottom: 1px solid black;
+  height: 20px;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: left;
+  align-items: center;
+  padding-left: 7px;
+  font-size: 9pt;
+}
+#menubar-container {
+  background-color: white;
+}
+
+
+#left-sidebar-container {
+  border: 1px solid rgb(206, 206, 206);
+  background-color: rgb(240, 240, 240);
+  position: absolute;
+  height: calc(100% - 79px);
+  display: flex;
+}
+
+#project-explorer-container {
+  margin-right: 5px;
+  border: 1px solid rgb(139, 139, 139);
+  background-color: rgb(252, 252, 252);
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+#dragbar {
+  background-color: rgb(211, 211, 211);
+  height: 100%;
+  float: right;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 5;
+  position: absolute;
+  right: 0;
+}
+#dragbar:hover {
+  background-color: #bdbdbd;
+}
+#ghostbar {
+  width: 5px;
+  background-color: #bdbdbd;
+  opacity: 0.5;
+  position: absolute;
+  cursor: col-resize;
+  z-index: 4;
+}
+
+/* Style the project explorer tab */
+.project-explorer-tab {
+  overflow: hidden;
+  background-color: #ffffff
+}
+.project-explorer-tab button {
+  /* background-color: inherit; */
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.project-explorer-tab button:hover {
+  background-color: #0000ff;
+  color: white;
+}
+.project-explorer-tab button.active {
+  background-color: #ffffee;
+  border: none;
+  font-weight: bold;
+  color: black;
+
+}
+.project-explorer-tabcontent {
+  display: none;
+  padding: 0px;
+  border: 1px solid #ccc;
+  border-bottom: none;
+  height: calc(100% - 25px);
+  overflow-y: scroll;
+  background-color: #ffffee;
+}

@@ -1,0 +1,182 @@
+<html>
+    <head>
+        <!-- <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css"> -->
+        <link rel="stylesheet" href="static/css/jquery-ui.css">
+        <link rel="stylesheet" href="static/css/menubar.css">
+        <link rel="stylesheet" href="static/css/dialog-box.css">
+        <link rel="stylesheet" href="static/css/dataTables.dataTables.css">
+
+        <script src="/static/js/modules/jquery.menu.js"></script>
+        <script src="/static/js/modules/jquery-ui.min.js"></script>
+        <script src="/static/js/dialogs.js"></script>
+        <script src="/static/js/modules/dataTables.js"></script>
+
+
+    </head>
+    <body>
+
+
+        <div id="menu-bar">
+            <ul class="main-menu">
+                <li>
+                    Project
+                    <ul>
+                        <li class="icon save" id="menubar-project-create-li">
+                            <a href="javascript:void(0)">Create...<span>Ctrl+S</span></a>
+                        </li>
+                        <li class="icon save" id="menubar-project-open-li"><a href="javascript:void(0)" >Open...<span>Ctrl+S</span></a></li>
+                        <li class="icon save"><a href="javascript:void(0)">Save<span>Ctrl+S</span></a></li>
+                        <li class="icon print"><a href="javascript:void(0)">Close<span>Ctrl+P</span></a></li>
+                        <li class="icon print"><a href="javascript:void(0)">Delete....<span>Ctrl+P</span></a></li>
+                        <li>Import</li>
+                        <li>Export</li>
+                        <li class="separator"></li>
+                        <li><a href="javascript:void(0)" id="test-api-link">Test...<span>Ctrl+</span></a></li>
+
+                    </ul>
+                </li>
+
+                <li>
+                    Well
+                    <ul>
+                    <li class="icon save"><a href="javascript:void(0)">Create...<span>Ctrl+S</span></a></li>
+                    <li class="icon save"><a href="javascript:void(0)">Delete...<span>Ctrl+S</span></a></li>
+                    <li class="icon save"><a href="javascript:void(0)">Properties...<span>Ctrl+S</span></a></li>
+                    <li>Import</li>
+                    <li>Export</li>
+                    </ul>
+                </li>
+
+                <li>
+                    Wellbore
+                    <ul>
+                        <li class="icon save"><a href="javascript:void(0)">Create...<span>Ctrl+S</span></a></li>
+                        <li class="icon save"><a href="javascript:void(0)">Delete...<span>Ctrl+S</span></a></li>
+                        <li class="icon save"><a href="javascript:void(0)">Properties...<span>Ctrl+S</span></a></li>
+                        <li>Edit Survey Data....</li>
+                        <li>Import Survey Data....</li>
+                        <li>Create a Top Table....</li>
+                        <li>Top Table Properties....</li>
+                        <li>Delete Top Tables....</li>
+                        <li>Create Temperature Profile....</li>
+                    </ul>
+                </li>
+
+                <li>
+                    Data
+                    <ul>
+                        <li class="icon save"><a href="javascript:void(0)">Create a Dataset...<span>Ctrl+S</span></a></li>
+                        <li class="icon save"><a href="javascript:void(0)">Delete Datasets...<span>Ctrl+S</span></a></li>
+                        <li class="icon save"><a href="javascript:void(0)">Dataset Properties...<span>Ctrl+S</span></a></li>
+                        <li>Import From a File....</li>
+                        <li>Export to a File....</li>
+                        <li>Average....</li>
+                        <li>Composite....</li>
+                        <li>MWA Filter....</li>
+                        <li>Create a Lithology Column....</li>
+                        <li>Edit a Lithology Column....</li>
+                        <li>Utilities
+                        <ul>
+                            <li>Submenu 1</li>
+                            <li>Submenu 2</li>
+                            <li>Submenu 3</li>
+                        </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                  Account
+                  <ul>
+                    <li class="icon save"><a href="javascript:void(0)">Settings<span></span></a></li>
+                    <li class="icon save" id="menubar-logout-li"><a href="javascript:void(0)">Logout<span></span></a></li>
+                  </ul>
+              </li>
+            </ul>
+        </div>
+
+
+        <div id="dialog-create-project" title="Create a Project" style="display: none;">
+            <form id="form-create-project">
+              <div id="page-container-create-project">
+                <!-- Page 1 -->
+                <div class="page-dialog-create-project" data-page="1">
+                  <table>
+                    <tbody>
+                      <tr>
+                        <td><label for="dialog-create-project-name">Project name:</label></td>
+                        <td><input type="text" id="dialog-create-project-name" /></td>
+                      </tr>
+                      <tr>
+                        <td><label for="dialog-create-project-description">Description:</label></td>
+                        <td><input type="text" id="dialog-create-project-description" /></td>
+                      </tr>
+                      <tr>
+                        <td><label for="dialog-create-project-analyst">Analyst:</label></td>
+                        <td><input type="text" id="dialog-create-project-analyst" /></td>
+                      </tr>
+                      <tr>
+                        <td><label for="dialog-create-project-default-depth-unit">Default depth unit:</label></td>
+                        <td>
+                          <select id="dialog-create-project-default-depth-unit">
+                            <option value="m">Meters</option>
+                            <option value="ft">Feet</option>
+                          </select>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <!-- Page 2 -->
+                <div class="page-dialog-create-project" data-page="2" style="display: none;">
+                  <textarea id="dialog-create-project-notes" rows="15" style="width: 100%;"></textarea>
+                </div>
+              </div>
+            </form>
+        </div>
+
+        <div id="dialog-open-project" title="Open a Project" style="display: none;">
+            <form id="form-open-project">
+              <div id="page-container-open-project">
+
+                <!-- <select
+                    id="menubar-project-open-select"
+                    size="8"
+                    style="width: 100%; height: 290px; font-size:10pt; padding:2px"
+                ></select> -->
+                <table id="project-open-table" class="display compact" width="100%"></table>
+              </div>
+            </form>
+        </div>
+
+
+        <script>
+            $(document).ready(function () {
+                // Bind click event to the "Create..." menu item
+                $("li#menubar-project-create-li").click(function () {
+                    console.log("create-project-clicked");
+                    $("#dialog-create-project").dialog("open");
+                });
+                $("li#menubar-project-open-li").click(function () {
+                    console.log(getProjects());
+                    $("#dialog-open-project").dialog("open");
+                });
+                $("#menubar-logout-li").click(function () {
+                    console.log("logout-clicked");
+                    logoutAccount();
+                }); 
+                $("a#test-api-link").click(function () {
+                    console.log("test-api-clicked");
+                    checkSession();
+                });
+
+                // $('#container').css('display', 'block');
+                // openProjectTable.columns.adjust().draw();
+           
+            });
+
+
+
+        </script>
+
+    </body>
+</html>

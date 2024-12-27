@@ -1,0 +1,47 @@
+<html>
+    <head>
+
+    </head>
+    <body>
+        <div id="pagination-modal-create-project" title="Create a Project" style="display: none;">
+            <form id="pagination-form-create-project">
+              <div id="page-container-create-project">
+                <!-- Page 1 -->
+                <div class="page-modal-create-project" data-page="1">
+                  <table>
+                    <tbody>
+                      <tr>
+                        <td><label for="modal-create-project-name">Project name:</label></td>
+                        <td><input type="text" id="modal-create-project-name" /></td>
+                      </tr>
+                      <tr>
+                        <td><label for="modal-create-project-description">Description:</label></td>
+                        <td><input type="text" id="modal-create-project-description" /></td>
+                      </tr>
+                      <tr>
+                        <td><label for="modal-create-project-analyst">Analyst:</label></td>
+                        <td><input type="text" id="modal-create-project-analyst" /></td>
+                      </tr>
+                      <tr>
+                        <td><label for="modal-create-project-default-depth-unit">Default depth unit:</label></td>
+                        <td>
+                          <select id="modal-create-project-default-depth-unit">
+                            <option value="m">Meters</option>
+                            <option value="ft">Feet</option>
+                          </select>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+          
+                <!-- Page 2 -->
+                <div class="page-modal-create-project" data-page="2" style="display: none;">
+                  <textarea id="modal-create-project-notes" rows="10"></textarea>
+                </div>
+              </div>
+            </form>
+          </div>
+          
+    </body>
+</html>

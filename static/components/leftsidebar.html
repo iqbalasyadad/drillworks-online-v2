@@ -1,0 +1,94 @@
+<html>
+    <head>
+        <script src="/static/js/leftSideBar.js"></script>
+    </head>
+    <body>
+        <div id="project-explorer-container">
+            <div id="project-explorer-tab-data-content" class="project-explorer-tabcontent">
+            <!-- Placeholder for JsTreeTable -->
+            <div id="jsTreeTable">Tree Table Content Here</div>
+            </div>
+        
+            <div id="project-explorer-tab-display-content" class="project-explorer-tabcontent">
+            <h3>Display</h3>
+            <p>Show tree view</p>
+            </div>
+        
+            <div class="project-explorer-tab">
+            <button
+                class="project-explorer-tablinks active"
+                onclick="openPexpTab(event, 'project-explorer-tab-data-content')"
+                id="project-explorer-tab-default-open"
+            >
+                Data
+            </button>
+            <button
+                class="project-explorer-tablinks"
+                onclick="openPexpTab(event, 'project-explorer-tab-display-content')"
+            >
+                Display
+            </button>
+            </div>
+        </div>
+        
+        <div id="dragbar" onmousedown="startDragging(event)" style="cursor: col-resize;"></div>
+
+        <script>
+            let sidebarWidth = 200;
+        
+            // Initialize sidebar width
+            $('#left-sidebar-container').css('width', `${sidebarWidth}px`);
+        
+            // Handle tab switching
+            function openPexpTab(evt, tabName) {
+                console.log("Left sidebar tab clicked");
+            
+                // Hide all tab content
+                $('.project-explorer-tabcontent').hide();
+            
+                // Remove active class from all tab links
+                $('.project-explorer-tablinks').removeClass('active');
+            
+                // Show the clicked tab and add active class
+                $(`#${tabName}`).show();
+                $(evt.currentTarget).addClass('active');
+            }
+        
+            // Automatically click the default tab on load
+            $('#project-explorer-tab-default-open').trigger('click');
+            $('#project-explorer-tab-default-open').addClass('active');
+
+
+            let isDragging = false;
+
+            // Function to start dragging
+            function startDragging(event) {
+            event.preventDefault();
+            isDragging = true;
+            document.addEventListener("mousemove", handleMouseMove);
+            document.addEventListener("mouseup", stopDragging);
+            }
+
+            // Function to handle mouse movement
+            function handleMouseMove(event) {
+                if (isDragging) {
+                    const newWidth = event.clientX; // Sidebar width based on cursor position
+                    const sidebar = document.getElementById("left-sidebar-container");
+                    if (sidebar) {
+                    sidebar.style.width = `${newWidth}px`;
+                    }
+                }
+            }
+
+            // Function to stop dragging
+            function stopDragging() {
+                isDragging = false;
+                document.removeEventListener("mousemove", handleMouseMove);
+                document.removeEventListener("mouseup", stopDragging);
+            }
+
+        </script>
+    </body>
+</html>
+
+  

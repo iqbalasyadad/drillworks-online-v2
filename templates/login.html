@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+  <script src="/static/js/modules/jquery-3.7.1.min.js"></script>
+  <script src="/static/js/modules/axios.min.js"></script>
+
+  <script src="/static/js/config.js"></script>
+  <script src="/static/js/apiService.js"></script>
+  
+
+  <title>Login</title>
+</head>
+
+<body>
+    <div id="parent-login-container">
+        <div id="login-container">
+            <div id="inner-login-container">
+                <div id="login">
+                    <h3>Login</h3>
+                    <form id="login-form">
+                        <div id="login-input-container">
+                            <label for="username-input" class="user-input-label">Username or Email Address</label>
+                            <input type="text" id="username-input" class="user-input" required>
+                            <label for="password-input" class="user-input-label">Password</label>
+                            <input type="password" id="password-input" class="user-input" required>
+                        </div>
+                        <button type="submit" id="submit-btn"><strong>Sign In</strong></button>
+                    </form>
+                    <div id="error-message"></div>
+                    <!-- <button id="test-btn"><strong>Test In</strong></button> -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+
+            // $("#test-btn").click(function () {
+            //         console.log("test-btn-clicked");
+            //         checkSession();
+            // });
+
+            $("#login-form").on("submit", function (e) {
+                e.preventDefault();
+
+                const username = $("#username-input").val();
+                const password = $("#password-input").val();
+
+                const credentials = { username, password };
+
+                $.ajax({
+                    url: "http://localhost:5000/login",
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(credentials),
+                    xhrFields: {
+                        withCredentials: true, // Ensure cookies are sent with the request
+                    },
+                    success: function (result) {
+                        console.log(result);
+                        // Redirect to the dashboard on success
+                        window.location.href = "/";
+                    },
+                    error: function (xhr) {
+                        // Display the error message
+                        const errorMessage = xhr.responseJSON?.message || "Login failed";
+                        $("#error-message").text(errorMessage).show();
+                    },
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>

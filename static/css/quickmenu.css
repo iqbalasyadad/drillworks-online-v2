@@ -1,0 +1,15 @@
+#quick-menu-container {
+    border-top: 1px solid rgb(0, 0, 0);
+    border-bottom: 1px solid rgb(0, 0, 0);
+    background-color: #ffffff;
+    height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10pt;
+}
+#project-view-select {
+    width: 200px;
+    border-radius: 0pt;
+    font-size: 10pt;
+}
