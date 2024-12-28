@@ -2,3 +2,17 @@
 <div id="app-header">
     <p>RocknRock</p>
 </div>
+<script>
+    $(document).ready(function () {
+        function setAppHeader() {
+            const activeProject = getLocalActiveProject();
+            const projectName = activeProject?.name || '-';
+            const viewName = "-"
+            $('#app-header p').text(`Project: ${projectName} - View: ${viewName} --- RocknRock` );
+        };
+
+        setAppHeader();
+        window.setAppHeader = setAppHeader;
+
+    });
+</script>

@@ -52,3 +52,16 @@ table.dataTable td {
 #dt-search-0 {
     padding: 2px !important;
 }
+/* table td {
+  border: 1px solid;
+} */
+.dialog-text-input {
+    width: 100%;
+}
+.dialog-select-input{
+    width: 100%;
+}
+
+textarea:focus, input:focus, select:focus {
+    outline: none;
+}

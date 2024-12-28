@@ -7,8 +7,7 @@ body {
   font-family: sans-serif;
   font-size: 10pt;
   background-color: #000000;
-} 
-
+}
 #app-container { 
   display: flex;
   flex-direction: column;
