@@ -21,11 +21,11 @@
                 <li>
                     Project
                     <ul>
-                        <li class="icon save" id="menubar-project-create-li">
+                        <li class="" id="menubar-project-create-li">
                             <a href="javascript:void(0)">Create...<span>Ctrl+S</span></a>
                         </li>
-                        <li class="icon save" id="menubar-project-open-li"><a href="javascript:void(0)" >Open...<span></span></a></li>
-                        <li class="icon save"><a href="javascript:void(0)">Save<span>Ctrl+S</span></a></li>
+                        <li class="" id="menubar-project-open-li"><a href="javascript:void(0)" >Open...<span></span></a></li>
+                        <li class=""><a href="javascript:void(0)">Save<span>Ctrl+S</span></a></li>
                         <li class="icon print"><a href="javascript:void(0)">Close<span></span></a></li>
                         <li class="icon print" id="menubar-project-delete-li"><a href="javascript:void(0)">Delete....<span></span></a></li>
                         <li>Import</li>
@@ -49,9 +49,9 @@
                 <li>
                     Wellbore
                     <ul>
-                        <li class="icon save"><a href="javascript:void(0)">Create...<span>Ctrl+S</span></a></li>
-                        <li class="icon save"><a href="javascript:void(0)">Delete...<span>Ctrl+S</span></a></li>
-                        <li class="icon save"><a href="javascript:void(0)">Properties...<span>Ctrl+S</span></a></li>
+                        <li class="" id="menubar-wellbore-create-li"><a href="javascript:void(0)">Create...<span>Ctrl+S</span></a></li>
+                        <li class="" id="menubar-wellbore-delete-li"><a href="javascript:void(0)">Delete...<span>Ctrl+S</span></a></li>
+                        <li class=""><a href="javascript:void(0)">Properties...<span>Ctrl+S</span></a></li>
                         <li>Edit Survey Data....</li>
                         <li>Import Survey Data....</li>
                         <li>Create a Top Table....</li>
@@ -64,9 +64,9 @@
                 <li>
                     Data
                     <ul>
-                        <li class="icon save"><a href="javascript:void(0)">Create a Dataset...<span>Ctrl+S</span></a></li>
-                        <li class="icon save"><a href="javascript:void(0)">Delete Datasets...<span>Ctrl+S</span></a></li>
-                        <li class="icon save"><a href="javascript:void(0)">Dataset Properties...<span>Ctrl+S</span></a></li>
+                        <li class=""><a href="javascript:void(0)">Create a Dataset...<span>Ctrl+S</span></a></li>
+                        <li class=""><a href="javascript:void(0)">Delete Datasets...<span>Ctrl+S</span></a></li>
+                        <li class=""><a href="javascript:void(0)">Dataset Properties...<span>Ctrl+S</span></a></li>
                         <li>Import From a File....</li>
                         <li>Export to a File....</li>
                         <li>Average....</li>
@@ -87,8 +87,8 @@
                 <li>
                   Account
                   <ul>
-                    <li class="icon save"><a href="javascript:void(0)">Settings<span></span></a></li>
-                    <li class="icon save" id="menubar-logout-li"><a href="javascript:void(0)">Logout<span></span></a></li>
+                    <li class=""><a href="javascript:void(0)">Settings<span></span></a></li>
+                    <li class="" id="menubar-logout-li"><a href="javascript:void(0)">Logout<span></span></a></li>
                   </ul>
               </li>
 
@@ -295,7 +295,146 @@
 
         <div id="dialog-delete-well" title="Delete a Well" style="display: none;">
           <form>
-            <select id="dialog-delete-well-select" size="8" style="width:100%; height:240px;font-size:10pt;padding:2px"></select>
+            <select class="dialog-select-input" id="dialog-delete-well-select" size="8"></select>
+          </form>
+        </div>
+
+        <div id="dialog-create-wellbore" title="Create a Wellbore" style="display: none;">
+          <form id="dialog-form-create-wellbore">
+            <div id="page-container-create-wellbore">
+    
+              <!-- {/* Page 1 */} -->
+                <div class="page-dialog-create-wellbore" data-page="1" style="display:none">
+                  <table>
+                    <colgroup id="colgroup">
+                      <col style="width: 30%;">
+                      <col style="width: 70%;">
+                    </colgroup>
+                    <tbody>
+                      <tr class="dialog-input-table-tr">
+                        <td><label class="dialog-label-input" for="dialog-create-wellbore-well-target-select">Existing well:</label></td>
+                        <td>
+                          <select class="dialog-select-input" id="dialog-create-wellbore-well-target-select" size="1"></select>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+              </div>
+      
+              <!-- {/* Page 2 */} -->
+              <div class="page-dialog-create-wellbore" data-page="2">
+                <table>
+                  <colgroup id="colgroup">
+                    <col style="width: 35%;">
+                    <col style="width: 10%;">
+                    <col style="width: 5%;">
+                    <col style="width: 25%;">
+                    <col style="width: 5%;">
+                  </colgroup>
+                  <tbody>
+                    <tr class="dialog-input-table-tr">
+                      <td><label class="dialog-label-input" for="dialog-create-wellbore-name">Wellbore name:</label></td>
+                      <td colspan="4"><input type="text" name="dialog-create-wellbore-name" class="dialog-text-input" id="dialog-create-wellbore-name" required></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr"> 
+                      <td><label for="dialog-create-wellbore-description" class="dialog-label-input">Description:</label></td>
+                      <td colspan="4"><input type="text" name="dialog-create-wellbore-description" class="dialog-text-input" id="dialog-create-wellbore-description"/></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-wellbore-uid" class="dialog-label-input">Unique wellbore identifier:</label></td>
+                      <td><input type="text" name="dialog-create-wellbore-uid" class="dialog-text-input" id="dialog-create-wellbore-uid"/></td>
+                      <td></td>
+                      <td><label for="dialog-create-wellbore-air-gap" class="dialog-label-input">Air gap:</label></td>
+                      <td><input type="number" name="dialog-create-wellbore-air-gap" class="dialog-text-input" id="dialog-create-wellbore-air-gap" value='0'/></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-wellbore-operator" class="dialog-label-input">Operator:</label></td>
+                      <td><input type="text" name="dialog-create-wellbore-operator" class="dialog-text-input" id="dialog-create-wellbore-operator"/></td>
+                      <td></td>
+                      <td><label for="dialog-create-wellbore-total-md" class="dialog-label-input">Total MD:</label></td>
+                      <td><input type="number" name="dialog-create-wellbore-total-md" class="dialog-text-input" id="dialog-create-wellbore-total-md" value='0'/></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-wellbore-analyst" class="dialog-label-input">Analyst:</label></td>
+                      <td><input type="text" name="dialog-create-wellbore-analyst" class="dialog-text-input" id="dialog-create-wellbore-analyst"/></td>                       
+                      <td></td>
+                      <td><label for="dialog-create-wellbore-total-tvd" class="dialog-label-input">Total TVD:</label></td>
+                      <td><input type="number" name="dialog-create-wellbore-total-tvd" class="dialog-text-input" id="dialog-create-wellbore-total-tvd" value='0'/></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-wellbore-status-select" class="dialog-label-input">Wellbore status:</label></td>
+                      <td>
+                        <select name="dialog-create-wellbore-status-select" class="dialog-select-input" id="dialog-create-wellbore-status-select">
+                          <option value="abandoned">Abandoned</option>
+                          <option value="production">Production</option>
+                        </select>
+                      </td>                       
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-wellbore-purpose-select" class="dialog-label-input">Wellbore purpose:</label></td>
+                      <td>
+                        <select name="dialog-create-wellbore-purpose-select" id="dialog-create-wellbore-purpose-select">
+                          <option value="development">Development</option>
+                          <option value="exploration">Exploration</option>
+                        </select>
+                      </td>                     
+                      <td></td>
+                      <td><label for="dialog-create-wellbore-spud-date" class="dialog-label-input">Spud date:</label></td>
+                      <td><input type="date" name="dialog-create-wellbore-spud-date" class="dialog-text-input" id="dialog-create-wellbore-spud-date"/></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-wellbore-analysis-type-select" class="dialog-label-input">Analysis type:</label></td>
+                      <td>
+                        <select name="dialog-create-wellbore-analysis-type-select" class="dialog-select-input" id="dialog-create-wellbore-analysis-type-select">
+                          <option value="post-mortem">Post-mortem</option>
+                          <option value="pre-drill">Pre-drill</option>
+                        </select>
+                      </td>                   
+                      <td></td>
+                      <td><label for="dialog-create-wellbore-completion-date" class="dialog-label-input">Completion date:</label></td>
+                      <td><input type="date" name="dialog-create-wellbore-completion-date" class="dialog-text-input" id="dialog-create-wellbore-completion-date"/></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-wellbore-trajectory-shape-select" class="dialog-label-input">Trajectory shape:</label></td>
+                      <td>
+                        <select name="dialog-create-wellbore-trajectory-shape-select" class="dialog-select-input" id="dialog-create-wellbore-trajectory-shape-select">
+                          <option value="s-shape">S-shape</option>
+                          <option value="j-shape">J-shape</option>
+                        </select>
+                      </td>                       
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-well-bore-rig-name" class="dialog-label-input">Rig name:</label></td>
+                      <td><input type="text" name="dialog-create-wellbore-rig-name" class="dialog-text-input" id="dialog-create-wellbore-rig-name"/></td>                     
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-well-bore-objective-information" class="dialog-label-input">Objective information:</label></td>
+                      <td><input type="text" name="dialog-create-wellbore-objective-information" class="dialog-text-input" id="dialog-create-wellbore-objective-information"/></td>                     
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+    
+              <!-- {/* Page 3 */} -->
+              <div class="page-dialog-create-wellbore" data-page="3" style="display:none">
+                <textarea id="dialog-create-wellbore-notes" name="dialog-create-wellbore-notes" rows="15" style="width:100%"></textarea>
+              </div>
+    
+            </div>
+    
           </form>
         </div>
 
@@ -343,6 +482,8 @@
                   const activeProject = JSON.parse(localStorage.getItem('activeProject'));
                   console.log("test active project local: ", activeProject);              
               });
+              
+              // WELL
               $("li#menubar-well-create-li").click(function () {
                   console.log("create-well-clicked");
                   $("#dialog-create-well").dialog("open");
@@ -351,7 +492,16 @@
                   console.log("delete-well-clicked");
                   $("#dialog-delete-well").dialog("open");
               });
-        
+              
+              // WELLBORE
+              $("li#menubar-wellbore-create-li").click(function () {
+                  console.log("create-wellbore-clicked");
+                  $("#dialog-create-wellbore").dialog("open");
+              });
+              // $("li#menubar-wellbore-delete-li").click(function () {
+              //     console.log("delete-well-clicked");
+              //     $("#dialog-delete-well").dialog("open");
+              // });        
 
 
             });

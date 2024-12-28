@@ -6,10 +6,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 10pt;
+    font-size: 9pt;
 }
 #project-view-select {
     width: 200px;
     border-radius: 0pt;
-    font-size: 10pt;
+    font-size: 9pt;
 }

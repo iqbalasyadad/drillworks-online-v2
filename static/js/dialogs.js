@@ -326,7 +326,7 @@ $(document).ready(function () {
     $("#dialog-create-well").dialog({
         autoOpen: false,
         height: 400,
-        width: 500,
+        width: 450,
         dialog: true,
         buttons: {
             "< Back": function () {
@@ -490,5 +490,124 @@ $(document).ready(function () {
         }
     });
 
+
+    // WELLBORE
+    let dialogWellboreCreateCurrentPage = 1;
+    const dialogWellboreCreatetotalPages = 3;
+
+    function dialogWellboreCreateShowPage(page) {
+        $(".page-dialog-create-wellbore").hide();
+        $(`.page-dialog-create-wellbore[data-page="${page}"]`).show();
+
+        // Dynamically update the dialog title with the current step
+        const stepTitles = {
+            1: "Step 1: Specify Data Source",
+            2: "Step 2: Collect Wellbore Information",
+            3: "Step 3: Wellbore Notes",
+        };
+        $("#dialog-create-wellbore").dialog("option", "title", stepTitles[page]);
+
+        dialogWellCreateUpdateButtonStates();
+    }
+
+    function dialogWellCreateUpdateButtonStates() {
+        $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", dialogWellboreCreateCurrentPage === 1);
+        $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", dialogWellboreCreateCurrentPage === dialogWellboreCreatetotalPages);
+        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", dialogWellboreCreateCurrentPage !== dialogWellboreCreatetotalPages);
+    }
+    // DIALOG CREATE WELLBORE
+    $("#dialog-create-wellbore").dialog({
+        autoOpen: false,
+        height: 400,
+        width: 500,
+        dialog: true,
+        buttons: {
+            "< Back": function () {
+                if (dialogWellboreCreateCurrentPage > 1) {
+                    dialogWellboreCreateCurrentPage--;
+                    dialogWellboreCreateShowPage(dialogWellboreCreateCurrentPage);
+                }
+            },
+            "Next >": function () {
+                if (dialogWellboreCreateCurrentPage < dialogWellboreCreatetotalPages) {
+                    dialogWellboreCreateCurrentPage++;
+                    dialogWellboreCreateShowPage(dialogWellboreCreateCurrentPage);
+                }
+            },
+            Finish: {
+                text: "Finish",
+                async click() {
+                    try {
+                        // Fetch the selected project ID
+                        const activeProject = getLocalActiveProject();
+                        const projectId = activeProject._id;
+                
+                        // Gather form data
+                        const formData = {
+                            project_id: projectId,
+                            name: $("#dialog-create-wellbore-name").val(),
+                            description: $("#dialog-create-wellbore-description").val(),
+                            uid: $("#dialog-create-wellbore-uid").val(),
+                            common_name: $("#dialog-create-wellbore-common-well-name").val(),
+                            status: $("#dialog-create-wellbore-status-select").val(),
+                            basin_name: $("#dialog-create-wellbore-basin-name").val(),
+                            dominant_geology: $("#dialog-create-wellbore-dominan-geology-select").val(),
+                            water_velocity: parseFloat($("#dialog-create-wellbore-water-velocity").val()),
+                            ground_elevation: parseFloat($("#dialog-create-wellbore-ground-elevation").val()),
+                            water_depth: parseFloat($("#dialog-create-wellbore-water-depth").val()),
+                            density_water: parseFloat($("#dialog-create-wellbore-density-water").val()) || null,
+                            density_formation_fluid: parseFloat($("#dialog-create-wellbore-density-formation-fluid").val()) || null,
+                            default_unit_depth: $("#dialog-create-wellbore-default-unit-depth-select").val(),
+                            default_unit_density: $("#dialog-create-wellbore-default-unit-density-select").val(),
+                            notes: $("#dialog-create-wellbore-notes").val(),
+                            date_created: new Date().toISOString() // Current date as ISO string
+                        };
+                
+                        // Validate required fields
+                        if (!formData.name) {
+                            alert("Please enter a well name!");
+                            return;
+                        }
+                        if (!formData.uid) {
+                            alert("Please enter a well UID!");
+                            return;
+                        }
+                
+                        console.log("Creating a new well with the following data:", formData);
+
+                        const result = await addWellbore(formData);
+                        if (result.success) {
+                            alert("Well added successfully!");
+                            $(this).dialog("close");
+                        } else {
+                            throw new Error(response.data.message || "Failed to add project");
+                        }
+                        
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert("An error occurred: " + error.message);
+                    }
+                }
+            },
+            
+            Cancel: function () {
+                $(this).dialog("close");
+            },
+        },
+        open: ()=> {
+            console.log("open dialog");
+            dialogWellboreCreateCurrentPage=1;
+            dialogWellboreCreateShowPage(dialogWellboreCreateCurrentPage);
+
+            const activeProject = getLocalActiveProject();
+            const projectId = activeProject._id;
+            const wellboreSelect = $('#dialog-create-wellbore-well-target-select');
+            fetchWellsToSelect(projectId, wellboreSelect);
+
+        },
+        close: () => {
+            $("#dialog-form-create-wellbore")[0].reset();
+        }
+    });
 
 });

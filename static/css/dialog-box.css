@@ -1,5 +1,5 @@
 .small-dialog-title .ui-dialog-title {
-    font-size: 10pt; /* Adjust to your preference */
+    font-size: 9pt; /* Adjust to your preference */
     font-weight: normal;
     line-height: 1;
 }
@@ -10,8 +10,8 @@
     border-radius: 0px;
 }
 .ui-dialog-buttonpane button {
-    font-size: 10pt !important;
-    padding: 3px 3px !important;
+    font-size: 9pt !important;
+    padding: 2px 3px !important;
     min-width: 50px;
 }
 /* .small-dialog-title {
@@ -55,11 +55,13 @@ table.dataTable td {
 /* table td {
   border: 1px solid;
 } */
+ 
 .dialog-text-input {
     width: 100%;
 }
 .dialog-select-input{
     width: 100%;
+    font-size: 9pt;
 }
 
 textarea:focus, input:focus, select:focus {
