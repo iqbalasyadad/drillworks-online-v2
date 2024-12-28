@@ -144,29 +144,82 @@ $(document).ready(function () {
     }
   };
 
-  const deleteWell = async (projectId, wellId) => {
+  const deleteWell = async (wellId) => {
     try {
+      // Send DELETE request to the server
       const response = await fetch(`${config.apiUrl}/api/wells/${wellId}`, {
         method: "DELETE",
-        credentials: "include",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ project_id: projectId })
+        credentials: "include", // Include cookies for session management
+        headers: { 'Content-Type': 'application/json' }, // Specify content type
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || "Failed to delete project");
+        throw new Error(result.message || "Failed to delete well");
       }
-      console.log(result.message);
+        console.log(result.message);
       return result;
+  
     } catch (error) {
       console.error("Error:", error);
       alert(error.message);
     }
   };
+  
 
+  // WELLBORE
+  const addWellbore = async (formData) => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/wellbores`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+          credentials: "include",
+      });
 
+      const result = await response.json();
+      if (!response.ok) {
+          throw new Error(result.message || "Failed to add wellbore");
+      }
+      return result;
+    } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred: " + error.message);
+    }
+  };
 
+  const getWellbores = async (wellId) => {
+    try {
+      const response = await axios.get(`${config.apiUrl}/api/wellbores?well_id=${wellId}`, {
+        withCredentials: true,  // Include cookies with the request
+      });
+      console.log(response);
+      return response.data;
+    } catch (error) {
+      console.error("Error get wells:", error.response?.data || error.message);
+      throw error;
+    }
+  };
 
+  const deleteWellbore = async (wellboreId) => {
+    try {
+      // Send DELETE request to the server
+      const response = await fetch(`${config.apiUrl}/api/wellbores/${wellboreId}`, {
+        method: "DELETE",
+        credentials: "include", // Include cookies for session management
+        headers: { 'Content-Type': 'application/json' }, // Specify content type
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to delete well");
+      }
+        console.log(result.message);
+      return result;
+  
+    } catch (error) {
+      console.error("Error:", error);
+      alert(error.message);
+    }
+  };
 
   // Attach functions to window if needed for global access
   window.checkSession = checkSession;
@@ -177,9 +230,16 @@ $(document).ready(function () {
   window.getLocalActiveProject = getLocalActiveProject;
   window.deleteProject = deleteProject;
 
-
+  // well
   window.getWells = getWells;
   window.addWell = addWell;
   window.deleteWell = deleteWell;
+
+  // wellbore
+  window.getWellbores = getWellbores;
+  window.addWellbore = addWellbore;
+  window.deleteWellbore = deleteWellbore;
+
+
 
 });

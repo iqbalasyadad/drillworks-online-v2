@@ -300,22 +300,137 @@ def get_wells():
     result = [{"_id": str(well["_id"]), "name": well["name"]} for well in wells]
     return jsonify(result)
 
+# remove well
+# @app.route('/api/wells/<well_id>', methods=['DELETE'])
+# def delete_well(well_id):
+#     print("Received request: delete well")
+#     if 'user_id' not in session:
+#         print("not  in session")
+#         return jsonify({"success": False, "message": "User not in session"}), 401
+    
+#     project_id = request.json.get('project_id')
+
+#     wells_collection.delete_one({"_id": ObjectId(well_id)})
+
+#     projects_collection.update_one(
+#         {"_id": ObjectId(project_id)},
+#         {"$pull": {"wells": ObjectId(well_id)}}
+#     )
+#     return jsonify({"success": True, "message": "Well {} deleted successfully".format(well_id)})
+
 @app.route('/api/wells/<well_id>', methods=['DELETE'])
 def delete_well(well_id):
     print("Received request: delete well")
     if 'user_id' not in session:
+        print("not in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+
+    # Find the well to get its associated wellbores
+    well = wells_collection.find_one({"_id": ObjectId(well_id)})
+    if not well:
+        return jsonify({"success": False, "message": f"Well {well_id} not found"}), 404
+    
+    # Delete all wellbores associated with the well
+    wellbores_collection.delete_many({"well_id": ObjectId(well_id)})
+
+    # Remove the well from all projects
+    projects_collection.update_many(
+        {"wells": ObjectId(well_id)},  # Find projects that contain the well
+        {"$pull": {"wells": ObjectId(well_id)}}  # Remove the well from the wells array
+    )
+
+    # Now, delete the well itself
+    wells_collection.delete_one({"_id": ObjectId(well_id)})
+
+    return jsonify({"success": True, "message": f"Well {well_id} and its wellbores deleted successfully"})
+
+@app.route('/api/wellbores', methods=['POST'])
+def add_wellbore():
+    print("Received request: add wellbore")
+    if 'user_id' not in session:
+        print("not  in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+
+    data = request.json
+    well_id = data.get('well_id')
+
+    # Check for duplicate project name for the same user
+    wellbore_uid = data.get('uid')
+    existing_welbore_uid = wellbores_collection.find_one({"uid": wellbore_uid})
+    if existing_welbore_uid:
+        return jsonify({"message": "A well with the same well UID already exists for this user"}), 400
+    
+    new_wellbore = {
+        "_id": ObjectId(),
+        "well_id": ObjectId(well_id),
+        "name": data.get('name'),
+        "uid": data.get('uid'),
+        "description": data.get('description'),
+        "operator": data.get('operator'),
+        "status": data.get('status'),
+        "purpose": data.get('purpose'),
+        "analysisType": data.get('analysis_type'),
+        "trajectoryShape": data.get('trajectory_shape'),
+        "rigName": data.get('rig_name'),
+        "objectiveInformation": data.get('objectiveInformation'),
+        "airGap": data.get('air_gap'),
+        "totalMD": data.get('total_md'),
+        "totalTVD": data.get('total_tvd'),
+        "spudDate": data.get('spud_date'),
+        "completionDate": data.get('completion_date'),
+        "datasets": [],
+        "trajectory": {
+            "md": [],
+            "tvd": [],
+            "inclination": [],
+            "azimuth": []
+        }
+    }
+    wellbore_id = wellbores_collection.insert_one(new_wellbore).inserted_id
+
+    # Update well to include the new wellbore
+    wells_collection.update_one({"_id": ObjectId(well_id)}, {"$push": {"wellbores": wellbore_id}})
+    return jsonify({"success": True, 
+                    "message": "Wellbore added successfully", 
+                    "welbore_id": str(wellbore_id)})
+
+@app.route('/api/wellbores', methods=['GET'])
+def get_wellbores():
+    print("Received request: get wellbore")
+    if 'user_id' not in session:
         print("not  in session")
         return jsonify({"success": False, "message": "User not in session"}), 401
     
-    project_id = request.json.get('project_id')
+    well_id = request.args.get('well_id')
+    if not well_id:
+        return jsonify({"error": "Well ID is required"}), 400
+    
+    try:
+        # Query for wellbores linked to the provided well_id
+        wellbores = wellbores_collection.find({"well_id": ObjectId(well_id)})
+        result = [{"_id": str(wellbore["_id"]), "name": wellbore["name"]} for wellbore in wellbores]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching wellbores: {e}")
+        return jsonify({"error": "An error occurred while fetching wellbores"}), 500
 
-    wells_collection.delete_one({"_id": ObjectId(well_id)})
-
-    projects_collection.update_one(
-        {"_id": ObjectId(project_id)},
-        {"$pull": {"wells": ObjectId(well_id)}}
+@app.route('/api/wellbores/<wellbore_id>', methods=['DELETE'])
+def delete_wellbore(wellbore_id):
+    print("Received request: delete wellbore")
+    if 'user_id' not in session:
+        print("not in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+    wellbore = wellbores_collection.find_one({"_id": ObjectId(wellbore_id)})
+    if not wellbore:
+        return jsonify({"success": False, "message": "Wellbore not found"}), 404
+    well_id = wellbore.get('well_id')
+    wellbores_collection.delete_one({"_id": ObjectId(wellbore_id)})
+    wells_collection.update_one(
+        {"_id": ObjectId(well_id)},
+        {"$pull": {"wellbores": ObjectId(wellbore_id)}}
     )
-    return jsonify({"success": True, "message": "Well {} deleted successfully".format(well_id)})
+    return jsonify({"success": True, "message": "Wellbore deleted successfully"})
+
 
 if __name__ == "__main__":
     app.run(debug=True)

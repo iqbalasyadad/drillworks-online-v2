@@ -312,9 +312,9 @@
                     </colgroup>
                     <tbody>
                       <tr class="dialog-input-table-tr">
-                        <td><label class="dialog-label-input" for="dialog-create-wellbore-well-target-select">Existing well:</label></td>
+                        <td><label class="dialog-label-input" for="dialog-create-wellbore-well-select">Existing well:</label></td>
                         <td>
-                          <select class="dialog-select-input" id="dialog-create-wellbore-well-target-select" size="1"></select>
+                          <select class="dialog-select-input" id="dialog-create-wellbore-well-select" size="1"></select>
                         </td>
                       </tr>
                     </tbody>
@@ -410,14 +410,14 @@
                       <td></td>
                     </tr>
                     <tr class="dialog-input-table-tr">
-                      <td><label for="dialog-create-well-bore-rig-name" class="dialog-label-input">Rig name:</label></td>
+                      <td><label for="dialog-create-wellbore-rig-name" class="dialog-label-input">Rig name:</label></td>
                       <td><input type="text" name="dialog-create-wellbore-rig-name" class="dialog-text-input" id="dialog-create-wellbore-rig-name"/></td>                     
                       <td></td>
                       <td></td>
                       <td></td>
                     </tr>
                     <tr class="dialog-input-table-tr">
-                      <td><label for="dialog-create-well-bore-objective-information" class="dialog-label-input">Objective information:</label></td>
+                      <td><label for="dialog-create-wellbore-objective-information" class="dialog-label-input">Objective information:</label></td>
                       <td><input type="text" name="dialog-create-wellbore-objective-information" class="dialog-text-input" id="dialog-create-wellbore-objective-information"/></td>                     
                       <td></td>
                       <td></td>
@@ -438,6 +438,19 @@
           </form>
         </div>
 
+        <div id="dialog-delete-wellbore" title="Delete a Wellbore" style="display: none;">
+          <form>
+            <div style="margin-bottom:10px">
+              <p>Select a well:</p>
+              <select id="dialog-delete-wellbore-well-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+            </div>
+            <div>
+              <p>Select a wellbore:</p>
+              <select id="dialog-delete-wellbore-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+            </div>
+          </form>
+        </div>
+        
 
 
         <script>
@@ -498,10 +511,10 @@
                   console.log("create-wellbore-clicked");
                   $("#dialog-create-wellbore").dialog("open");
               });
-              // $("li#menubar-wellbore-delete-li").click(function () {
-              //     console.log("delete-well-clicked");
-              //     $("#dialog-delete-well").dialog("open");
-              // });        
+              $("li#menubar-wellbore-delete-li").click(function () {
+                  console.log("delete-wellbore-clicked");
+                  $("#dialog-delete-wellbore").dialog("open");
+              });        
 
 
             });

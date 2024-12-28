@@ -40,16 +40,10 @@
             $('#left-sidebar-container').css('width', `${sidebarWidth}px`);
         
             // Handle tab switching
-            function openPexpTab(evt, tabName) {
-                console.log("Left sidebar tab clicked");
-            
-                // Hide all tab content
+            function openPexpTab(evt, tabName) {            
                 $('.project-explorer-tabcontent').hide();
-            
-                // Remove active class from all tab links
                 $('.project-explorer-tablinks').removeClass('active');
             
-                // Show the clicked tab and add active class
                 $(`#${tabName}`).show();
                 $(evt.currentTarget).addClass('active');
             }

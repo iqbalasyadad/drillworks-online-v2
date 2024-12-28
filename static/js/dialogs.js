@@ -27,7 +27,7 @@ $(document).ready(function () {
         autoOpen: false,
         height: 400,
         width: 400,
-        dialog: true,
+        modal: true,
         buttons: {
             "< Back": function () {
                 if (currentPage > 1) {
@@ -145,7 +145,7 @@ $(document).ready(function () {
         autoOpen: false,
         height: 400,
         width: 400,
-        dialog: true,
+        modal: true,
         buttons: {
             Open: {
                 // id: "menubar-project-open-dialog-open-btn",
@@ -239,7 +239,7 @@ $(document).ready(function () {
         autoOpen: false,
         height: 400,
         width: 400,
-        dialog: true,
+        modal: true,
         buttons: {
             Delete: {
                 text: "Delete",
@@ -327,7 +327,7 @@ $(document).ready(function () {
         autoOpen: false,
         height: 400,
         width: 450,
-        dialog: true,
+        modal: true,
         buttons: {
             "< Back": function () {
                 if (dialogWellCreateCurrentPage > 1) {
@@ -387,7 +387,7 @@ $(document).ready(function () {
                             alert("Well added successfully!");
                             $(this).dialog("close");
                         } else {
-                            throw new Error(response.data.message || "Failed to add project");
+                            throw new Error(response.data.message || "Failed to add well");
                         }
                         
                     } catch (error) {
@@ -412,11 +412,11 @@ $(document).ready(function () {
     });
 
     // DELETE WELL
-    const fetchWellsToSelect = async(projectId, selectElement) => {
+    const fetchWellsSelect = async(projectId, wellSelect) => {
         const wells = await getWells(projectId);
-        selectElement.empty(); // Clear previous options
+        wellSelect.empty(); // Clear previous options
         wells.forEach(well => {
-            selectElement.append(`<option value="${well._id}">${well.name}</option>`);
+            wellSelect.append(`<option value="${well._id}">${well.name}</option>`);
         });
     };
 
@@ -425,32 +425,27 @@ $(document).ready(function () {
         autoOpen: false,
         height: 400,
         width: 400,
-        dialog: true,
+        modal: true,
         buttons: {
             Delete: {
                 text: "Delete",
                 async click() {
-                    const dialog = $(this);
-
-                    // Fetch the selected project ID
-                    const activeProject = getLocalActiveProject();
-                    const projectId = activeProject._id;
-
-                    const selectedWellId = $("#dialog-delete-well-select").val();
-                    const selectedWellName = $("#dialog-delete-well-select option:selected").text();
-                    console.log("wellname: ", selectedWellName);
-
-                    if (selectedWellId) {
-                        const isConfirmed = window.confirm(`Are you sure you want to delete the well: ${selectedWellName}?`);
+                    // const dialog = $(this);
+                    const wellSelect = $('#dialog-delete-well-select');
+                    const wellSelectedName = wellSelect.find("option:selected").text();
+                    const wellSelectedId = wellSelect.val();
+                    if (wellSelectedId) {
+                        const isConfirmed = window.confirm(`Are you sure you want to delete the well: ${wellSelectedName}?`);
                         if (isConfirmed) {
                             try {
-                                const result = await deleteWell( projectId, selectedWellId);
+                                const result = await deleteWell(wellSelectedId);
                                 console.log("Response:", result);
                     
                                 if (result.success) {
                                     // alert("Well deleted successfully!");
-                                    const wellSelect = $('#dialog-delete-well-select');
-                                    fetchWellsToSelect(projectId, wellSelect);
+                                    const activeProject = getLocalActiveProject();
+                                    const projectId = activeProject._id;
+                                    fetchWellsSelect(projectId, wellSelect);
                                     // dialog.dialog("close");  // Use the stored reference to close the dialog
                                 }
                             } catch (error) {
@@ -477,7 +472,7 @@ $(document).ready(function () {
                 const activeProject = getLocalActiveProject();
                 const projectId = activeProject._id;
                 const wellSelect = $('#dialog-delete-well-select');
-                fetchWellsToSelect(projectId, wellSelect);
+                fetchWellsSelect(projectId, wellSelect);
         
             } catch (error) {
                 console.error("Failed to fetch wells:", error.message);
@@ -507,10 +502,17 @@ $(document).ready(function () {
         };
         $("#dialog-create-wellbore").dialog("option", "title", stepTitles[page]);
 
-        dialogWellCreateUpdateButtonStates();
+        dialogWellboreCreateUpdateButtonStates();
+
+        if (page===2) {
+            const wellSelectedName = $("#dialog-create-wellbore-well-select").find("option:selected").text();
+            console.log(wellSelectedName);
+            
+            $("#dialog-create-wellbore-name").val(`${wellSelectedName}_`);
+        };
     }
 
-    function dialogWellCreateUpdateButtonStates() {
+    function dialogWellboreCreateUpdateButtonStates() {
         $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", dialogWellboreCreateCurrentPage === 1);
         $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", dialogWellboreCreateCurrentPage === dialogWellboreCreatetotalPages);
         $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", dialogWellboreCreateCurrentPage !== dialogWellboreCreatetotalPages);
@@ -520,7 +522,7 @@ $(document).ready(function () {
         autoOpen: false,
         height: 400,
         width: 500,
-        dialog: true,
+        modal: true,
         buttons: {
             "< Back": function () {
                 if (dialogWellboreCreateCurrentPage > 1) {
@@ -545,22 +547,24 @@ $(document).ready(function () {
                         // Gather form data
                         const formData = {
                             project_id: projectId,
+                            well_id: $("#dialog-create-wellbore-well-select").val(),
                             name: $("#dialog-create-wellbore-name").val(),
                             description: $("#dialog-create-wellbore-description").val(),
                             uid: $("#dialog-create-wellbore-uid").val(),
-                            common_name: $("#dialog-create-wellbore-common-well-name").val(),
+                            operator: $("#dialog-create-wellbore-operator").val(),
+                            analyst: $("#dialog-create-wellbore-analyst").val(),
                             status: $("#dialog-create-wellbore-status-select").val(),
-                            basin_name: $("#dialog-create-wellbore-basin-name").val(),
-                            dominant_geology: $("#dialog-create-wellbore-dominan-geology-select").val(),
-                            water_velocity: parseFloat($("#dialog-create-wellbore-water-velocity").val()),
-                            ground_elevation: parseFloat($("#dialog-create-wellbore-ground-elevation").val()),
-                            water_depth: parseFloat($("#dialog-create-wellbore-water-depth").val()),
-                            density_water: parseFloat($("#dialog-create-wellbore-density-water").val()) || null,
-                            density_formation_fluid: parseFloat($("#dialog-create-wellbore-density-formation-fluid").val()) || null,
-                            default_unit_depth: $("#dialog-create-wellbore-default-unit-depth-select").val(),
-                            default_unit_density: $("#dialog-create-wellbore-default-unit-density-select").val(),
+                            purpose: $("#dialog-create-wellbore-purpose-select").val(),
+                            analysis_type: $("#dialog-create-wellbore-analysis-type-select").val(),
+                            trajectory_shape: $("#dialog-create-wellbore-trajectory-shape-select").val(),
+                            rig_name: $("#dialog-create-wellbore-rig-name").val(),
+                            objective_information: $("#dialog-create-wellbore-objective-information").val(),
+                            air_gap: parseFloat($("#dialog-create-wellbore-air-gap").val()),
+                            total_md: parseFloat($("#dialog-create-wellbore-total-md").val()),
+                            total_tvd: parseFloat($("#dialog-create-wellbore-total-tvd").val()),
+                            spud_date: $("#dialog-create-wellbore-spud-date").val(),
+                            completion_date: $("#dialog-create-wellbore-completion-date").val(),
                             notes: $("#dialog-create-wellbore-notes").val(),
-                            date_created: new Date().toISOString() // Current date as ISO string
                         };
                 
                         // Validate required fields
@@ -573,14 +577,14 @@ $(document).ready(function () {
                             return;
                         }
                 
-                        console.log("Creating a new well with the following data:", formData);
+                        console.log("Creating a new wellbore:", formData);
 
                         const result = await addWellbore(formData);
                         if (result.success) {
-                            alert("Well added successfully!");
+                            alert("Wellbore added successfully!");
                             $(this).dialog("close");
                         } else {
-                            throw new Error(response.data.message || "Failed to add project");
+                            throw new Error(response.data.message || "Failed to add wellbore");
                         }
                         
                     } catch (error) {
@@ -601,12 +605,118 @@ $(document).ready(function () {
 
             const activeProject = getLocalActiveProject();
             const projectId = activeProject._id;
-            const wellboreSelect = $('#dialog-create-wellbore-well-target-select');
-            fetchWellsToSelect(projectId, wellboreSelect);
+            const wellSelect = $('#dialog-create-wellbore-well-select');
+            fetchWellsSelect(projectId, wellSelect);
 
         },
         close: () => {
             $("#dialog-form-create-wellbore")[0].reset();
+        }
+    });
+
+    // DELETE WELLBORE
+    const fetchWellsWellboresToSelect = async(projectId, wellSelect, wellboreSelect) => {
+        wellSelect.empty();
+        wellboreSelect.empty();
+        const wells = await getWells(projectId);
+        wells.forEach(well => {
+            wellSelect.append(`<option value="${well._id}">${well.name}</option>`);
+        });
+        wellSelect.off('change').on('change', async function () {
+            const selectedWellId = $(this).val();
+            wellboreSelect.empty();
+            
+            if (selectedWellId) {
+                try {
+                    const wellbores = await getWellbores(selectedWellId);
+                    wellbores.forEach(wellbore => {
+                        wellboreSelect.append(`<option value="${wellbore._id}">${wellbore.name}</option>`);
+                    });
+                } catch (error) {
+                    console.error("Error populating wellbores:", error);
+                }
+            }
+        });
+    };
+    const fetchWellboresToSelect = async(wellSelect, wellboreSelect) => {
+        wellboreSelect.empty();
+        const selectedWellId = wellSelect.val();
+        wellboreSelect.empty();
+        if (selectedWellId) {
+            try {
+                const wellbores = await getWellbores(selectedWellId);
+                wellbores.forEach(wellbore => {
+                    wellboreSelect.append(`<option value="${wellbore._id}">${wellbore.name}</option>`);
+                });
+            } catch (error) {
+                console.error("Error populating wellbores:", error);
+            }
+        }
+    };
+    // DIALOG DELETE WELLBORE
+    $("#dialog-delete-wellbore").dialog({
+        autoOpen: false,
+        height: 400,
+        width: 400,
+        modal: true,
+        buttons: {
+            Delete: {
+                text: "Delete",
+                async click() {
+                    const wellSelect = $("#dialog-delete-wellbore-well-select");
+                    const wellboreSelect = $("#dialog-delete-wellbore-wellbore-select");
+                    var selectedWellbore = {
+                        _id: wellboreSelect.val(),
+                        name: wellboreSelect.find("option:selected").text()
+                    }
+                    console.log(selectedWellbore);
+                    if (selectedWellbore._id) {
+                        const isConfirmed = window.confirm(`Are you sure you want to delete the wellbore: ${selectedWellbore.name}?`);
+                        if (isConfirmed) {
+                            try {
+                                const result = await deleteWellbore( selectedWellbore._id);
+                                console.log("Response:", result);
+                    
+                                if (result.success) {
+                                    fetchWellboresToSelect(wellSelect, wellboreSelect);
+                                    selectedWellbore = {};
+                                }
+                            } catch (error) {
+                                console.error("Failed to delete wellbore:", error.message);
+                            }
+                        }
+                    } else {
+                        window.alert("Please select a wellbore!")
+                    }
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        },
+        open: async ()=> {
+            console.log("fetch wellbores called");
+            try {
+        
+                // Fetch the selected project ID
+                const activeProject = getLocalActiveProject();
+                const projectId = activeProject._id;
+                const wellSelect = $('#dialog-delete-wellbore-well-select');
+                const wellboreSelect = $('#dialog-delete-wellbore-wellbore-select');
+
+                fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
+        
+            } catch (error) {
+                console.error("Failed to fetch wells:", error.message);
+            }
+            
+        },
+        close: function () {
+            $('#dialog-delete-wellbore-select').empty()
+            //pass
         }
     });
 
