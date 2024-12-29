@@ -249,8 +249,8 @@ $(document).ready(function () {
                                 console.log("Response:", response);
                     
                                 if (response.success) {
-                                    alert("Project deleted successfully!");
-                                    dialog.dialog("close");  // Use the stored reference to close the dialog
+                                    // alert("Project deleted successfully!");
+                                    // dialog.dialog("close");  // Use the stored reference to close the dialog
                                 }
                             } catch (error) {
                                 console.error("Failed to delete project:", error.message);
@@ -769,6 +769,7 @@ $(document).ready(function () {
     let surveyInputGrid;
     function renderGrid(surveyData) {
         let data;
+        console.log(surveyData.md.length);
         if(surveyData.md.length==0) {
             // const rowData = generateEmptyRows(colData);
             data = DataGridXL.createEmptyData(10, 4)
@@ -926,7 +927,7 @@ $(document).ready(function () {
 
         },
         close: () => {
-            // $("#dialog-form-create-wellbore")[0].reset();
+            $("#dialog-form-wellbore-edit-survey-data")[0].reset();
         }
     });
 
