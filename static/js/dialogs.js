@@ -19,7 +19,7 @@ $(document).ready(function () {
     function updateButtonStates() {
         $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", currentPage === 1);
         $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", currentPage === totalPages);
-        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", currentPage !== totalPages);
+        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", currentPage < totalPages-1);
     }  
 
     // Initialize the dialog
@@ -69,7 +69,7 @@ $(document).ready(function () {
                     if (response.data.success) {
                         console.log(response.data);
                         setActiveProject(response.data.project);
-                        alert(response.data.message);
+                        // alert(response.data.message);
                         
                     } else {
                         throw new Error(response.data.message || "Failed to add project");
@@ -136,8 +136,6 @@ $(document).ready(function () {
             $(this).addClass('selected');
             openProjectTableSelectedProject = openProjectTable.row(this).data();
         }
-        console.log("tr clicked", this);
-        console.log(openProjectTableSelectedProject);
         
     });
 
@@ -186,7 +184,6 @@ $(document).ready(function () {
                         date_created: formatDate(item.date_created)
                     };
                 });
-                console.log(formattedData);
                 openProjectTable.clear();
                 openProjectTable.rows.add(formattedData);
                 openProjectTable.draw();
@@ -229,9 +226,7 @@ $(document).ready(function () {
             deleteProjectTable.$('tr.selected').removeClass('selected');
             $(this).addClass('selected');
             deleteProjectTableSelectedProject = deleteProjectTable.row(this).data();
-        }
-        console.log(deleteProjectTableSelectedProject);
-        
+        }        
     });
 
     // DIALOG DELETE PROJECT
@@ -283,7 +278,6 @@ $(document).ready(function () {
                         date_created: formatDate(item.date_created)
                     };
                 });
-                console.log(formattedData);
                 deleteProjectTable.clear();
                 deleteProjectTable.rows.add(formattedData);
                 deleteProjectTable.draw();
@@ -320,7 +314,7 @@ $(document).ready(function () {
     function dialogWellCreateUpdateButtonStates() {
         $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", dialogWellCreateCurrentPage === 1);
         $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", dialogWellCreateCurrentPage === dialogWellCreatetotalPages);
-        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", dialogWellCreateCurrentPage !== dialogWellCreatetotalPages);
+        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", dialogWellCreateCurrentPage < dialogWellCreatetotalPages-1);
     }
     // DIALOG CREATE WELL
     $("#dialog-create-well").dialog({
@@ -384,7 +378,7 @@ $(document).ready(function () {
 
                         const result = await addWell(formData);
                         if (result.success) {
-                            alert("Well added successfully!");
+                            console.log("Add well: success: ", result);
                             $(this).dialog("close");
                         } else {
                             throw new Error(response.data.message || "Failed to add well");
@@ -509,13 +503,15 @@ $(document).ready(function () {
             console.log(wellSelectedName);
             
             $("#dialog-create-wellbore-name").val(`${wellSelectedName}_`);
+            $("#dialog-create-wellbore-uid").val(`${wellSelectedName}_`);
+
         };
     }
 
     function dialogWellboreCreateUpdateButtonStates() {
         $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", dialogWellboreCreateCurrentPage === 1);
         $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", dialogWellboreCreateCurrentPage === dialogWellboreCreatetotalPages);
-        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", dialogWellboreCreateCurrentPage !== dialogWellboreCreatetotalPages);
+        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", dialogWellboreCreateCurrentPage < dialogWellboreCreatetotalPages-1);
     }
     // DIALOG CREATE WELLBORE
     $("#dialog-create-wellbore").dialog({
@@ -581,7 +577,7 @@ $(document).ready(function () {
 
                         const result = await addWellbore(formData);
                         if (result.success) {
-                            alert("Wellbore added successfully!");
+                            console.log("add wellbore: success")
                             $(this).dialog("close");
                         } else {
                             throw new Error(response.data.message || "Failed to add wellbore");
@@ -719,5 +715,342 @@ $(document).ready(function () {
             //pass
         }
     });
+
+
+    // WELLBORE EDIT SURVEY DATA
+    // const survey_data_input_grid = new DataGridXL("dialog-wellbore-edit-survey-data-grid", { 
+    //     data: DataGridXL.createEmptyData(20, 2),
+    //     columns: [
+    //         {title: "PP DEPTH"}, 
+    //         {title: "PP SG"}
+    //     ],
+    //     allowDeleteCols: false,
+    //     allowMoveCols: false,
+    //     allowInsertCols: false,
+    //     allowHideCols: false,
+    //     allowHideRows: false,
+    //     allowMoveRows: false,
+    //     colHeaderHeight: 20,
+    //     colHeaderWidth: 50,
+    //     colHeaderLabelType: "numbers",
+    //     colHeaderLabelAlign: "center",
+    //     colAlign: "right",
+    //     rowHeight: 20,
+    //     frozenRows: 0,
+    //     topBar: false,
+    //     bottomBar: false
+    // });
+
+    // DIALOG WELLBORE EDIT SURVEY DATA
+    let dialogWellboreEditSurveyDataCurrentPage = 1;
+    const dialogWellboreEditSurveyDataCreatetotalPages = 2;
+
+    function dialogWellboreEditSurveyDataShowPage(page) {
+        $(".page-dialog-wellbore-edit-survey-data").hide();
+        $(`.page-dialog-wellbore-edit-survey-data[data-page="${page}"]`).show();
+
+        // Dynamically update the dialog title with the current step
+        const stepTitles = {
+            1: "Step 1: Select well & wellbore",
+            2: "Step 2: Input Survey Data"
+        };
+        $("#dialog-wellbore-edit-survey-data").dialog("option", "title", stepTitles[page]);
+        dialogWellboreEditSurveyDataUpdateButtonStates();
+
+    }
+
+    function dialogWellboreEditSurveyDataUpdateButtonStates() {
+        $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", dialogWellboreEditSurveyDataCurrentPage === 1);
+        $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", dialogWellboreEditSurveyDataCurrentPage === dialogWellboreEditSurveyDataCreatetotalPages);
+        $(".ui-dialog-buttonpane button:contains('Apply')").button("option", "disabled", dialogWellboreEditSurveyDataCurrentPage < dialogWellboreEditSurveyDataCreatetotalPages);
+    }
+
+    // WELLBORE TABLE EDIT SURVEY
+    let surveyInputGrid;
+    function renderGrid(surveyData) {
+        let data;
+        if(surveyData.md.length==0) {
+            // const rowData = generateEmptyRows(colData);
+            data = DataGridXL.createEmptyData(10, 4)
+        } else {
+            data = col_to_row(surveyData.md, surveyData.tvd, surveyData.inclination, surveyData.azimuth);
+        };
+
+        const headers = [
+            { title: "MD", type: 'number', format: '0,0.00' },
+            { title: "TVD", type: 'number', format: '0,0.00' },
+            { title: "INCLINATION", type: 'number', format: '0,0.00' },
+            { title: "AZIMUTH", type: 'number', format: '0,0.00' } ];
+
+        surveyInputGrid = new DataGridXL("dialog-wellbore-edit-survey-data-grid", {
+            // data: DataGridXL.createEmptyData(20, 4),
+            data: data,
+            columns: headers,
+            allowDeleteCols: false,
+            allowMoveCols: false,
+            allowInsertCols: false,
+            allowHideCols: false,
+            allowHideRows: false,
+            allowMoveRows: false,
+            colHeaderHeight: 16,
+            colHeaderWidth: 30,
+            colHeaderLabelType: "numbers",
+            colHeaderLabelAlign: "center",
+            colAlign: "right",
+            rowHeight: 16,
+            frozenRows: 0,
+            topBar: false,
+            bottomBar: false,
+        });
+    };
+    // DIALOG WELLBORE EDIT SURVEY DATA
+    $("#dialog-wellbore-edit-survey-data").dialog({
+        autoOpen: false,
+        height: 400,
+        width: 500,
+        modal: true,
+        buttons: {
+            "< Back": function () {
+                if (dialogWellboreEditSurveyDataCurrentPage > 1) {
+                    dialogWellboreEditSurveyDataCurrentPage--;
+                    dialogWellboreEditSurveyDataShowPage(dialogWellboreEditSurveyDataCurrentPage);
+                }
+            },
+            "Next >": function () {
+                if (dialogWellboreEditSurveyDataCurrentPage < dialogWellboreEditSurveyDataCreatetotalPages) {
+                    dialogWellboreEditSurveyDataCurrentPage++;
+                    dialogWellboreEditSurveyDataShowPage(dialogWellboreEditSurveyDataCurrentPage);
+                }
+                
+
+                if (dialogWellboreEditSurveyDataCurrentPage===2) {
+                    const wellboreSelect = $("#dialog-wellbore-edit-survey-data-wellbore-select");
+                    var selectedWellbore = {
+                        _id: wellboreSelect.val(),
+                        name: wellboreSelect.find("option:selected").text()
+                    }
+                    async function renderGridAsync() {
+                        try {
+                            const result = await getWellboreSurvey(selectedWellbore._id);
+                            if (result.success) {
+                                console.log("get survey success ", result.survey)
+                                renderGrid(result.survey);
+                            } else {
+                                throw new Error(response.data.message || "Failed to get survey");
+                            };
+                        } catch (error) {
+                            console.error("Error rendering grid:", error);
+                        }
+                    }
+                    renderGridAsync();
+                };
+            },
+            Apply: {
+                text: "Apply",
+                async click() {
+                    const wellboreSelect = $("#dialog-wellbore-edit-survey-data-wellbore-select");
+                    var selectedWellbore = {
+                        _id: wellboreSelect.val(),
+                        name: wellboreSelect.find("option:selected").text()
+                    }
+                    let calculateTVDchecked = $("#page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox").prop("checked");
+                    const gridData = transposeAndConvert(surveyInputGrid.getData(), calculateTVDchecked, calculateTVDchecked?1:null);
+                    console.log(gridData);
+
+
+                    if (selectedWellbore._id) {
+                        if(gridData.ok===true) {
+                            console.log("gridData OK");
+                            try {
+                                const formData = {
+                                    md: gridData.data[0],
+                                    tvd: gridData.data[1],
+                                    inclination: gridData.data[2],
+                                    azimuth: gridData.data[3],
+                                    calculate_tvd_checked: calculateTVDchecked
+                                };
+                                console.log(formData);
+                                const result = await setWellboreSurvey(selectedWellbore._id, formData);
+                                if (result.success) {
+                                    console.log("set survey: success");
+                                    console.log(result);
+                                    if (calculateTVDchecked) {
+                                        const newSurveyData = {
+                                            md: formData.md,
+                                            tvd: result.survey.tvd,
+                                            inclination: formData.inclination,
+                                            azimuth: formData.azimuth,
+                                        }
+                                        renderGrid(newSurveyData);
+                                    }
+                                } else {
+                                    throw new Error(response.data.message || "Failed to add wellbore");
+                                }
+                            } catch (error) {
+                                console.error("Error:", error);
+                                alert("An error occurred: " + error.message);
+                            }
+                        } else {
+                            console.log(gridData.message);
+                        }
+                    } else {
+                        window.alert("Please select a wellbore!")
+                    };
+
+                }
+            },
+            
+            Cancel: function () {
+                $(this).dialog("close");
+            },
+        },
+        open: ()=> {
+            console.log("open dialog edit survey data")
+            dialogWellboreEditSurveyDataCurrentPage=1;
+            dialogWellboreEditSurveyDataShowPage(dialogWellboreEditSurveyDataCurrentPage);
+
+            console.log("fetch wellbores called");
+            try {
+        
+                // Fetch the selected project ID
+                const activeProject = getLocalActiveProject();
+                const projectId = activeProject._id;
+                const wellSelect = $('#dialog-wellbore-edit-survey-data-well-select');
+                const wellboreSelect = $('#dialog-wellbore-edit-survey-data-wellbore-select');
+
+                fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
+        
+            } catch (error) {
+                console.error("Failed to fetch wells:", error.message);
+            }
+
+        },
+        close: () => {
+            // $("#dialog-form-create-wellbore")[0].reset();
+        }
+    });
+
+    function col_to_row(...columns) {
+        let result = [];
+        
+        // Get the length of the first column to loop through
+        const numRows = columns[0].length;
+        
+        // Loop through each row
+        for (let i = 0; i < numRows; i++) {
+            let row = [];
+            
+            // For each column, push the corresponding value at index 'i' into the row
+            for (let j = 0; j < columns.length; j++) {
+                row.push(columns[j][i]);
+            }
+            // Add the row to the result
+            result.push(row);
+        }
+    
+        return result;
+    }
+
+    function transposeAndConvert(array, skipColumn, skipColumnIndex=null) {
+        const nEmptyRow = 10;
+        const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow).fill(null));
+    
+        // If the array is empty or contains only null values, return a 2D null array with 5 columns and n rows
+        if (array.length === 0 || array.every(row => row.every(cell => cell === null))) {
+            return {
+                ok: true,
+                message: 'ok',
+                data: emptyArray
+            };
+        }
+    
+        // Check for mixed null and number in each row (skip specified column if skipColumn is true)
+        for (let rowIndex = 0; rowIndex < array.length; rowIndex++) {
+            let hasNumber = false;
+            let hasNull = false;
+    
+            for (let colIndex = 0; colIndex < array[rowIndex].length; colIndex++) {
+                if (skipColumn && colIndex === skipColumnIndex) {
+                    continue; // Skip the specified column if skipColumn is true
+                }
+                let cell = array[rowIndex][colIndex];
+                if (cell === null) {
+                    hasNull = true;
+                } else if (!isNaN(cell)) {
+                    hasNumber = true;
+                }
+            }
+    
+            if (hasNumber && hasNull) {
+                alert(`Error at row ${rowIndex + 1}: Row contains both numbers and null values.`);
+                return {
+                    ok: false,
+                    message: `Error at row ${rowIndex + 1}: Row contains both numbers and null values.`,
+                    data: emptyArray
+                };
+            }
+        }
+    
+        // Filter out rows that only contain null values
+        let filteredArray = array.filter(row => row.some(cell => cell !== null));
+    
+        // Check if the rows are continuous (i.e., no null rows between non-null rows)
+        let nullRowDetected = false;
+        for (let i = 0; i < array.length; i++) {
+            if (array[i].every(cell => cell === null)) {
+                if (!nullRowDetected) {
+                    nullRowDetected = true;
+                }
+            } else if (nullRowDetected) {
+                alert(`Error: Found gap between filled rows at row ${i + 1}.`);
+                return {
+                    ok: false,
+                    message: `Error: Found gap between filled rows at row ${i + 1}.`,
+                    data: emptyArray
+                };
+            }
+        }
+    
+        // Transpose the filtered array (convert rows to columns)
+        let transposed = filteredArray[0].map((_, colIndex) => filteredArray.map(row => row[colIndex]));
+    
+        // Convert all values to float and check for invalid values (skip specified column if skipColumn is true)
+        for (let rowIndex = 0; rowIndex < transposed.length; rowIndex++) {
+            // Skip the specified column index if skipColumn is true
+            if (skipColumn && rowIndex === skipColumnIndex) {
+                continue; // Skip the conversion and validation for the specified column
+            }
+    
+            for (let colIndex = 0; colIndex < transposed[rowIndex].length; colIndex++) {
+                let cell = transposed[rowIndex][colIndex];
+    
+                if (cell === null) {
+                    alert(`Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
+                    return {
+                        ok: false,
+                        message: `Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
+                        data: emptyArray
+                    };
+                }
+    
+                let floatValue = parseFloat(cell);
+                if (isNaN(floatValue)) {
+                    alert(`Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
+                    return {
+                        ok: false,
+                        message: `Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
+                        data: emptyArray
+                    };
+                }
+                transposed[rowIndex][colIndex] = floatValue;
+            }
+        }
+        return {
+            ok: true,
+            message: 'ok',
+            data: transposed
+        };
+    }
+    
 
 });

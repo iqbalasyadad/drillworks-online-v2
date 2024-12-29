@@ -1,8 +1,6 @@
 $(document).ready(function () {
-  console.log(config.apiUrl);
 
   function refreshUI() {
-    console.log("UI refreshed");
     setAppHeader();
   };
 
@@ -76,6 +74,7 @@ $(document).ready(function () {
       return response.data;
     } catch (error) {
         console.error("Error fetching projects:", error.response?.data || error.message);
+        localStorage.setItem('activeProject', JSON.stringify({}));
         throw error;
     }
   };
@@ -116,7 +115,6 @@ $(document).ready(function () {
       const response = await axios.get(`${config.apiUrl}/api/wells?project_id=${projectId}`, {
         withCredentials: true,  // Include cookies with the request
       });
-      console.log(response);
       return response.data;
     } catch (error) {
       console.error("Error get wells:", error.response?.data || error.message);
@@ -192,7 +190,6 @@ $(document).ready(function () {
       const response = await axios.get(`${config.apiUrl}/api/wellbores?well_id=${wellId}`, {
         withCredentials: true,  // Include cookies with the request
       });
-      console.log(response);
       return response.data;
     } catch (error) {
       console.error("Error get wells:", error.response?.data || error.message);
@@ -221,6 +218,39 @@ $(document).ready(function () {
     }
   };
 
+  const setWellboreSurvey = async (wellboreId, formData) => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/wellbore/${wellboreId}/survey`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+          credentials: "include",
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+          throw new Error(result.message || "Failed to set wellbore survey");
+      }
+      return result;
+    } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred: " + error.message);
+    }
+  };
+
+  const getWellboreSurvey = async (wellboreId) => {
+    try {
+      const response = await axios.get(`${config.apiUrl}/api/wellbore-survey?wellbore_id=${wellboreId}`, {
+        withCredentials: true,  // Include cookies with the request
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error get wells:", error.response?.data || error.message);
+      throw error;
+    }
+  };
+
+
   // Attach functions to window if needed for global access
   window.checkSession = checkSession;
   window.logoutAccount = logoutAccount;
@@ -238,8 +268,8 @@ $(document).ready(function () {
   // wellbore
   window.getWellbores = getWellbores;
   window.addWellbore = addWellbore;
-  window.deleteWellbore = deleteWellbore;
-
-
+  window.deleteWellbore = deleteWellbore;  
+  window.setWellboreSurvey = setWellboreSurvey;
+  window.getWellboreSurvey = getWellboreSurvey;
 
 });

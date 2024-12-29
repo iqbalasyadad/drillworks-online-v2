@@ -7,6 +7,8 @@ import hashlib
 from flask_cors import CORS  # Import CORS
 from flask_talisman import Talisman
 
+from modules import appcalculation
+
 app = Flask(__name__)
 app.secret_key = 'qwer'
 # app.config['SESSION_COOKIE_SAMESITE'] = 'None'
@@ -358,7 +360,9 @@ def add_wellbore():
     wellbore_uid = data.get('uid')
     existing_welbore_uid = wellbores_collection.find_one({"uid": wellbore_uid})
     if existing_welbore_uid:
-        return jsonify({"message": "A well with the same well UID already exists for this user"}), 400
+        return jsonify({
+            "success": False, 
+            "message": "A well with the same well UID already exists for this user"}), 400
     
     new_wellbore = {
         "_id": ObjectId(),
@@ -379,7 +383,7 @@ def add_wellbore():
         "spudDate": data.get('spud_date'),
         "completionDate": data.get('completion_date'),
         "datasets": [],
-        "trajectory": {
+        "survey": {
             "md": [],
             "tvd": [],
             "inclination": [],
@@ -430,6 +434,94 @@ def delete_wellbore(wellbore_id):
         {"$pull": {"wellbores": ObjectId(wellbore_id)}}
     )
     return jsonify({"success": True, "message": "Wellbore deleted successfully"})
+
+@app.route('/api/wellbore-survey', methods=['GET'])
+def get_wellbore_survey():
+    print("Received request: get wellbore survey")
+    if 'user_id' not in session:
+        print("not  in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+    
+    wellbore_id = request.args.get('wellbore_id')
+    if not wellbore_id:
+        return jsonify({"error": "Wellbore ID is required"}), 400
+    
+    try:
+        wellbore = wellbores_collection.find_one({"_id": ObjectId(wellbore_id)})
+        if not wellbore:
+            return jsonify({"success": False, "message": "Wellbore not found"}), 404
+        survey_data = wellbore.get("survey", {})
+        return jsonify({
+            "success": True,
+            "wellbore_id": str(wellbore["_id"]),
+            "survey": survey_data
+        })
+    except Exception as e:
+        print(f"Error get wellbore survey: {e}")
+        return jsonify({"error": "An error occurred while get wellbore survey"}), 500
+
+@app.route('/api/wellbore/<wellbore_id>/survey', methods=['PUT'])
+def set_survey(wellbore_id):
+    print("Received request: set survey for wellbore", wellbore_id)
+
+    if 'user_id' not in session:
+        print("User not in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+
+    # Get the survey data from the request JSON
+    data = request.json
+    md = data.get('md')
+    inclination = data.get('inclination')
+    azimuth = data.get('azimuth')
+    calculateTVDChecked = data.get('calculate_tvd_checked')
+
+    # # Check if all required fields are present
+    # if not all([md, tvd, inclination, azimuth]):
+    #     return jsonify({
+    #         "success": False, 
+    #         "message": "Missing required fields (md, tvd, inclination, azimuth)"
+    #     }), 400
+
+    # # Check if the lengths of all the survey data are the same
+    # if not (len(md) == len(tvd) == len(inclination) == len(azimuth)):
+    #     return jsonify({
+    #         "success": False, 
+    #         "message": "Survey data arrays must have the same length"
+    #     }), 400
+
+    print("calculateTVDChecked: ", calculateTVDChecked)
+    if calculateTVDChecked:
+        print("calculate TVD")
+        tvd = appcalculation.calculate_tvd(md, inclination)
+    else:
+        tvd = data.get('tvd')
+
+    survey_data = {
+        "md": md,
+        "tvd": tvd,
+        "inclination": inclination,
+        "azimuth": azimuth
+    }
+
+    # Find the wellbore by its ID and update the survey field
+    result = wellbores_collection.update_one(
+        {"_id": ObjectId(wellbore_id)}, 
+        {"$set": {"survey": survey_data}}
+    )
+
+    if result.matched_count == 0:
+        return jsonify({
+            "success": False,
+            "message": f"No wellbore found with ID {wellbore_id}"
+        }), 404
+    
+    result = { "success": True, "message": "Survey data updated successfully"}
+
+    if calculateTVDChecked:
+        result['survey'] = { "tvd": tvd }
+
+    return jsonify(result)
+
 
 
 if __name__ == "__main__":

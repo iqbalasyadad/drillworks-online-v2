@@ -14,29 +14,6 @@
     padding: 2px 3px !important;
     min-width: 50px;
 }
-/* .small-dialog-title {
-    padding: 2px !important;
-} */
-/* .small-dialog-button {
-    font-size: 10pt !important;
-    padding: 3px 3px !important;
-    min-width: 50px;
-} */
-.modal-label-input {
-    font-size: 10pt;
-    -webkit-user-select: none; /* Safari */
-    -ms-user-select: none; /* IE 10 and IE 11 */
-    user-select: none; /* Standard syntax */
-}
-.modal-text-input {
-    font-size: 10pt;
-    width: 100%;
-    /* margin-top: 10px; */
-
-}
-.modal-input-table-tr {
-    height: 25px;
-}
 
 /* .ui-dialog,.ui-widget, .ui-widget-content, .ui-corner-all, .foo, .ui-draggable, .ui-resizable {
     background-color:rgb(236, 236, 236) !important;
@@ -49,7 +26,7 @@
 table.dataTable td {
     font-size: 9pt;
 }
-#dt-search-0 {
+#dt-search-0, #dt-search-1 {
     padding: 2px !important;
 }
 /* table td {
@@ -66,4 +43,9 @@ table.dataTable td {
 
 textarea:focus, input:focus, select:focus {
     outline: none;
+}
+
+#dialog-wellbore-edit-survey-data-grid {
+    height: 730px;
+    width: 275px;
 }

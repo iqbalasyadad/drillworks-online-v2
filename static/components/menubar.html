@@ -8,6 +8,7 @@
 
         <script src="/static/js/modules/jquery.menu.js"></script>
         <script src="/static/js/modules/jquery-ui.min.js"></script>
+        <script src="/static/js/modules/datagridxl2.js"></script>
         <script src="/static/js/dialogs.js"></script>
         <script src="/static/js/modules/dataTables.js"></script>
         <script src="/static/js/APItest.js"></script>
@@ -52,7 +53,7 @@
                         <li class="" id="menubar-wellbore-create-li"><a href="javascript:void(0)">Create...<span>Ctrl+S</span></a></li>
                         <li class="" id="menubar-wellbore-delete-li"><a href="javascript:void(0)">Delete...<span>Ctrl+S</span></a></li>
                         <li class=""><a href="javascript:void(0)">Properties...<span>Ctrl+S</span></a></li>
-                        <li>Edit Survey Data....</li>
+                        <li class="" id="menubar-wellbore-edit-survey-data-li"><a href="javascript:void(0)">Edit Survey Data....<span>Ctrl+S</span></a></li>
                         <li>Import Survey Data....</li>
                         <li>Create a Top Table....</li>
                         <li>Top Table Properties....</li>
@@ -99,6 +100,7 @@
                   <li id="check-active-project"><a href="javascript:void(0)">Active Project<span></span></a></li>
                   <li id="add-dummy-project-li"><a href="javascript:void(0)">Add Dummy Project<span></span></a></li>
                   <li id="add-dummy-well-li"><a href="javascript:void(0)">Add Dummy Well<span></span></a></li>
+                  <li id="add-dummy-wellbore-li"><a href="javascript:void(0)">Add Dummy Wellbore<span></span></a></li>
 
                 </ul>
             </li>
@@ -450,6 +452,40 @@
             </div>
           </form>
         </div>
+
+        <div id="dialog-wellbore-edit-survey-data" title="Edit Survey Data" style="display: none;">
+          <form id="dialog-form-wellbore-edit-survey-data">
+            <div id="page-container-wellbore-edit-survey-data">
+    
+              <!-- {/* Page 1 */} -->
+              <div class="page-dialog-wellbore-edit-survey-data" data-page="1" style="display:none">
+                <div style="margin-bottom:10px">
+                  <p>Select a well:</p>
+                  <select id="dialog-wellbore-edit-survey-data-well-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+                </div>
+                <div>
+                  <p>Select a wellbore:</p>
+                  <select id="dialog-wellbore-edit-survey-data-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+                </div>
+
+              </div>
+      
+              <!-- {/* Page 2 */} -->
+              <div class="page-dialog-wellbore-edit-survey-data" data-page="2">
+                <div class="dialog-wellbore-edit-survey-data-grid-container">
+                  <div id="dialog-wellbore-edit-survey-data-grid" style="width:100%;height:280px; border: 1px solid gray;"></div>
+                </div>
+                <input type="checkbox" id="page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox" value="delete-wells" style="margin-top: 5px;"></input>
+                <label for="page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox">Calculate TVD by MD and Inclination</label>
+              </div>
+    
+            </div>
+    
+          </form>
+
+        </div>
+
+
         
 
 
@@ -463,6 +499,10 @@
               $("li#add-dummy-well-li").click(function () {
                     console.log("create-well-clicked");
                     addDummyWell();
+              });
+              $("li#add-dummy-wellbore-li").click(function () {
+                    console.log("create-wellbore-clicked");
+                    addDummyWellbore();
               });
             
               // Bind click event to the "Create..." menu item
@@ -514,7 +554,12 @@
               $("li#menubar-wellbore-delete-li").click(function () {
                   console.log("delete-wellbore-clicked");
                   $("#dialog-delete-wellbore").dialog("open");
-              });        
+              });
+              
+              $("li#menubar-wellbore-edit-survey-data-li").click(function () {
+                  console.log("edit-survey-data-wellbore-clicked");
+                  $("#dialog-wellbore-edit-survey-data").dialog("open");
+              });  
 
 
             });
