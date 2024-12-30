@@ -32,7 +32,6 @@ table.dataTable td {
 /* table td {
   border: 1px solid;
 } */
- 
 .dialog-text-input {
     width: 100%;
 }
@@ -41,11 +40,19 @@ table.dataTable td {
     font-size: 9pt;
 }
 
-textarea:focus, input:focus, select:focus {
-    outline: none;
-}
-
 #dialog-wellbore-edit-survey-data-grid {
     height: 730px;
     width: 275px;
+}
+.dgxl-contextMenuItemList {
+    font-size: 9pt !important; /* Adjust this value as needed */
+    padding: 2px 1px !important;
+}
+.dgxl-contextMenuItem {
+    height: 25px !important;
+    line-height: 25px !important;
+}
+.dgxl-contextMenuItem-highlight {
+    background-color: #0000ff !important;
+    color: white;
 }

@@ -8,6 +8,46 @@ body {
   font-size: 9pt;
   background-color: #000000;
 }
+.no-highlight {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+}
+textarea:focus, input:focus, select:focus {
+  outline: none;
+}
+fieldset {
+  border: #e0e0e0 1px solid;
+  padding: 0px 5px;
+  /* margin: 10px; */
+}
+input[type="radio"] {
+  margin: 3px;
+}
+/* option:hover {
+  background-color: #0000ff;
+  color: white;
+}
+option:checked {
+  background-color: #0000ff;
+}
+option:hover,
+option:focus,
+option:active,
+option:checked {
+  background-color: #0000ff;
+  color: #ffffff;
+} */
+/* .no-drag, .no-drag::after, .no-drag::before {
+	-webkit-user-select: none;
+	-webkit-user-drag: none;
+	-webkit-app-region: no-drag;
+	cursor: default;
+} */
 #app-container { 
   display: flex;
   flex-direction: column;

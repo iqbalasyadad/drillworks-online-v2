@@ -22,12 +22,13 @@ $(document).ready(function () {
         $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", currentPage < totalPages-1);
     }  
 
-    // Initialize the dialog
+    // DIALOG CREATE PROJECT
     $("#dialog-create-project").dialog({
         autoOpen: false,
-        height: 400,
+        height: 300,
         width: 400,
         modal: true,
+        position: { my: "center", at: "center", of: window },
         buttons: {
             "< Back": function () {
                 if (currentPage > 1) {
@@ -47,10 +48,11 @@ $(document).ready(function () {
                     name: $("#dialog-create-project-name").val(),
                     description: $("#dialog-create-project-description").val(),
                     analyst: $("#dialog-create-project-analyst").val(),
-                    default_depth_unit: $("#dialog-create-project-default-depth-unit").val(),
+                    default_depth_unit: $('input[name="dialog-create-project-default-depth-unit"]:checked').val(),
                     notes: $("#dialog-create-project-notes").val(),
                     date_created: new Date()
                 };
+                console.log(formData);
             
                 if (!formData.name) {
                     alert("Please enter a project name!");
@@ -70,11 +72,9 @@ $(document).ready(function () {
                         console.log(response.data);
                         setActiveProject(response.data.project);
                         // alert(response.data.message);
-                        
                     } else {
                         throw new Error(response.data.message || "Failed to add project");
                     }
-            
                 } catch (error) {
                     // Handle any errors here, e.g., duplicate project name error
                     console.error("Error:", error);
@@ -319,7 +319,7 @@ $(document).ready(function () {
     // DIALOG CREATE WELL
     $("#dialog-create-well").dialog({
         autoOpen: false,
-        height: 400,
+        height: 370,
         width: 450,
         modal: true,
         buttons: {

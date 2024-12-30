@@ -111,3 +111,6 @@ ul.main-menu li.separator
 .active-sub-menu li{
     color: black;
 }
+#menu-top-mask {
+    display: none;
+}
