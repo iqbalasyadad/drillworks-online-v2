@@ -32,10 +32,10 @@ table.dataTable td {
 /* table td {
   border: 1px solid;
 } */
-.dialog-text-input {
+.dialog-text-input, .dialog-td-text {
     width: 100%;
 }
-.dialog-select-input{
+.dialog-select-input {
     width: 100%;
     font-size: 9pt;
 }
@@ -55,4 +55,8 @@ table.dataTable td {
 .dgxl-contextMenuItem-highlight {
     background-color: #0000ff !important;
     color: white;
+}
+.dialog-datagridxl-input {
+    width: 100%;
+    border: 1px solid gray;
 }

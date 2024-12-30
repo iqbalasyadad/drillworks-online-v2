@@ -250,6 +250,26 @@ $(document).ready(function () {
     }
   };
 
+  // DATASET
+  const addDataset = async (formData) => {
+    try {
+        const response = await fetch(`${config.apiUrl}/api/datasets`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData),
+            credentials: "include",
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.message || "Failed to add dataset");
+        }
+        return result;
+    } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred: " + (error.message || "Unknown error"));
+    }
+};
 
   // Attach functions to window if needed for global access
   window.checkSession = checkSession;
@@ -271,5 +291,9 @@ $(document).ready(function () {
   window.deleteWellbore = deleteWellbore;  
   window.setWellboreSurvey = setWellboreSurvey;
   window.getWellboreSurvey = getWellboreSurvey;
+
+  // dataset
+  window.addDataset = addDataset;
+
 
 });

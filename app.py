@@ -522,6 +522,41 @@ def set_survey(wellbore_id):
 
     return jsonify(result)
 
+# DATASETS
+@app.route('/api/datasets', methods=['POST'])
+def add_datasets():
+    print("Received request: add datasets")
+    if 'user_id' not in session:
+        print("not  in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+    
+    data = request.json
+    wellbore_id = data.get('wellbore_id')
+
+    new_dataset = {
+        "_id": ObjectId(),
+        "wellbore_id": ObjectId(wellbore_id),
+        "name": data.get('name'),
+        "description": data.get('description'),
+        "indexType": data.get('index_type'),
+        "indexUnit": data.get('index_unit'),
+        "referenceLevel": data.get('reference_level'),
+        "referenceDate": data.get('reference_date'),
+        "dataType": data.get('data_type'),
+        "dataUnit": data.get('data_unit'),
+        "color": data.get('color'),
+        "lineStyle": data.get('line_style'),
+        "lineWidth": data.get('line_width'),
+        "symbol": data.get('symbol'),
+        "symbolSize": data.get('symbol_size'),
+        "hasTextColumn": data.get('has_text_column'),
+        "datasets": data.get('datasets')
+    }
+    dataset_id = datasets_collection.insert_one(new_dataset).inserted_id
+
+    # Update wellbore to include the new dataset
+    wellbores_collection.update_one({"_id": ObjectId(wellbore_id)}, {"$push": {"datasets": dataset_id}})
+    return jsonify({"success": True, "message": "Dataset added successfully", "dataset_id": str(dataset_id)})
 
 
 if __name__ == "__main__":

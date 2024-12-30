@@ -1,4 +1,126 @@
 $(document).ready(function () {
+
+    function col_to_row(...columns) {
+        let result = [];
+        
+        // Get the length of the first column to loop through
+        const numRows = columns[0].length;
+        
+        // Loop through each row
+        for (let i = 0; i < numRows; i++) {
+            let row = [];
+            
+            // For each column, push the corresponding value at index 'i' into the row
+            for (let j = 0; j < columns.length; j++) {
+                row.push(columns[j][i]);
+            }
+            // Add the row to the result
+            result.push(row);
+        }
+    
+        return result;
+    }
+
+    function transposeAndConvert(array, skipColumn, skipColumnIndex=null) {
+        const nEmptyRow = 10;
+        const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow).fill(null));
+    
+        // If the array is empty or contains only null values, return a 2D null array with 5 columns and n rows
+        if (array.length === 0 || array.every(row => row.every(cell => cell === null))) {
+            return {
+                ok: true,
+                message: 'ok',
+                data: emptyArray
+            };
+        }
+    
+        // Check for mixed null and number in each row (skip specified column if skipColumn is true)
+        for (let rowIndex = 0; rowIndex < array.length; rowIndex++) {
+            let hasNumber = false;
+            let hasNull = false;
+    
+            for (let colIndex = 0; colIndex < array[rowIndex].length; colIndex++) {
+                if (skipColumn && colIndex === skipColumnIndex) {
+                    continue; // Skip the specified column if skipColumn is true
+                }
+                let cell = array[rowIndex][colIndex];
+                if (cell === null) {
+                    hasNull = true;
+                } else if (!isNaN(cell)) {
+                    hasNumber = true;
+                }
+            }
+    
+            if (hasNumber && hasNull) {
+                alert(`Error at row ${rowIndex + 1}: Row contains both numbers and null values.`);
+                return {
+                    ok: false,
+                    message: `Error at row ${rowIndex + 1}: Row contains both numbers and null values.`,
+                    data: emptyArray
+                };
+            }
+        }
+    
+        // Filter out rows that only contain null values
+        let filteredArray = array.filter(row => row.some(cell => cell !== null));
+    
+        // Check if the rows are continuous (i.e., no null rows between non-null rows)
+        let nullRowDetected = false;
+        for (let i = 0; i < array.length; i++) {
+            if (array[i].every(cell => cell === null)) {
+                if (!nullRowDetected) {
+                    nullRowDetected = true;
+                }
+            } else if (nullRowDetected) {
+                alert(`Error: Found gap between filled rows at row ${i + 1}.`);
+                return {
+                    ok: false,
+                    message: `Error: Found gap between filled rows at row ${i + 1}.`,
+                    data: emptyArray
+                };
+            }
+        }
+    
+        // Transpose the filtered array (convert rows to columns)
+        let transposed = filteredArray[0].map((_, colIndex) => filteredArray.map(row => row[colIndex]));
+    
+        // Convert all values to float and check for invalid values (skip specified column if skipColumn is true)
+        for (let rowIndex = 0; rowIndex < transposed.length; rowIndex++) {
+            // Skip the specified column index if skipColumn is true
+            if (skipColumn && rowIndex === skipColumnIndex) {
+                continue; // Skip the conversion and validation for the specified column
+            }
+    
+            for (let colIndex = 0; colIndex < transposed[rowIndex].length; colIndex++) {
+                let cell = transposed[rowIndex][colIndex];
+    
+                if (cell === null) {
+                    alert(`Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
+                    return {
+                        ok: false,
+                        message: `Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
+                        data: emptyArray
+                    };
+                }
+    
+                let floatValue = parseFloat(cell);
+                if (isNaN(floatValue)) {
+                    alert(`Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
+                    return {
+                        ok: false,
+                        message: `Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
+                        data: emptyArray
+                    };
+                }
+                transposed[rowIndex][colIndex] = floatValue;
+            }
+        }
+        return {
+            ok: true,
+            message: 'ok',
+            data: transposed
+        };
+    }
              
     // const apiUrl = config.apiUrl; // Replace with your API URL
     let currentPage = 1;
@@ -767,7 +889,7 @@ $(document).ready(function () {
 
     // WELLBORE TABLE EDIT SURVEY
     let surveyInputGrid;
-    function renderGrid(surveyData) {
+    function renderGridEditSurvey(surveyData) {
         let data;
         console.log(surveyData.md.length);
         if(surveyData.md.length==0) {
@@ -830,12 +952,12 @@ $(document).ready(function () {
                         _id: wellboreSelect.val(),
                         name: wellboreSelect.find("option:selected").text()
                     }
-                    async function renderGridAsync() {
+                    async function renderGridEditSurveyAsync() {
                         try {
                             const result = await getWellboreSurvey(selectedWellbore._id);
                             if (result.success) {
                                 console.log("get survey success ", result.survey)
-                                renderGrid(result.survey);
+                                renderGridEditSurvey(result.survey);
                             } else {
                                 throw new Error(response.data.message || "Failed to get survey");
                             };
@@ -843,7 +965,7 @@ $(document).ready(function () {
                             console.error("Error rendering grid:", error);
                         }
                     }
-                    renderGridAsync();
+                    renderGridEditSurveyAsync();
                 };
             },
             Apply: {
@@ -865,10 +987,12 @@ $(document).ready(function () {
                             try {
                                 const formData = {
                                     md: gridData.data[0],
-                                    tvd: gridData.data[1],
                                     inclination: gridData.data[2],
                                     azimuth: gridData.data[3],
                                     calculate_tvd_checked: calculateTVDchecked
+                                };
+                                if (!calculateTVDchecked) {
+                                    formData.tvd = gridData.data[1];
                                 };
                                 console.log(formData);
                                 const result = await setWellboreSurvey(selectedWellbore._id, formData);
@@ -882,7 +1006,7 @@ $(document).ready(function () {
                                             inclination: formData.inclination,
                                             azimuth: formData.azimuth,
                                         }
-                                        renderGrid(newSurveyData);
+                                        renderGridEditSurvey(newSurveyData);
                                     }
                                 } else {
                                     throw new Error(response.data.message || "Failed to add wellbore");
@@ -931,127 +1055,211 @@ $(document).ready(function () {
         }
     });
 
-    function col_to_row(...columns) {
-        let result = [];
-        
-        // Get the length of the first column to loop through
-        const numRows = columns[0].length;
-        
-        // Loop through each row
-        for (let i = 0; i < numRows; i++) {
-            let row = [];
-            
-            // For each column, push the corresponding value at index 'i' into the row
-            for (let j = 0; j < columns.length; j++) {
-                row.push(columns[j][i]);
-            }
-            // Add the row to the result
-            result.push(row);
-        }
+    // DATASET
+    function addDatasetDatatypeUnit() {
+        // Add event listener for data type selection
+        const dataTypeSelect = $("#dialog-create-dataset-data-type-select");
+        const unitSelect = $("#dialog-create-dataset-data-unit-select");
     
-        return result;
+        // Define mapping between data types and units
+        const pressureGradientUnits = ["sg", "ppg", "psi/ft", "g/cc", "kPa/m", "Pa/m", "MPa/m"];
+        const dataTypeToUnits = {
+            "PP": pressureGradientUnits,
+            "FG": pressureGradientUnits,
+            "OBG": pressureGradientUnits,
+            "Temperature": ["Celsius", "Fahrenheit"],
+            "Unknown": ["unknown"],
+            "POISSON": ["unitless"],
+            "GR": ["GAPI", "API"],
+            "RT": ["ohmm"],
+            "DT": ["us/ft", "us/m"],
+            "RHOB": pressureGradientUnits
+        };
+    
+        dataTypeSelect.off('change');
+        dataTypeSelect.on('change', function () {
+            const selectedDataType = $(this).val(); // Get the selected value
+            unitSelect.empty(); // Clear previous options
+    
+            if (dataTypeToUnits[selectedDataType]) {
+                dataTypeToUnits[selectedDataType].forEach(unit => {
+                    const option = $('<option></option>').val(unit).text(unit);
+                    unitSelect.append(option);
+                });
+            } else {
+                const defaultOption = $('<option></option>').val('').text('-');
+                unitSelect.append(defaultOption);
+            }
+            console.log("changed data type select");
+        });
+    }
+    
+
+    let dialogDatasetCreateCurrentPage = 1;
+    const dialogDatasetCreatetotalPages = 3;
+
+    function dialogDatasetCreateShowPage(page) {
+        $(".page-dialog-create-dataset").hide();
+        $(`.page-dialog-create-dataset[data-page="${page}"]`).show();
+
+        // Dynamically update the dialog title with the current step
+        const stepTitles = {
+            1: "Step 1: Specify Target",
+            2: "Step 2: Collect Dataset Information",
+            3: "Step 3: Input Data",
+        };
+        $("#dialog-create-dataset").dialog("option", "title", stepTitles[page]);
+        dialogDatasetCreateUpdateButtonStates();
     }
 
-    function transposeAndConvert(array, skipColumn, skipColumnIndex=null) {
-        const nEmptyRow = 10;
-        const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow).fill(null));
-    
-        // If the array is empty or contains only null values, return a 2D null array with 5 columns and n rows
-        if (array.length === 0 || array.every(row => row.every(cell => cell === null))) {
-            return {
-                ok: true,
-                message: 'ok',
-                data: emptyArray
-            };
-        }
-    
-        // Check for mixed null and number in each row (skip specified column if skipColumn is true)
-        for (let rowIndex = 0; rowIndex < array.length; rowIndex++) {
-            let hasNumber = false;
-            let hasNull = false;
-    
-            for (let colIndex = 0; colIndex < array[rowIndex].length; colIndex++) {
-                if (skipColumn && colIndex === skipColumnIndex) {
-                    continue; // Skip the specified column if skipColumn is true
-                }
-                let cell = array[rowIndex][colIndex];
-                if (cell === null) {
-                    hasNull = true;
-                } else if (!isNaN(cell)) {
-                    hasNumber = true;
-                }
-            }
-    
-            if (hasNumber && hasNull) {
-                alert(`Error at row ${rowIndex + 1}: Row contains both numbers and null values.`);
-                return {
-                    ok: false,
-                    message: `Error at row ${rowIndex + 1}: Row contains both numbers and null values.`,
-                    data: emptyArray
-                };
-            }
-        }
-    
-        // Filter out rows that only contain null values
-        let filteredArray = array.filter(row => row.some(cell => cell !== null));
-    
-        // Check if the rows are continuous (i.e., no null rows between non-null rows)
-        let nullRowDetected = false;
-        for (let i = 0; i < array.length; i++) {
-            if (array[i].every(cell => cell === null)) {
-                if (!nullRowDetected) {
-                    nullRowDetected = true;
-                }
-            } else if (nullRowDetected) {
-                alert(`Error: Found gap between filled rows at row ${i + 1}.`);
-                return {
-                    ok: false,
-                    message: `Error: Found gap between filled rows at row ${i + 1}.`,
-                    data: emptyArray
-                };
-            }
-        }
-    
-        // Transpose the filtered array (convert rows to columns)
-        let transposed = filteredArray[0].map((_, colIndex) => filteredArray.map(row => row[colIndex]));
-    
-        // Convert all values to float and check for invalid values (skip specified column if skipColumn is true)
-        for (let rowIndex = 0; rowIndex < transposed.length; rowIndex++) {
-            // Skip the specified column index if skipColumn is true
-            if (skipColumn && rowIndex === skipColumnIndex) {
-                continue; // Skip the conversion and validation for the specified column
-            }
-    
-            for (let colIndex = 0; colIndex < transposed[rowIndex].length; colIndex++) {
-                let cell = transposed[rowIndex][colIndex];
-    
-                if (cell === null) {
-                    alert(`Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
-                    return {
-                        ok: false,
-                        message: `Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
-                        data: emptyArray
-                    };
-                }
-    
-                let floatValue = parseFloat(cell);
-                if (isNaN(floatValue)) {
-                    alert(`Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
-                    return {
-                        ok: false,
-                        message: `Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
-                        data: emptyArray
-                    };
-                }
-                transposed[rowIndex][colIndex] = floatValue;
-            }
-        }
-        return {
-            ok: true,
-            message: 'ok',
-            data: transposed
-        };
+    function dialogDatasetCreateUpdateButtonStates() {
+        $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", dialogDatasetCreateCurrentPage === 1);
+        $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", dialogDatasetCreateCurrentPage === dialogDatasetCreatetotalPages);
+        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", dialogDatasetCreateCurrentPage < dialogDatasetCreatetotalPages);
     }
+    // DIALOG CREATE DATASET
+    $("#dialog-create-dataset").dialog({
+        autoOpen: false,
+        height: 400,
+        width: 500,
+        modal: true,
+        buttons: {
+            "< Back": function () {
+                if (dialogDatasetCreateCurrentPage > 1) {
+                    dialogDatasetCreateCurrentPage--;
+                    dialogDatasetCreateShowPage(dialogDatasetCreateCurrentPage);
+                }
+            },
+            "Next >": function () {
+                if (dialogDatasetCreateCurrentPage < dialogDatasetCreatetotalPages) {
+                    dialogDatasetCreateCurrentPage++;
+                    dialogDatasetCreateShowPage(dialogDatasetCreateCurrentPage);
+                }
+                if (dialogDatasetCreateCurrentPage === dialogDatasetCreatetotalPages) {
+                    $("#dialog-create-dataset-review-well").val($("#dialog-create-dataset-well-select option:selected").text());
+                    $("#dialog-create-dataset-review-wellbore").val($("#dialog-create-dataset-wellbore-select option:selected").text());
+                    $("#dialog-create-dataset-review-name").val($("#dialog-create-dataset-name").val());
+                    $("#dialog-create-dataset-review-index-type").val($("#dialog-create-dataset-index-type-select").val());
+                    $("#dialog-create-dataset-review-reference-level").val($("#dialog-create-dataset-reference-level-select").val());
+                    $("#dialog-create-dataset-review-data-type").val($("#dialog-create-dataset-data-type-select").val());
+                    $("#dialog-create-dataset-review-data-unit").val($("#dialog-create-dataset-data-unit-select").val());
+                    
+                    const hasTextColumnChecked = $('#dialog-create-dataset-has-text-column-checkbox').prop('checked');
+                    renderGridCreateDataset(hasTextColumnChecked);
+                }
+            },
+            Finish: {
+                text: "Finish",
+                async click() {
+                    const hasTextColumnChecked = $('#dialog-create-dataset-has-text-column-checkbox').prop('checked');
+                    const gridData = transposeAndConvert(
+                        datasetInputGrid.getData(),
+                        hasTextColumnChecked,
+                        hasTextColumnChecked ? 2 : null
+                    );
+                
+                    let datasetGridData = { index: gridData.data[0], value: gridData.data[1] };
+                    if (hasTextColumnChecked) {
+                        datasetGridData.text = gridData.data[2];
+                    }
+                
+                    // Collect form data
+                    const formData = {
+                        wellbore_id: $("#dialog-create-dataset-wellbore-select").val(),
+                        name: $("#dialog-create-dataset-name").val(),
+                        description: $("#dialog-create-dataset-description").val(),
+                        index_type: $("#dialog-create-dataset-index-type-select").val(),
+                        index_unit: $("#dialog-create-dataset-index-unit-select").val(),
+                        reference_level: $("#dialog-create-dataset-reference-level-select").val(),
+                        reference_date: $("#dialog-create-dataset-reference-date").val(),
+                        data_type: $("#dialog-create-dataset-data-type-select").val(),
+                        data_unit: $("#dialog-create-dataset-data-unit-select").val(),
+                        color: $("#dialog-create-dataset-color-select").val(),
+                        line_style: $("#dialog-create-dataset-line-style-select").val(),
+                        line_width: parseInt($("#dialog-create-dataset-line-width-select").val()),
+                        symbol: $("#dialog-create-dataset-symbol-select").val(),
+                        symbol_size: parseInt($("#dialog-create-dataset-symbol-size-select").val()),
+                        has_text_column: hasTextColumnChecked,
+                        datasets: datasetGridData,
+                    };
+                
+                    // Validate required fields
+                    const requiredFields = ["wellbore_id", "name", "index_type", "index_unit", "data_type", "data_unit"];
+                    const missingFields = requiredFields.filter(field => !formData[field]);
+                    if (missingFields.length > 0) {
+                        alert(`Please fill in the following fields: ${missingFields.join(", ")}`);
+                        return;
+                    }
+                
+                    console.log("Creating a new dataset:", formData);
+                
+                    try {
+                        const result = await addDataset(formData);
+                        if (result && result.success) {
+                            console.log("Dataset created successfully:", result);
+                            $("#dialog-create-dataset").dialog("close");
+                        } else {
+                            throw new Error(result ? result.message : "Unknown error occurred");
+                        }
+                    } catch (error) {
+                        console.error("Error creating dataset:", error);
+                        alert("An error occurred while creating the dataset: " + error.message);
+                    }
+
+                }
+            },
+            
+            Cancel: function () {
+                $(this).dialog("close");
+            },
+        },
+        open: ()=> {
+            console.log("open dialog");
+            dialogDatasetCreateCurrentPage=1;
+            dialogDatasetCreateShowPage(dialogDatasetCreateCurrentPage);
+
+            const activeProject = getLocalActiveProject();
+            const projectId = activeProject._id;
+            const wellSelect = $('#dialog-create-dataset-well-select');
+            const wellboreSelect = $('#dialog-create-dataset-wellbore-select');
+            fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
+            addDatasetDatatypeUnit();
+        },
+        close: () => {
+            $("#dialog-form-create-dataset")[0].reset();
+        }
+    });
+
+    let datasetInputGrid;
+    function renderGridCreateDataset(hasTextColumn) {
+
+        // data = col_to_row(surveyData.md, surveyData.tvd, surveyData.inclination, surveyData.azimuth);
+        headers = [
+            { title: "INDEX", type: 'number', format: '0,0.00' },
+            { title: "VALUE", type: 'number', format: '0,0.00' } ];
+        if (hasTextColumn) { headers.push( { title: "TEXT", type: 'text', format: '0,0.00' }) };
+        
+        datasetInputGrid = new DataGridXL("dialog-create-dataset-data-grid", {
+            data: DataGridXL.createEmptyData(20, 3),
+            // data: data,
+            columns: headers,
+            allowDeleteCols: false,
+            allowMoveCols: false,
+            allowInsertCols: false,
+            allowHideCols: false,
+            allowHideRows: false,
+            allowMoveRows: false,
+            colHeaderHeight: 16,
+            colHeaderWidth: 30,
+            colHeaderLabelType: "numbers",
+            colHeaderLabelAlign: "center",
+            colAlign: "right",
+            rowHeight: 16,
+            frozenRows: 0,
+            topBar: false,
+            bottomBar: false,
+        });
+    };
     
 
 });

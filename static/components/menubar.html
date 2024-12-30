@@ -5,12 +5,16 @@
         <link rel="stylesheet" href="static/css/menubar.css">
         <link rel="stylesheet" href="static/css/dialog-box.css">
         <link rel="stylesheet" href="static/css/dataTables.dataTables.css">
+        <link href="static/css/evol-colorpicker.css" rel="stylesheet" type="text/css" />
 
         <script src="/static/js/modules/jquery.menu.js"></script>
         <script src="/static/js/modules/jquery-ui.min.js"></script>
         <script src="/static/js/modules/datagridxl2.js"></script>
-        <script src="/static/js/dialogs.js"></script>
         <script src="/static/js/modules/dataTables.js"></script>
+        <script src="/static/js/modules/evol-colorpicker.min.js" type="text/javascript" charset="utf-8"></script>
+
+
+        <script src="/static/js/dialogs.js"></script>
         <script src="/static/js/APItest.js"></script>
 
     </head>
@@ -64,7 +68,7 @@
             <li>
               Data
               <ul>
-                <li class=""><a href="javascript:void(0)">Create a Dataset...<span>Ctrl+S</span></a></li>
+                <li class="" id="menubar-dataset-create-li"><a href="javascript:void(0)">Create a Dataset...<span>Ctrl+S</span></a></li>
                 <li class=""><a href="javascript:void(0)">Delete Datasets...<span>Ctrl+S</span></a></li>
                 <li class=""><a href="javascript:void(0)">Dataset Properties...<span>Ctrl+S</span></a></li>
                 <li>Import From a File....</li>
@@ -520,13 +524,12 @@
                   <p>Select a wellbore:</p>
                   <select id="dialog-wellbore-edit-survey-data-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
                 </div>
-
               </div>
       
               <!-- {/* Page 2 */} -->
               <div class="page-dialog-wellbore-edit-survey-data" data-page="2">
                 <div class="dialog-wellbore-edit-survey-data-grid-container">
-                  <div id="dialog-wellbore-edit-survey-data-grid" style="width:100%;height:280px; border: 1px solid gray;"></div>
+                  <div class="dialog-datagridxl-input" id="dialog-wellbore-edit-survey-data-grid" style="width:100%;height:280px;"></div>
                 </div>
                 <input type="checkbox" id="page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox" value="delete-wells" style="margin-top: 5px;"></input>
                 <label for="page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox">Calculate TVD by MD and Inclination</label>
@@ -538,8 +541,227 @@
 
         </div>
 
-
+        <!-- DIALOG CREATE DATASET -->
+        <div id="dialog-create-dataset" title="Create a Dataset" style="display: none;">
+          <form id="dialog-form-create-dataset">
+            <div id="page-container-create-dataset">
+    
+              <!-- {/* Page 1 */} -->
+              <div class="page-dialog-create-dataset" data-page="1" style="display:none">
+                <div style="margin-bottom:10px">
+                  <p>Select a well:</p>
+                  <select id="dialog-create-dataset-well-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+                </div>
+                <div>
+                  <p>Select a wellbore:</p>
+                  <select id="dialog-create-dataset-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+                </div>
+              </div>
       
+              <!-- {/* Page 2 */} -->
+              <div class="page-dialog-create-dataset" data-page="2" style="display:none">
+                <table style="width: 100%;">
+                  <colgroup id="colgroup">
+                    <col style="width: 28%;">
+                    <col style="width: 35%;">
+                    <col style="width: 5%;">
+                    <col style="width: 22%;">
+                    <col style="width: 10%;">
+                  </colgroup>
+                  <tbody>
+                    <tr class="dialog-input-table-tr">
+                      <td><label class="dialog-label-input" for="dialog-create-dataset-name">Dataset name:</label></td>
+                      <td colspan="4"><input type="text" name="dialog-create-dataset-name" class="dialog-text-input" id="dialog-create-dataset-name" required/></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr"> 
+                      <td><label for="dialog-create-dataset-description" class="dialog-label-input">Description:</label></td>
+                      <td colspan="4"><input type="text" name="dialog-create-dataset-description" class="dialog-text-input" id="dialog-create-dataset-description"/></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-dataset-index-type-select" class="dialog-label-input">Index type:</label></td>
+                      <td>
+                        <select name="dialog-create-dataset-index-type-select" class="dialog-select-input" id="dialog-create-dataset-index-type-select">
+                          <option value="TVD">True vertical depth</option>
+                          <option value="MD">Measured depth</option>
+                      </select>
+                      </td>
+                      <td></td>
+                      <td><label for="dialog-create-dataset-index-unit-select" class="dialog-label-input">Index unit:</label></td>
+                      <td>
+                        <select name="dialog-create-dataset-index-unit-select" class="dialog-select-input" id="dialog-create-dataset-index-unit-select">
+                          <option value="m">meters</option>
+                          <option value="ft">feet</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-dataset-reference-level-select" class="dialog-label-input">Reference level:</label></td>
+                      <td>
+                        <select name="dialog-create-dataset-reference-level-select" class="dialog-select-input" id="dialog-create-dataset-reference-level-select">
+                          <option value="MSL">Mean sea level</option>
+                          <option value="RT">Measured depth</option>
+                        </select>
+                      </td>
+                      <td></td>
+                      <td><label for="dialog-create-dataset-reference-date" class="dialog-label-input">Reference date:</label></td>
+                      <td><input type="date" name="dialog-create-dataset-reference-date" id="dialog-create-dataset-reference-date"/></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td colspan="2" rowspan="8">
+                        <table>
+                          <colgroup id="colgroup">
+                            <col style="width: 70%;">
+                            <col style="width: 30%;">
+                          </colgroup>
+                          <tr class="dialog-input-table-tr">
+                            <td>Datatype:</td>
+                            <td>Unit:</td>
+                          </tr>
+                          <tr class="dialog-input-table-tr">
+                            <td>
+                              <select name="dialog-create-dataset-data-type-select" class="dialog-select-input" id="dialog-create-dataset-data-type-select" size="10">
+                                <option value="GR">GR - Gamma Ray</option>
+                                <option value="DT">DT - Sonic</option>
+                                <option value="RT">RT - Resistivity</option>
+                                <option value="RHOB">RHOB - Density</option>
+                                <option value="PP">PP - Pore Pressure Gradient</option>
+                                <option value="FG">FG - Fracture Gradient</option>
+                                <option value="OBG">OBG - Overburden Gradient</option>
+                                <option value="POISSON">POISSON - Poisson Ratio</option>
+                              </select>
+                            </td>
+                            <td>
+                              <select name="dialog-create-dataset-data-unit-select" class="dialog-select-input" id="dialog-create-dataset-data-unit-select" size="10"></select>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                      <td>&nbsp;</td>
+                      <td>&nbsp;</td>
+                      <td>&nbsp;</td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td></td>
+                      <td><label for="dialog-create-dataset-color-select" class="dialog-label-input">Color:</label></td>
+                      <td><input type="color" id="dialog-create-dataset-color-select" value="#000000" /></td>                
+                      <!-- <td>
+                        <div style="width:128px;">
+                          <input style="width:100px;" id="mycolor" class="colorPicker evo-cp0" />
+                          <div class="evo-colorind" style="background-color:#8db3e2"></div>
+                        </div>
+                      </td> -->
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td></td>
+                      <td><label for="dialog-create-dataset-line-style-select" class="dialog-label-input">Line style:</label></td>
+                      <td>
+                        <select name="dialog-create-dataset-line-style-select" class="dialog-select-input" id="dialog-create-dataset-line-style-select">
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td></td>
+                      <td><label for="dialog-create-dataset-line-width-select" class="dialog-label-input">Line width:</label></td>
+                      <td>
+                        <select name="dialog-create-dataset-line-width-select" class="dialog-select-input" id="dialog-create-dataset-line-width-select">
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td></td>
+                      <td><label for="dialog-create-dataset-symbol-select" class="dialog-label-input">Symbol:</label></td>
+                      <td>                        
+                      <select name="dialog-create-dataset-symbol-select" class="dialog-select-input" id="dialog-create-dataset-symbol-select">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                      </select></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td></td>
+                      <td><label for="dialog-create-dataset-symbol-size-select" class="dialog-label-input">Symbol size:</label></td>
+                      <td>
+                        <select name="dialog-create-dataset-symbol-size-select" class="dialog-select-input" id="dialog-create-dataset-symbol-size-select">
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td>&nbsp;</td>
+                      <td>&nbsp;</td>
+                      <td>&nbsp;</td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td></td>
+                      <td colspan="2">
+                        <input type="checkbox" name="dialog-create-dataset-has-text-column-checkbox" id="dialog-create-dataset-has-text-column-checkbox"/>
+                        <label class="dialog-label-input" for="dialog-create-dataset-has-text-column-checkbox">Has text column</label>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- {/* Page 3 */} -->
+              <div class="page-dialog-create-dataset" data-page="3" style="display:none">
+                <div style="margin-bottom: 5px;">
+                  <table>
+                    <colgroup id="colgroup">
+                      <col style="width: 10%;">
+                      <col style="width: 30%;">
+                      <col style="width: 5%;">
+                      <col style="width: 10%;">
+                      <col style="width: 15%;">
+                      <col style="width: 5%;">
+                      <col style="width: 10%;">
+                      <col style="width: 15%;">
+                    </colgroup>
+                    <tbody>
+                      <tr>
+                        <td><label for="dialog-create-dataset-review-well" class="dialog-label-input">Well:</label></td>
+                        <td><input type="text" name="dialog-create-dataset-review-well" class="dialog-td-text" id="dialog-create-dataset-review-well" size="8" disabled/></td>
+                        <td></td>
+                        <td><label for="dialog-create-dataset-review-index-type" class="dialog-label-input">Index:</label></td>
+                        <td><input type="text" name="dialog-create-dataset-review-index-type" class="dialog-td-text" id="dialog-create-dataset-review-index-type" size="8" disabled/></td>
+                        <td></td>
+                        <td><label for="dialog-create-dataset-review-data-unit" class="dialog-label-input">Unit:</label></td>
+                        <td><input type="text" name="dialog-create-dataset-review-data-unit" class="dialog-td-text" id="dialog-create-dataset-review-data-unit" size="8" disabled/></td>
+                      </tr>
+                      <tr>
+                        <td><label for="dialog-create-dataset-review-wellbore" class="dialog-label-input">Wellbore:</label></td>
+                        <td><input type="text" name="dialog-create-dataset-review-wellbore" class="dialog-td-text" id="dialog-create-dataset-review-wellbore" size="8" disabled/></td>
+                        <td></td>
+                        <td><label for="dialog-create-dataset-review-reference-level" class="dialog-label-input">Reference:</label></td>
+                        <td><input type="text" name="dialog-create-dataset-review-reference-level" class="dialog-td-text" id="dialog-create-dataset-review-reference-level" size="8" disabled/></td>
+                        <td></td>
+                      </tr>                              
+                      <tr>
+                        <td><label for="dialog-create-dataset-review-name" class="dialog-label-input">Dataset:</label></td>
+                        <td><input type="text" name="dialog-create-dataset-review-name" class="dialog-td-text" id="dialog-create-dataset-review-name" size="8" disabled/></td>
+                        <td></td>
+                        <td><label for="dialog-create-dataset-review-data-type" class="dialog-label-input">Data type:</label></td>
+                        <td><input type="text" name="dialog-create-dataset-review-data-type" class="dialog-td-text" id="dialog-create-dataset-review-data-type" size="8" disabled/></td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="dialog-create-dataset-data-grid-container">
+                  <div class="dialog-datagridxl-input" id="dialog-create-dataset-data-grid" style="width:100%;height:240px;"></div>
+                </div>
+              </div>
+    
+            </div>
+    
+          </form>
+          
+        </div>
+
+
         <script>
           $(document).ready(function () {
 
@@ -610,7 +832,13 @@
             $("li#menubar-wellbore-edit-survey-data-li").click(function () {
                 console.log("edit-survey-data-wellbore-clicked");
                 $("#dialog-wellbore-edit-survey-data").dialog("open");
-            });  
+            });
+
+            // DATASET
+            $("li#menubar-dataset-create-li").click(function () {
+                console.log("create-dataset-clicked");
+                $("#dialog-create-dataset").dialog("open");
+            });
           });
 
         </script>
