@@ -1,7 +1,17 @@
 $(document).ready(function () {
 
+
+  function setAppHeader() {
+    const activeProject = getLocalActiveProject();
+    console.log(activeProject);
+    const projectName = activeProject?.name || '-';
+    const viewName = "-"
+    $('#app-header-p').text(`Project: ${projectName} - View: ${viewName} --- ` );
+  };
+
   function refreshUI() {
     setAppHeader();
+    console.log("called refresh UI");
   };
 
   const checkSession = async () => {
@@ -192,7 +202,7 @@ $(document).ready(function () {
       });
       return response.data;
     } catch (error) {
-      console.error("Error get wells:", error.response?.data || error.message);
+      console.error("Error get wellbores:", error.response?.data || error.message);
       throw error;
     }
   };
@@ -207,9 +217,9 @@ $(document).ready(function () {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.message || "Failed to delete well");
+        throw new Error(result.message || "Failed to delete wellbore");
       }
-        console.log(result.message);
+      console.log(result.message);
       return result;
   
     } catch (error) {
@@ -245,7 +255,7 @@ $(document).ready(function () {
       });
       return response.data;
     } catch (error) {
-      console.error("Error get wells:", error.response?.data || error.message);
+      console.error("Error get wellbore survey:", error.response?.data || error.message);
       throw error;
     }
   };
@@ -269,7 +279,46 @@ $(document).ready(function () {
         console.error("Error:", error);
         alert("An error occurred: " + (error.message || "Unknown error"));
     }
-};
+  };
+
+  const getDatasets = async (wellboreId) => {
+    try {
+      const response = await axios.get(`${config.apiUrl}/api/datasets?wellbore_id=${wellboreId}`, {
+        withCredentials: true,  // Include cookies with the request
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error get datasets:", error.response?.data || error.message);
+      throw error;
+    }
+  };
+
+  const deleteDatasets = async (wellboreId, datasetIds) => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/datasets`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          wellbore_id: wellboreId,
+          dataset_ids: datasetIds
+        })
+      });
+      console.log("api delete datasets");
+      // console.log(dataset_ids);
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to delete datasets");
+      }
+      console.log(result.message);
+      return result;
+    } catch (error) {
+      console.error("Error:", error);
+      alert(error.message);
+    }
+  };
+
 
   // Attach functions to window if needed for global access
   window.checkSession = checkSession;
@@ -294,6 +343,12 @@ $(document).ready(function () {
 
   // dataset
   window.addDataset = addDataset;
+  window.getDatasets = getDatasets;
+  window.deleteDatasets = deleteDatasets;
 
+
+  // call initial app function
+  // getActiveProject();
+  // refreshUI();
 
 });

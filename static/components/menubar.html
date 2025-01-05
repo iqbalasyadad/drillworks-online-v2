@@ -53,10 +53,10 @@
             <li>
               Wellbore
               <ul>
-                  <li class="" id="menubar-wellbore-create-li"><a href="javascript:void(0)">Create...<span>Ctrl+S</span></a></li>
-                  <li class="" id="menubar-wellbore-delete-li"><a href="javascript:void(0)">Delete...<span>Ctrl+S</span></a></li>
+                  <li class="" id="menubar-wellbore-create-li"><a href="javascript:void(0)">Create...<span></span></a></li>
+                  <li class="" id="menubar-wellbore-delete-li"><a href="javascript:void(0)">Delete...<span></span></a></li>
                   <li class=""><a href="javascript:void(0)">Properties...<span>Ctrl+S</span></a></li>
-                  <li class="" id="menubar-wellbore-edit-survey-data-li"><a href="javascript:void(0)">Edit Survey Data....<span>Ctrl+S</span></a></li>
+                  <li class="" id="menubar-wellbore-edit-survey-data-li"><a href="javascript:void(0)">Edit Survey Data....<span></span></a></li>
                   <li>Import Survey Data....</li>
                   <li>Create a Top Table....</li>
                   <li>Top Table Properties....</li>
@@ -68,9 +68,9 @@
             <li>
               Data
               <ul>
-                <li class="" id="menubar-dataset-create-li"><a href="javascript:void(0)">Create a Dataset...<span>Ctrl+S</span></a></li>
-                <li class=""><a href="javascript:void(0)">Delete Datasets...<span>Ctrl+S</span></a></li>
-                <li class=""><a href="javascript:void(0)">Dataset Properties...<span>Ctrl+S</span></a></li>
+                <li class="" id="menubar-dataset-create-li"><a href="javascript:void(0)">Create a Dataset...<span></span></a></li>
+                <li class="" id="menubar-dataset-delete-li"><a href="javascript:void(0)">Delete Datasets...<span></span></a></li>
+                <li class=""><a href="javascript:void(0)">Dataset Properties...<span></span></a></li>
                 <li>Import From a File....</li>
                 <li>Export to a File....</li>
                 <li>Average....</li>
@@ -500,11 +500,11 @@
           <form>
             <div style="margin-bottom:10px">
               <p>Select a well:</p>
-              <select id="dialog-delete-wellbore-well-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+              <select id="dialog-delete-wellbore-well-select" size="8" style="width: 100%; height: 100px; font-size: 9pt; padding: 2px;"></select>
             </div>
             <div>
               <p>Select a wellbore:</p>
-              <select id="dialog-delete-wellbore-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+              <select id="dialog-delete-wellbore-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 9pt; padding: 2px;"></select>
             </div>
           </form>
         </div>
@@ -518,11 +518,11 @@
               <div class="page-dialog-wellbore-edit-survey-data" data-page="1" style="display:none">
                 <div style="margin-bottom:10px">
                   <p>Select a well:</p>
-                  <select id="dialog-wellbore-edit-survey-data-well-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+                  <select id="dialog-wellbore-edit-survey-data-well-select" size="8" style="width: 100%; height: 100px; font-size: 9pt; padding: 2px;"></select>
                 </div>
                 <div>
                   <p>Select a wellbore:</p>
-                  <select id="dialog-wellbore-edit-survey-data-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+                  <select id="dialog-wellbore-edit-survey-data-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 9pt; padding: 2px;"></select>
                 </div>
               </div>
       
@@ -550,11 +550,11 @@
               <div class="page-dialog-create-dataset" data-page="1" style="display:none">
                 <div style="margin-bottom:10px">
                   <p>Select a well:</p>
-                  <select id="dialog-create-dataset-well-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+                  <select id="dialog-create-dataset-well-select" size="8" style="width: 100%; height: 100px; font-size: 9pt; padding: 2px;"></select>
                 </div>
                 <div>
                   <p>Select a wellbore:</p>
-                  <select id="dialog-create-dataset-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 10pt; padding: 2px;"></select>
+                  <select id="dialog-create-dataset-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 9pt; padding: 2px;"></select>
                 </div>
               </div>
       
@@ -761,6 +761,24 @@
           
         </div>
 
+        <!-- DIALOG DELETE DATASETS -->
+        <div id="dialog-delete-dataset" title="Delete Datasets" style="display: none;">
+          <form>
+            <div style="margin-bottom:10px">
+              <p>Select a well:</p>
+              <select id="dialog-delete-dataset-well-select" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+            </div>
+            <div style="margin-bottom:10px">
+              <p>Select a wellbore:</p>
+              <select id="dialog-delete-dataset-wellbore-select" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+            </div>
+            <div style="margin-bottom:10px">
+              <p>Select datasets:</p>
+              <select id="dialog-delete-dataset-dataset-select" size="8" style="width: 100%; font-size: 9pt; padding: 2px;" multiple></select>
+            </div>
+          </form>
+        </div>
+
 
         <script>
           $(document).ready(function () {
@@ -839,6 +857,11 @@
                 console.log("create-dataset-clicked");
                 $("#dialog-create-dataset").dialog("open");
             });
+            $("li#menubar-dataset-delete-li").click(function () {
+                console.log("delete-dataset-clicked");
+                $("#dialog-delete-dataset").dialog("open");
+            });
+
           });
 
         </script>

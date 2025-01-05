@@ -558,6 +558,65 @@ def add_datasets():
     wellbores_collection.update_one({"_id": ObjectId(wellbore_id)}, {"$push": {"datasets": dataset_id}})
     return jsonify({"success": True, "message": "Dataset added successfully", "dataset_id": str(dataset_id)})
 
+@app.route('/api/datasets', methods=['GET'])
+def get_datasets():
+    print("Received request: get datasets list")
+    if 'user_id' not in session:
+        print("not  in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+    
+    wellbore_id = request.args.get('wellbore_id')
+    if not wellbore_id:
+        return jsonify({"error": "Wellbore ID is required"}), 400
+
+    try:
+        # Query datasets linked to the provided wellbore_id
+        datasets = datasets_collection.find({"wellbore_id": ObjectId(wellbore_id)})
+        result = [{"_id": str(dataset["_id"]), "name": dataset["name"]} for dataset in datasets]
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching datasets: {e}")
+        return jsonify({"error": "An error occurred while fetching datasets name"}), 500
+
+@app.route('/api/datasets', methods=['DELETE'])
+def delete_datasets():
+    print("Received request: delete datasets")
+    
+    if 'user_id' not in session:
+        print("User not in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+
+    # Retrieve the wellbore_id and dataset_ids from the request body
+    wellbore_id = request.json.get('wellbore_id')
+    dataset_ids = request.json.get('dataset_ids')
+
+    print(wellbore_id, dataset_ids)
+
+    if not wellbore_id or not dataset_ids:
+        return jsonify({"success": False, "message": "Wellbore ID and dataset IDs are required"}), 400
+
+    try:
+        # Convert dataset_ids to ObjectId format
+        object_ids = [ObjectId(dataset_id) for dataset_id in dataset_ids]
+
+        # Delete datasets from the datasets collection
+        delete_result = datasets_collection.delete_many({"_id": {"$in": object_ids}})
+        print(f"Deleted {delete_result.deleted_count} datasets from datasets_collection")
+
+        # Remove references from the wellbores collection
+        update_result = wellbores_collection.update_one(
+            {"_id": ObjectId(wellbore_id)},
+            {"$pull": {"datasets": {"$in": object_ids}}}
+        )
+        print(f"Updated wellbores_collection: {update_result.modified_count} documents modified")
+
+        return jsonify({"success": True, "message": "Datasets deleted successfully"}), 200
+
+    except Exception as e:
+        print(f"Error deleting datasets: {str(e)}")
+        return jsonify({"success": False, "message": "An error occurred while deleting datasets"}), 500
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)

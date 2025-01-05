@@ -1,5 +1,74 @@
 $(document).ready(function () {
 
+    // Fetch to select
+    const fetchWellsToSelect = async(projectId, wellSelect) => {
+        wellSelect.empty();
+        if (projectId) {
+            try {
+                const wells = await getWells(projectId);
+                // wellSelect.append(`<option value=""></option>`);
+                wells.forEach(well => {
+                    wellSelect.append(`<option value="${well._id}">${well.name}</option>`);
+                });
+            } catch (error) {
+                console.error("Error populating wells:", error);
+            }
+        }
+    };
+
+    const fetchWellboresToSelect = async(selectedWellId, wellboreSelect) => {
+        wellboreSelect.empty();
+        if (selectedWellId) {
+            try {
+                const wellbores = await getWellbores(selectedWellId);
+                // wellboreSelect.append(`<option value=""></option>`);
+                wellbores.forEach(wellbore => {
+                    wellboreSelect.append(`<option value="${wellbore._id}">${wellbore.name}</option>`);
+                });
+            } catch (error) {
+                console.error("Error populating wellbores:", error);
+            }
+        }
+    };
+
+    const fetchWellsWellboresToSelect = async(projectId, wellSelect, wellboreSelect) => {
+        fetchWellsToSelect(projectId, wellSelect);
+        wellSelect.off('change').on('change', async function () {
+            const selectedWellId = $(this).val();
+            fetchWellboresToSelect(selectedWellId, wellboreSelect);
+        });
+    };
+
+    const fetchDatasetsToSelect = async(selectedWellboreId, datasetSelect) => {
+        datasetSelect.empty();
+        if (selectedWellboreId) {
+            try {
+                const datasets = await getDatasets(selectedWellboreId);
+                datasets.forEach(dataset => {
+                    datasetSelect.append(`<option value="${dataset._id}">${dataset.name}</option>`);
+                });
+            } catch (error) {
+                console.error("Error populating datasets:", error);
+            }
+        }
+    };
+ 
+
+    const fetchWellsWellboresDatasetsToSelect = async(projectId, wellSelect, wellboreSelect, datasetSelect) => {
+        fetchWellsToSelect(projectId, wellSelect);
+
+        wellSelect.off('change').on('change', async function () {
+            const selectedWellId = $(this).val();
+            fetchWellboresToSelect(selectedWellId, wellboreSelect);
+        });
+        wellboreSelect.off('change').on('change', async function () {
+            console.log("wellbore select changed");
+            const selectedWellboreId = $(this).val();
+            fetchDatasetsToSelect(selectedWellboreId, datasetSelect);
+        });
+    };
+
+
     function col_to_row(...columns) {
         let result = [];
         
@@ -528,14 +597,6 @@ $(document).ready(function () {
     });
 
     // DELETE WELL
-    const fetchWellsSelect = async(projectId, wellSelect) => {
-        const wells = await getWells(projectId);
-        wellSelect.empty(); // Clear previous options
-        wells.forEach(well => {
-            wellSelect.append(`<option value="${well._id}">${well.name}</option>`);
-        });
-    };
-
     // DIALOG DELETE WELL
     $("#dialog-delete-well").dialog({
         autoOpen: false,
@@ -561,7 +622,7 @@ $(document).ready(function () {
                                     // alert("Well deleted successfully!");
                                     const activeProject = getLocalActiveProject();
                                     const projectId = activeProject._id;
-                                    fetchWellsSelect(projectId, wellSelect);
+                                    fetchWellsToSelect(projectId, wellSelect);
                                     // dialog.dialog("close");  // Use the stored reference to close the dialog
                                 }
                             } catch (error) {
@@ -588,7 +649,7 @@ $(document).ready(function () {
                 const activeProject = getLocalActiveProject();
                 const projectId = activeProject._id;
                 const wellSelect = $('#dialog-delete-well-select');
-                fetchWellsSelect(projectId, wellSelect);
+                fetchWellsToSelect(projectId, wellSelect);
         
             } catch (error) {
                 console.error("Failed to fetch wells:", error.message);
@@ -724,7 +785,7 @@ $(document).ready(function () {
             const activeProject = getLocalActiveProject();
             const projectId = activeProject._id;
             const wellSelect = $('#dialog-create-wellbore-well-select');
-            fetchWellsSelect(projectId, wellSelect);
+            fetchWellsToSelect(projectId, wellSelect);
 
         },
         close: () => {
@@ -733,44 +794,7 @@ $(document).ready(function () {
     });
 
     // DELETE WELLBORE
-    const fetchWellsWellboresToSelect = async(projectId, wellSelect, wellboreSelect) => {
-        wellSelect.empty();
-        wellboreSelect.empty();
-        const wells = await getWells(projectId);
-        wells.forEach(well => {
-            wellSelect.append(`<option value="${well._id}">${well.name}</option>`);
-        });
-        wellSelect.off('change').on('change', async function () {
-            const selectedWellId = $(this).val();
-            wellboreSelect.empty();
-            
-            if (selectedWellId) {
-                try {
-                    const wellbores = await getWellbores(selectedWellId);
-                    wellbores.forEach(wellbore => {
-                        wellboreSelect.append(`<option value="${wellbore._id}">${wellbore.name}</option>`);
-                    });
-                } catch (error) {
-                    console.error("Error populating wellbores:", error);
-                }
-            }
-        });
-    };
-    const fetchWellboresToSelect = async(wellSelect, wellboreSelect) => {
-        wellboreSelect.empty();
-        const selectedWellId = wellSelect.val();
-        wellboreSelect.empty();
-        if (selectedWellId) {
-            try {
-                const wellbores = await getWellbores(selectedWellId);
-                wellbores.forEach(wellbore => {
-                    wellboreSelect.append(`<option value="${wellbore._id}">${wellbore.name}</option>`);
-                });
-            } catch (error) {
-                console.error("Error populating wellbores:", error);
-            }
-        }
-    };
+
     // DIALOG DELETE WELLBORE
     $("#dialog-delete-wellbore").dialog({
         autoOpen: false,
@@ -781,7 +805,7 @@ $(document).ready(function () {
             Delete: {
                 text: "Delete",
                 async click() {
-                    const wellSelect = $("#dialog-delete-wellbore-well-select");
+                    const selectedWellId = $("#dialog-delete-wellbore-well-select").val();
                     const wellboreSelect = $("#dialog-delete-wellbore-wellbore-select");
                     var selectedWellbore = {
                         _id: wellboreSelect.val(),
@@ -796,7 +820,7 @@ $(document).ready(function () {
                                 console.log("Response:", result);
                     
                                 if (result.success) {
-                                    fetchWellboresToSelect(wellSelect, wellboreSelect);
+                                    fetchWellboresToSelect(selectedWellId, wellboreSelect);
                                     selectedWellbore = {};
                                 }
                             } catch (error) {
@@ -1260,6 +1284,79 @@ $(document).ready(function () {
             bottomBar: false,
         });
     };
-    
+
+    // DIALOG DELETE DATASET
+    $("#dialog-delete-dataset").dialog({
+        autoOpen: false,
+        height: 400,
+        width: 400,
+        modal: true,
+        buttons: {
+            Delete: {
+                text: "Delete",
+                async click() {
+                    // const wellSelect = $("#dialog-delete-dataset-well-select");
+                    const wellboreSelect = $("#dialog-delete-dataset-wellbore-select");
+                    const datasetSelect = $("#dialog-delete-dataset-dataset-select");
+                    var selectedDatasets = {
+                        _ids: datasetSelect.val(),
+                        names: datasetSelect.find("option:selected").toArray().map(item => item.text)
+                        // name: $('#dialog-delete-dataset-dataset-select option:selected').toArray().map(item => item.value)
+                    }
+                    console.log(selectedDatasets);
+                    if (selectedDatasets._ids) {
+                        const isConfirmed = window.confirm(`Are you sure you want to delete the dataset?`);
+                        if (isConfirmed) {
+                            try {
+                                const result = await deleteDatasets(wellboreSelect.val(), selectedDatasets._ids);
+                                console.log("Response:", result);
+                    
+                                if (result.success) {
+                                    fetchDatasetsToSelect(wellboreSelect.val(), datasetSelect);
+                                    selectedDatasets = {};
+                                }
+                            } catch (error) {
+                                console.error("Failed to delete dataset:", error.message);
+                            }
+                        }
+                    } else {
+                        window.alert("Please select dataset(s)!")
+                    }
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        },
+        open: async ()=> {
+            console.log("fetch datasets called");
+            try {
+        
+                // Fetch the selected project ID
+                const activeProject = getLocalActiveProject();
+                const projectId = activeProject._id;
+                const wellSelect = $('#dialog-delete-dataset-well-select');
+                const wellboreSelect = $('#dialog-delete-dataset-wellbore-select');
+                const datasetSelect = $('#dialog-delete-dataset-dataset-select');
+
+                // await fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
+
+                // console.log(wellSelect.val());
+                // await fetchWellboresToSelect(wellSelect, wellboreSelect);
+                await fetchWellsWellboresDatasetsToSelect(projectId, wellSelect, wellboreSelect, datasetSelect);
+
+            } catch (error) {
+                console.error("Failed to fetch wells:", error.message);
+            }
+            
+        },
+        close: function () {
+            $('#dialog-delete-dataset-select').empty()
+            //pass
+        }
+    });
 
 });

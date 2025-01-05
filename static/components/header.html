@@ -11,8 +11,10 @@
             $('#app-header-p').text(`Project: ${projectName} - View: ${viewName} --- ` );
         };
         window.setAppHeader = setAppHeader;
-
+        
+        getActiveProject();
         setAppHeader();
+
     });
 
 </script>
