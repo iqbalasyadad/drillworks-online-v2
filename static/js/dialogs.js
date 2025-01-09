@@ -31,14 +31,6 @@ $(document).ready(function () {
         }
     };
 
-    const fetchWellsWellboresToSelect = async(projectId, wellSelect, wellboreSelect) => {
-        fetchWellsToSelect(projectId, wellSelect);
-        wellSelect.off('change').on('change', async function () {
-            const selectedWellId = $(this).val();
-            fetchWellboresToSelect(selectedWellId, wellboreSelect);
-        });
-    };
-
     const fetchDatasetsToSelect = async(selectedWellboreId, datasetSelect) => {
         datasetSelect.empty();
         if (selectedWellboreId) {
@@ -52,7 +44,14 @@ $(document).ready(function () {
             }
         }
     };
- 
+
+    const fetchWellsWellboresToSelect = async(projectId, wellSelect, wellboreSelect) => {
+        fetchWellsToSelect(projectId, wellSelect);
+        wellSelect.off('change').on('change', async function () {
+            const selectedWellId = $(this).val();
+            fetchWellboresToSelect(selectedWellId, wellboreSelect);
+        });
+    };
 
     const fetchWellsWellboresDatasetsToSelect = async(projectId, wellSelect, wellboreSelect, datasetSelect) => {
         fetchWellsToSelect(projectId, wellSelect);
@@ -864,52 +863,6 @@ $(document).ready(function () {
 
 
     // WELLBORE EDIT SURVEY DATA
-    // const survey_data_input_grid = new DataGridXL("dialog-wellbore-edit-survey-data-grid", { 
-    //     data: DataGridXL.createEmptyData(20, 2),
-    //     columns: [
-    //         {title: "PP DEPTH"}, 
-    //         {title: "PP SG"}
-    //     ],
-    //     allowDeleteCols: false,
-    //     allowMoveCols: false,
-    //     allowInsertCols: false,
-    //     allowHideCols: false,
-    //     allowHideRows: false,
-    //     allowMoveRows: false,
-    //     colHeaderHeight: 20,
-    //     colHeaderWidth: 50,
-    //     colHeaderLabelType: "numbers",
-    //     colHeaderLabelAlign: "center",
-    //     colAlign: "right",
-    //     rowHeight: 20,
-    //     frozenRows: 0,
-    //     topBar: false,
-    //     bottomBar: false
-    // });
-
-    // DIALOG WELLBORE EDIT SURVEY DATA
-    let dialogWellboreEditSurveyDataCurrentPage = 1;
-    const dialogWellboreEditSurveyDataCreatetotalPages = 2;
-
-    function dialogWellboreEditSurveyDataShowPage(page) {
-        $(".page-dialog-wellbore-edit-survey-data").hide();
-        $(`.page-dialog-wellbore-edit-survey-data[data-page="${page}"]`).show();
-
-        // Dynamically update the dialog title with the current step
-        const stepTitles = {
-            1: "Step 1: Select well & wellbore",
-            2: "Step 2: Input Survey Data"
-        };
-        $("#dialog-wellbore-edit-survey-data").dialog("option", "title", stepTitles[page]);
-        dialogWellboreEditSurveyDataUpdateButtonStates();
-
-    }
-
-    function dialogWellboreEditSurveyDataUpdateButtonStates() {
-        $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", dialogWellboreEditSurveyDataCurrentPage === 1);
-        $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", dialogWellboreEditSurveyDataCurrentPage === dialogWellboreEditSurveyDataCreatetotalPages);
-        $(".ui-dialog-buttonpane button:contains('Apply')").button("option", "disabled", dialogWellboreEditSurveyDataCurrentPage < dialogWellboreEditSurveyDataCreatetotalPages);
-    }
 
     // WELLBORE TABLE EDIT SURVEY
     let surveyInputGrid;
@@ -950,48 +903,28 @@ $(document).ready(function () {
             bottomBar: false,
         });
     };
+
+    async function renderGridEditSurveyAsync(selectedWellboreId) {
+        try {
+            const result = await getWellboreSurvey(selectedWellboreId);
+            if (result.success) {
+                console.log("get survey success ", result.survey)
+                renderGridEditSurvey(result.survey);
+            } else {
+                throw new Error(response.data.message || "Failed to get survey");
+            };
+        } catch (error) {
+            console.error("Error rendering grid:", error);
+        }
+    }
+
     // DIALOG WELLBORE EDIT SURVEY DATA
     $("#dialog-wellbore-edit-survey-data").dialog({
         autoOpen: false,
-        height: 400,
+        height: 550,
         width: 500,
         modal: true,
         buttons: {
-            "< Back": function () {
-                if (dialogWellboreEditSurveyDataCurrentPage > 1) {
-                    dialogWellboreEditSurveyDataCurrentPage--;
-                    dialogWellboreEditSurveyDataShowPage(dialogWellboreEditSurveyDataCurrentPage);
-                }
-            },
-            "Next >": function () {
-                if (dialogWellboreEditSurveyDataCurrentPage < dialogWellboreEditSurveyDataCreatetotalPages) {
-                    dialogWellboreEditSurveyDataCurrentPage++;
-                    dialogWellboreEditSurveyDataShowPage(dialogWellboreEditSurveyDataCurrentPage);
-                }
-                
-
-                if (dialogWellboreEditSurveyDataCurrentPage===2) {
-                    const wellboreSelect = $("#dialog-wellbore-edit-survey-data-wellbore-select");
-                    var selectedWellbore = {
-                        _id: wellboreSelect.val(),
-                        name: wellboreSelect.find("option:selected").text()
-                    }
-                    async function renderGridEditSurveyAsync() {
-                        try {
-                            const result = await getWellboreSurvey(selectedWellbore._id);
-                            if (result.success) {
-                                console.log("get survey success ", result.survey)
-                                renderGridEditSurvey(result.survey);
-                            } else {
-                                throw new Error(response.data.message || "Failed to get survey");
-                            };
-                        } catch (error) {
-                            console.error("Error rendering grid:", error);
-                        }
-                    }
-                    renderGridEditSurveyAsync();
-                };
-            },
             Apply: {
                 text: "Apply",
                 async click() {
@@ -1004,80 +937,97 @@ $(document).ready(function () {
                     const gridData = transposeAndConvert(surveyInputGrid.getData(), calculateTVDchecked, calculateTVDchecked?1:null);
                     console.log(gridData);
 
-
-                    if (selectedWellbore._id) {
-                        if(gridData.ok===true) {
-                            console.log("gridData OK");
-                            try {
-                                const formData = {
-                                    md: gridData.data[0],
-                                    inclination: gridData.data[2],
-                                    azimuth: gridData.data[3],
-                                    calculate_tvd_checked: calculateTVDchecked
-                                };
-                                if (!calculateTVDchecked) {
-                                    formData.tvd = gridData.data[1];
-                                };
-                                console.log(formData);
-                                const result = await setWellboreSurvey(selectedWellbore._id, formData);
-                                if (result.success) {
-                                    console.log("set survey: success");
-                                    console.log(result);
-                                    if (calculateTVDchecked) {
-                                        const newSurveyData = {
-                                            md: formData.md,
-                                            tvd: result.survey.tvd,
-                                            inclination: formData.inclination,
-                                            azimuth: formData.azimuth,
-                                        }
-                                        renderGridEditSurvey(newSurveyData);
+                    if (!selectedWellbore._id) {
+                        window.alert("Please select a wellbore")
+                        return;
+                    };
+                    if(gridData.ok===true) {
+                        console.log("gridData OK");
+                        try {
+                            const formData = {
+                                md: gridData.data[0],
+                                inclination: gridData.data[2],
+                                azimuth: gridData.data[3],
+                                calculate_tvd_checked: calculateTVDchecked
+                            };
+                            if (!calculateTVDchecked) {
+                                formData.tvd = gridData.data[1];
+                            };
+                            console.log(formData);
+                            const result = await setWellboreSurvey(selectedWellbore._id, formData);
+                            if (result.success) {
+                                console.log("set survey: success");
+                                console.log(result);
+                                if (calculateTVDchecked) {
+                                    const newSurveyData = {
+                                        md: formData.md,
+                                        tvd: result.survey.tvd,
+                                        inclination: formData.inclination,
+                                        azimuth: formData.azimuth,
                                     }
-                                } else {
-                                    throw new Error(response.data.message || "Failed to add wellbore");
+                                    renderGridEditSurvey(newSurveyData);
                                 }
-                            } catch (error) {
-                                console.error("Error:", error);
-                                alert("An error occurred: " + error.message);
+                            } else {
+                                throw new Error(response.data.message || "Failed to add wellbore");
                             }
-                        } else {
-                            console.log(gridData.message);
+                        } catch (error) {
+                            console.error("Error:", error);
+                            alert("An error occurred: " + error.message);
                         }
                     } else {
-                        window.alert("Please select a wellbore!")
-                    };
-
+                        console.log(gridData.message);
+                    }
                 }
             },
-            
-            Cancel: function () {
-                $(this).dialog("close");
-            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
         },
-        open: ()=> {
+        open: async ()=> {
             console.log("open dialog edit survey data")
-            dialogWellboreEditSurveyDataCurrentPage=1;
-            dialogWellboreEditSurveyDataShowPage(dialogWellboreEditSurveyDataCurrentPage);
-
-            console.log("fetch wellbores called");
+            renderGridEditSurvey({md: []})
             try {
-        
-                // Fetch the selected project ID
                 const activeProject = getLocalActiveProject();
                 const projectId = activeProject._id;
                 const wellSelect = $('#dialog-wellbore-edit-survey-data-well-select');
                 const wellboreSelect = $('#dialog-wellbore-edit-survey-data-wellbore-select');
 
-                fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
+                // fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
+                // wellboreSelect.off('change').on('change', async function () {
+                //     var selectedWellbore = {
+                //         _id: wellboreSelect.val(),
+                //         name: wellboreSelect.find("option:selected").text()
+                //     }
+                //     renderGridEditSurveyAsync(selectedWellbore._id);
+                // });
+                fetchWellsToSelect(projectId, wellSelect);
+                let selectedWellId = null;
+                let selectedWellboreId = null;
+                wellSelect.off('change').on('change', async function () {
+                    selectedWellId = $(this).val();
+                    fetchWellboresToSelect(selectedWellId, wellboreSelect);
+                    selectedWellboreId = null;
+                    renderGridEditSurvey({md: []})
+                });
+                wellboreSelect.off('change').on('change', async function () {
+                    console.log("wellbore select changed");
+                    selectedWellboreId = $(this).val();
+                    renderGridEditSurveyAsync(selectedWellboreId);
+                });
         
             } catch (error) {
-                console.error("Failed to fetch wells:", error.message);
+                console.error("Failed to fetch survey:", error.message);
             }
-
         },
-        close: () => {
-            $("#dialog-form-wellbore-edit-survey-data")[0].reset();
+        close: function () {
+            $('#dialog-wellbore-edit-survey-data-well-select').empty();
+            $('#dialog-wellbore-edit-survey-data-wellbore-select').empty();
         }
     });
+
 
     // DATASET
     function addDatasetDatatypeUnit() {
@@ -1301,7 +1251,6 @@ $(document).ready(function () {
                     var selectedDatasets = {
                         _ids: datasetSelect.val(),
                         names: datasetSelect.find("option:selected").toArray().map(item => item.text)
-                        // name: $('#dialog-delete-dataset-dataset-select option:selected').toArray().map(item => item.value)
                     }
                     console.log(selectedDatasets);
                     if (selectedDatasets._ids) {
@@ -1334,29 +1283,20 @@ $(document).ready(function () {
         open: async ()=> {
             console.log("fetch datasets called");
             try {
-        
-                // Fetch the selected project ID
                 const activeProject = getLocalActiveProject();
                 const projectId = activeProject._id;
                 const wellSelect = $('#dialog-delete-dataset-well-select');
                 const wellboreSelect = $('#dialog-delete-dataset-wellbore-select');
                 const datasetSelect = $('#dialog-delete-dataset-dataset-select');
-
-                // await fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
-
-                // console.log(wellSelect.val());
-                // await fetchWellboresToSelect(wellSelect, wellboreSelect);
                 await fetchWellsWellboresDatasetsToSelect(projectId, wellSelect, wellboreSelect, datasetSelect);
-
             } catch (error) {
                 console.error("Failed to fetch wells:", error.message);
             }
-            
         },
         close: function () {
-            $('#dialog-delete-dataset-select').empty()
-            //pass
+            $('#dialog-delete-dataset-well-select').empty();
+            $('#dialog-delete-dataset-wellbore-select').empty();
+            $('#dialog-delete-dataset-dataset-select').empty();
         }
     });
-
 });
