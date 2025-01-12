@@ -31,8 +31,9 @@
                 </li>
                 <li class="" id="menubar-project-open-li"><a href="javascript:void(0)" >Open...<span></span></a></li>
                 <li class=""><a href="javascript:void(0)">Save<span>Ctrl+S</span></a></li>
-                <li class="icon print"><a href="javascript:void(0)">Close<span></span></a></li>
-                <li class="icon print" id="menubar-project-delete-li"><a href="javascript:void(0)">Delete....<span></span></a></li>
+                <li class="" id="menubar-project-close-li"><a href="javascript:void(0)">Close<span></span></a></li>
+                <li class="" id="menubar-project-delete-li"><a href="javascript:void(0)">Delete....<span></span></a></li>
+                <li class="" id="menubar-project-refresh-li"><a href="javascript:void(0)">Refresh<span></span></a></li>
                 <li>Import</li>
                 <li>Export</li>
                 <li class="separator"></li>
@@ -70,7 +71,7 @@
               <ul>
                 <li class="" id="menubar-dataset-create-li"><a href="javascript:void(0)">Create a Dataset...<span></span></a></li>
                 <li class="" id="menubar-dataset-delete-li"><a href="javascript:void(0)">Delete Datasets...<span></span></a></li>
-                <li class=""><a href="javascript:void(0)">Dataset Properties...<span></span></a></li>
+                <li class="" id="menubar-dataset-properties-li"><a href="javascript:void(0)">Dataset Properties...<span></span></a></li>
                 <li>Import From a File....</li>
                 <li>Export to a File....</li>
                 <li>Average....</li>
@@ -104,6 +105,8 @@
                 <li id="add-dummy-project-li"><a href="javascript:void(0)">Add Dummy Project<span></span></a></li>
                 <li id="add-dummy-well-li"><a href="javascript:void(0)">Add Dummy Well<span></span></a></li>
                 <li id="add-dummy-wellbore-li"><a href="javascript:void(0)">Add Dummy Wellbore<span></span></a></li>
+                <li id="project-structure-li"><a href="javascript:void(0)">Get Project Structure<span></span></a></li>
+
               </ul>
             </li>
           </ul>
@@ -619,6 +622,7 @@
                                 <option value="FG">FG - Fracture Gradient</option>
                                 <option value="OBG">OBG - Overburden Gradient</option>
                                 <option value="POISSON">POISSON - Poisson Ratio</option>
+                                <option value="Unknown">UNKNOWN</option>
                               </select>
                             </td>
                             <td>
@@ -770,88 +774,222 @@
           </form>
         </div>
 
+        <!-- DIALOG PROPERTIES DATASETS -->
+        <div id="dialog-properties-dataset" title="Dataset Properties" style="display: none;">
+          <form>
+            <div style="display: flex; flex-direction: row;">
+              <div style="width: 30%; margin-right: 10px;">
+                <div style="margin-bottom:10px">
+                  <p>Select a well:</p>
+                  <select id="dialog-properties-dataset-well-select" size="3" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+                </div>
+                <div style="margin-bottom:10px">
+                  <p>Select a wellbore:</p>
+                  <select id="dialog-properties-dataset-wellbore-select" size="3" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+                </div>
+                <div style="margin-bottom:10px">
+                  <p>Select datasets:</p>
+                  <select id="dialog-properties-dataset-dataset-select" size="8" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+                </div>
+              </div>
+              <div id="tabs" style="width: 70%;">
+                <ul>
+                  <li><a href="#tabs-1">Properties</a></li>
+                  <li><a href="#tabs-2">Data</a></li>
+                  <li><a href="#tabs-3">Parameters</a></li>
+                  <li><a href="#tabs-4">Advanced</a></li>
+                </ul>
+                <div id="tabs-1">
+
+                  <table style="width: 100%;">
+                    <colgroup id="colgroup">
+                      <col style="width: 30%;">
+                      <col style="width: 20%;">
+                      <col style="width: 5%;">
+                      <col style="width: 25%;">
+                      <col style="width: 20%;">
+                    </colgroup>
+                    <tbody>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-name" class="dialog-label-input">Name:</label></td>
+                        <td colspan="4"><input type="text" name="dialog-properties-dataset-name" class="dialog-td-text" id="dialog-properties-dataset-name" size="8"/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-description" class="dialog-label-input">Description:</label></td>
+                        <td colspan="4"><input type="text" name="dialog-properties-dataset-description" class="dialog-td-text" id="dialog-properties-dataset-description" size="8"/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-data-type" class="dialog-label-input">Data type:</label></td>
+                        <td><input type="text" name="dialog-properties-dataset-data-type" class="dialog-td-text" id="dialog-properties-dataset-data-type" size="8" disabled/></td>
+                        <td></td>
+                        <td><label for="dialog-properties-dataset-data-unit" class="dialog-label-input">Unit:</label></td>
+                        <td><input type="text" name="dialog-properties-dataset-data-unit" class="dialog-td-text" id="dialog-properties-dataset-data-unit" size="8" disabled/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-index-type" class="dialog-label-input">Index type:</label></td>
+                        <td colspan="3"><input type="text" name="dialog-properties-dataset-index-type" class="dialog-td-text" id="dialog-properties-dataset-index-type" size="8" disabled/></td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-index-unit" class="dialog-label-input">Index unit:</label></td>
+                        <td colspan="3"><input type="text" name="dialog-properties-dataset-index-unit" class="dialog-td-text" id="dialog-properties-dataset-index-unit" size="8" disabled/></td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-reference-level" class="dialog-label-input">Reference level:</label></td>
+                        <td colspan="3"><input type="text" name="dialog-properties-dataset-reference-level" class="dialog-td-text" id="dialog-properties-dataset-reference-level" size="8" disabled/></td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-reference-date" class="dialog-label-input">Reference date:</label></td>
+                        <td colspan="3"><input type="text" name="dialog-properties-dataset-reference-date" class="dialog-td-text" id="dialog-properties-dataset-reference-date" size="8" disabled/></td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                </div>
+                <div id="tabs-2">
+                  <div class="dialog-datagridxl-input" id="dialog-properties-dataset-data-grid" style="width:100%;height:240px;"></div>
+                </div>
+                <div id="tabs-3">
+                  <textarea id="dialog-properties-dataset-parameters-textarea" name="dialog-properties-dataset-parameters-textarea" rows="15" style="width:100%; resize: none;" disabled></textarea>
+                </div>
+                <div id="tabs-4">
+
+                  <table style="width: 70%;">
+                    <colgroup id="colgroup">
+                      <col style="width: 30%;">
+                      <col style="width: 20%;">
+                    </colgroup>
+                    <tbody>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-advanced-data-type-select" class="dialog-label-input">Data type:</label></td>
+                        <td><select name="dialog-properties-dataset-advanced-data-type-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-data-type-select" size="1"></select></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-advanced-data-unit-select" class="dialog-label-input">Data unit:</label></td>
+                        <td><select name="dialog-properties-dataset-advanced-data-unit-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-data-unit-select" size="1"></select></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-advanced-index-type-select" class="dialog-label-input">Index type:</label></td>
+                        <td><select name="dialog-properties-dataset-advanced-index-type-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-index-type-select" size="1"></select></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-advanced-index-unit-select" class="dialog-label-input">Index unit:</label></td>
+                        <td><select name="dialog-properties-dataset-advanced-index-unit-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-index-unit-select" size="1"></select></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-dataset-advanced-reference-level-select" class="dialog-label-input">Reference level:</label></td>
+                        <td><select name="dialog-properties-dataset-advanced-reference-level-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-reference-level-select" size="1"></select></td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
 
         <script>
           $(document).ready(function () {
 
             $("li#add-dummy-project-li").click(function () {
-                  console.log("create-project-clicked");
-                  addDummyProject();
+              console.log("create-project-clicked");
+              addDummyProject();
             });
             $("li#add-dummy-well-li").click(function () {
-                  console.log("create-well-clicked");
-                  addDummyWell();
+              console.log("create-well-clicked");
+              addDummyWell();
             });
             $("li#add-dummy-wellbore-li").click(function () {
-                  console.log("create-wellbore-clicked");
-                  addDummyWellbore();
+              console.log("create-wellbore-clicked");
+              addDummyWellbore();
+            });
+
+            $("li#project-structure-li").click(async function () {
+              console.log("project-structure-clicked");
+              const activeProject = JSON.parse(localStorage.getItem('activeProject'));
+              try {
+                const projectStructure = await getProjectDataStructure(activeProject._id);
+                console.log(projectStructure);
+              } catch (error) {
+                console.log("error");
+              }
             });
           
             // Bind click event to the "Create..." menu item
+            // PROJECT
             $("li#menubar-project-create-li").click(function () {
-                console.log("create-project-clicked");
-                $("#dialog-create-project").dialog("open");
+              console.log("create-project-clicked");
+              $("#dialog-create-project").dialog("open");
             });
             $("li#menubar-project-open-li").click(function () {
-                console.log(getProjects());
-                $("#dialog-open-project").dialog("open");
+              console.log(getProjects());
+              $("#dialog-open-project").dialog("open");
             });
 
             $("li#menubar-project-delete-li").click(function () {
-                console.log(getProjects());
-                $("#dialog-delete-project").dialog("open");
+              console.log(getProjects());
+              $("#dialog-delete-project").dialog("open");
+            });
+
+            $("li#menubar-project-close-li").click(function () {
+              closeProject();
+            });
+            $("li#menubar-project-refresh-li").click(function () {
+              location.reload();
             });
 
 
             $("#menubar-logout-li").click(function () {
-                console.log("logout-clicked");
-                logoutAccount();
+              logoutAccount();
             }); 
             $("a#test-api-link").click(function () {
-                console.log("test-api-clicked");
-                checkSession();
+              checkSession();
             });
             $("#check-active-project").click(function () {
-                console.log("check-active-project");
-                getActiveProject();
-                const activeProject = JSON.parse(localStorage.getItem('activeProject'));
-                console.log("test active project local: ", activeProject);              
+              getActiveProject();
+              const activeProject = JSON.parse(localStorage.getItem('activeProject'));
+              console.log("test active project local: ", activeProject);              
             });
             
             // WELL
             $("li#menubar-well-create-li").click(function () {
-                console.log("create-well-clicked");
-                $("#dialog-create-well").dialog("open");
+              $("#dialog-create-well").dialog("open");
             });
             $("li#menubar-well-delete-li").click(function () {
-                console.log("delete-well-clicked");
-                $("#dialog-delete-well").dialog("open");
+              $("#dialog-delete-well").dialog("open");
             });
             
             // WELLBORE
             $("li#menubar-wellbore-create-li").click(function () {
-                console.log("create-wellbore-clicked");
-                $("#dialog-create-wellbore").dialog("open");
+              $("#dialog-create-wellbore").dialog("open");
             });
             $("li#menubar-wellbore-delete-li").click(function () {
-                console.log("delete-wellbore-clicked");
-                $("#dialog-delete-wellbore").dialog("open");
+              $("#dialog-delete-wellbore").dialog("open");
             });
             
             $("li#menubar-wellbore-edit-survey-data-li").click(function () {
-                console.log("edit-survey-data-wellbore-clicked");
-                $("#dialog-wellbore-edit-survey-data").dialog("open");
+              $("#dialog-wellbore-edit-survey-data").dialog("open");
             });
 
             // DATASET
             $("li#menubar-dataset-create-li").click(function () {
-                console.log("create-dataset-clicked");
-                $("#dialog-create-dataset").dialog("open");
+              $("#dialog-create-dataset").dialog("open");
             });
             $("li#menubar-dataset-delete-li").click(function () {
-                console.log("delete-dataset-clicked");
-                $("#dialog-delete-dataset").dialog("open");
+              $("#dialog-delete-dataset").dialog("open");
             });
+            $("li#menubar-dataset-properties-li").click(function () {
+              $("#dialog-properties-dataset").dialog("open");
+            });
+
+            $( function() {
+              $( "#tabs" ).tabs();
+            } );
 
           });
 

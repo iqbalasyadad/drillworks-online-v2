@@ -2,10 +2,10 @@ $(document).ready(function () {
 
     // Fetch to select
     const fetchWellsToSelect = async(projectId, wellSelect) => {
-        wellSelect.empty();
         if (projectId) {
             try {
                 const wells = await getWells(projectId);
+                wellSelect.empty();
                 // wellSelect.append(`<option value=""></option>`);
                 wells.forEach(well => {
                     wellSelect.append(`<option value="${well._id}">${well.name}</option>`);
@@ -17,10 +17,10 @@ $(document).ready(function () {
     };
 
     const fetchWellboresToSelect = async(selectedWellId, wellboreSelect) => {
-        wellboreSelect.empty();
         if (selectedWellId) {
             try {
                 const wellbores = await getWellbores(selectedWellId);
+                wellboreSelect.empty();
                 // wellboreSelect.append(`<option value=""></option>`);
                 wellbores.forEach(wellbore => {
                     wellboreSelect.append(`<option value="${wellbore._id}">${wellbore.name}</option>`);
@@ -32,10 +32,10 @@ $(document).ready(function () {
     };
 
     const fetchDatasetsToSelect = async(selectedWellboreId, datasetSelect) => {
-        datasetSelect.empty();
         if (selectedWellboreId) {
             try {
                 const datasets = await getDatasets(selectedWellboreId);
+                datasetSelect.empty();
                 datasets.forEach(dataset => {
                     datasetSelect.append(`<option value="${dataset._id}">${dataset.name}</option>`);
                 });
@@ -59,9 +59,9 @@ $(document).ready(function () {
         wellSelect.off('change').on('change', async function () {
             const selectedWellId = $(this).val();
             fetchWellboresToSelect(selectedWellId, wellboreSelect);
+            datasetSelect.empty();
         });
         wellboreSelect.off('change').on('change', async function () {
-            console.log("wellbore select changed");
             const selectedWellboreId = $(this).val();
             fetchDatasetsToSelect(selectedWellboreId, datasetSelect);
         });
@@ -261,6 +261,7 @@ $(document).ready(function () {
                     if (response.data.success) {
                         console.log(response.data);
                         setActiveProject(response.data.project);
+                        initializeTree();
                         // alert(response.data.message);
                     } else {
                         throw new Error(response.data.message || "Failed to add project");
@@ -329,6 +330,7 @@ $(document).ready(function () {
         
     });
 
+    // DIALOG OPEN PROJECT
     $("#dialog-open-project").dialog({
         autoOpen: false,
         height: 400,
@@ -348,6 +350,7 @@ $(document).ready(function () {
                 
                             if (result.statusText === "OK") {
                                 dialog.dialog("close");  // Use the stored reference to close the dialog
+                                initializeTree();
                             }
                         } catch (error) {
                             console.error("Failed to save project:", error.message);
@@ -570,6 +573,7 @@ $(document).ready(function () {
                         if (result.success) {
                             console.log("Add well: success: ", result);
                             $(this).dialog("close");
+                            initializeTree();
                         } else {
                             throw new Error(response.data.message || "Failed to add well");
                         }
@@ -623,6 +627,7 @@ $(document).ready(function () {
                                     const projectId = activeProject._id;
                                     fetchWellsToSelect(projectId, wellSelect);
                                     // dialog.dialog("close");  // Use the stored reference to close the dialog
+                                    initializeTree();
                                 }
                             } catch (error) {
                                 console.error("Failed to delete well:", error.message);
@@ -761,6 +766,7 @@ $(document).ready(function () {
                         if (result.success) {
                             console.log("add wellbore: success")
                             $(this).dialog("close");
+                            initializeTree();
                         } else {
                             throw new Error(response.data.message || "Failed to add wellbore");
                         }
@@ -821,6 +827,7 @@ $(document).ready(function () {
                                 if (result.success) {
                                     fetchWellboresToSelect(selectedWellId, wellboreSelect);
                                     selectedWellbore = {};
+                                    initializeTree();
                                 }
                             } catch (error) {
                                 console.error("Failed to delete wellbore:", error.message);
@@ -1047,7 +1054,7 @@ $(document).ready(function () {
             "GR": ["GAPI", "API"],
             "RT": ["ohmm"],
             "DT": ["us/ft", "us/m"],
-            "RHOB": pressureGradientUnits
+            "RHOB": pressureGradientUnits,
         };
     
         dataTypeSelect.off('change');
@@ -1130,13 +1137,11 @@ $(document).ready(function () {
                         datasetInputGrid.getData(),
                         hasTextColumnChecked,
                         hasTextColumnChecked ? 2 : null
-                    );
-                
+                    );                
                     let datasetGridData = { index: gridData.data[0], value: gridData.data[1] };
                     if (hasTextColumnChecked) {
-                        datasetGridData.text = gridData.data[2];
+                        datasetGridData.description = gridData.data[2];
                     }
-                
                     // Collect form data
                     const formData = {
                         wellbore_id: $("#dialog-create-dataset-wellbore-select").val(),
@@ -1154,7 +1159,8 @@ $(document).ready(function () {
                         symbol: $("#dialog-create-dataset-symbol-select").val(),
                         symbol_size: parseInt($("#dialog-create-dataset-symbol-size-select").val()),
                         has_text_column: hasTextColumnChecked,
-                        datasets: datasetGridData,
+                        data: datasetGridData,
+                        date_created: new Date().toISOString()
                     };
                 
                     // Validate required fields
@@ -1172,6 +1178,7 @@ $(document).ready(function () {
                         if (result && result.success) {
                             console.log("Dataset created successfully:", result);
                             $("#dialog-create-dataset").dialog("close");
+                            initializeTree();
                         } else {
                             throw new Error(result ? result.message : "Unknown error occurred");
                         }
@@ -1201,6 +1208,8 @@ $(document).ready(function () {
         },
         close: () => {
             $("#dialog-form-create-dataset")[0].reset();
+            $('#dialog-create-dataset-well-select').empty();
+            $('#dialog-create-dataset-wellbore-select').empty();
         }
     });
 
@@ -1211,7 +1220,7 @@ $(document).ready(function () {
         headers = [
             { title: "INDEX", type: 'number', format: '0,0.00' },
             { title: "VALUE", type: 'number', format: '0,0.00' } ];
-        if (hasTextColumn) { headers.push( { title: "TEXT", type: 'text', format: '0,0.00' }) };
+        if (hasTextColumn) { headers.push( { title: "DESCRIPTION", type: 'text', format: '0,0.00' }) };
         
         datasetInputGrid = new DataGridXL("dialog-create-dataset-data-grid", {
             data: DataGridXL.createEmptyData(20, 3),
@@ -1263,6 +1272,7 @@ $(document).ready(function () {
                                 if (result.success) {
                                     fetchDatasetsToSelect(wellboreSelect.val(), datasetSelect);
                                     selectedDatasets = {};
+                                    initializeTree();
                                 }
                             } catch (error) {
                                 console.error("Failed to delete dataset:", error.message);
@@ -1281,7 +1291,6 @@ $(document).ready(function () {
             }
         },
         open: async ()=> {
-            console.log("fetch datasets called");
             try {
                 const activeProject = getLocalActiveProject();
                 const projectId = activeProject._id;
@@ -1298,5 +1307,214 @@ $(document).ready(function () {
             $('#dialog-delete-dataset-wellbore-select').empty();
             $('#dialog-delete-dataset-dataset-select').empty();
         }
+    });
+
+
+    // DATASET PROPERTIES
+    // const fetchDatasetProperties = async(datasetSelect) => {
+    //     datasetSelect.off('change').on('change', async function () {
+    //         const selectedDatasetId = $(this).val();
+    //         try {
+    //             const result = await getDatasetProperties(datasetId);
+    
+    //             if (result.success) {
+    //                 console.log(result.dataset);
+    //             };
+    //         } catch(error) {
+    //             console.error("Error get datasets:", error);
+    //         };
+    //     });
+    // };
+
+    let datasetPropertiesDataGrid;
+    function renderGridDatasetPropertiesData(hasTextColumn=false, datasetData, empty=false) {
+        let data, cols;
+        headers = [
+            { title: "INDEX", type: 'number', format: '0,0.00' },
+            { title: "VALUE", type: 'number', format: '0,0.00' } ];
+        if (hasTextColumn) {  headers.push( { title: "DESCRIPTION", type: 'text', format: '0,0.00' }) }
+
+        if(empty || datasetData.index.length==0) {
+            data = DataGridXL.createEmptyData(20, headers.length)
+        } else {
+            if (hasTextColumn) {
+                data = col_to_row(datasetData.index, datasetData.value, datasetData.description);
+                console.log("has text ", data);
+            } else {
+                data = col_to_row(datasetData.index, datasetData.value);
+            };
+        };
+        
+        datasetPropertiesDataGrid = new DataGridXL("dialog-properties-dataset-data-grid", {
+            data: data,
+            columns: headers,
+            allowDeleteCols: false,
+            allowMoveCols: false,
+            allowInsertCols: false,
+            allowHideCols: false,
+            allowHideRows: false,
+            allowMoveRows: false,
+            colHeaderHeight: 16,
+            colHeaderWidth: 20,
+            colHeaderLabelType: "numbers",
+            colHeaderLabelAlign: "center",
+            colAlign: "right",
+            rowHeight: 16,
+            frozenRows: 0,
+            topBar: false,
+            bottomBar: false,
+        });
+    };
+
+    // DIALOG PROPERTIES DATASET
+    $("#dialog-properties-dataset").dialog({
+        autoOpen: false,
+        height: 400,
+        width: 650,
+        modal: true,
+        buttons: {
+            Delete: {
+                text: "Delete selected dataset",
+                async click() {
+                    // const wellSelect = $("#dialog-delete-dataset-well-select");
+                    const wellboreSelect = $("#dialog-properties-dataset-wellbore-select");
+                    const datasetSelect = $("#dialog-properties-dataset-dataset-select");
+                    var selectedDatasets = {
+                        _ids: [datasetSelect.val()],
+                        names: datasetSelect.find("option:selected").toArray().map(item => item.text)
+                    }
+                    if (selectedDatasets._ids) {
+                        const isConfirmed = window.confirm(`Are you sure you want to delete the dataset?`);
+                        if (isConfirmed) {
+                            try {
+                                const result = await deleteDatasets(wellboreSelect.val(), selectedDatasets._ids);
+                                console.log("Response:", result);
+                    
+                                if (result.success) {
+                                    fetchDatasetsToSelect(wellboreSelect.val(), datasetSelect);
+                                    selectedDatasets = {};
+                                    initializeTree();
+                                }
+                            } catch (error) {
+                                console.error("Failed to delete dataset:", error.message);
+                            }
+                        }
+                    } else {
+                        window.alert("Please select dataset(s)!")
+                    }
+                }
+            },
+            SaveAs: {
+                text: "Save As...",
+                async click() {
+                    console.log("Save as dataset");
+                }
+            },
+            Apply: {
+                text: "Apply",
+                async click() {
+                    console.log("Apply");
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        },
+        open: async ()=> {
+            // renderGridDatasetPropertiesData();
+            try {
+                const activeProject = getLocalActiveProject();
+                const projectId = activeProject._id;
+                const wellSelect = $('#dialog-properties-dataset-well-select');
+                const wellboreSelect = $('#dialog-properties-dataset-wellbore-select');
+                const datasetSelect = $('#dialog-properties-dataset-dataset-select');
+                await fetchWellsWellboresDatasetsToSelect(projectId, wellSelect, wellboreSelect, datasetSelect);
+
+                datasetSelect.off('change').on('change', async function () {
+                    const selectedDatasetId = $(this).val();
+                    try {
+                        const result = await getDatasetProperties(selectedDatasetId);
+                        if (result.success) {
+                            console.log(result.dataset);
+                            $('#dialog-properties-dataset-name').val(result.dataset.name);
+                            $('#dialog-properties-dataset-description').val(result.dataset.description);
+                            $('#dialog-properties-dataset-data-type').val(result.dataset.dataType);
+                            $('#dialog-properties-dataset-data-unit').val(result.dataset.dataUnit);
+                            $('#dialog-properties-dataset-index-type').val(result.dataset.indexType);
+                            $('#dialog-properties-dataset-index-unit').val(result.dataset.indexUnit);
+                            $('#dialog-properties-dataset-reference-level').val(result.dataset.referenceLevel);
+                            $('#dialog-properties-dataset-reference-date').val(result.dataset.referenceDate);
+
+                            renderGridDatasetPropertiesData(result.dataset.hasTextColumn, result.dataset.data, empty=false);
+
+                            $("#tabs").tabs({
+                                activate: function (event, ui) {
+                                    const activeTabId = ui.newPanel.attr("id"); // Get the ID of the activated tab
+                                    if (activeTabId==="tabs-2") {
+                                        if (datasetSelect.val()) {
+                                            renderGridDatasetPropertiesData(result.dataset.hasTextColumn, result.dataset.data, empty=false);
+                                        } else {
+                                            console.log("open tab data with no selected dataset");
+                                            renderGridDatasetPropertiesData(false, null, empty=true);
+                                        }
+                                    };
+                                },
+                            });
+                            
+                            // set tab parameters
+                            const parametersText = `Dataset name: ${result.dataset.name}\nDate created: ${result.dataset.dateCreated} \n`;
+                            $("#dialog-properties-dataset-parameters-textarea").val(parametersText);
+
+                        };
+                    } catch(error) {
+                        console.error("Error get datasets:", error);
+                    };
+                });
+
+            } catch (error) {
+                console.error("Failed to fetch wells:", error.message);
+            }
+        },
+        close: function () {
+            $('#dialog-properties-dataset-well-select').empty();
+            $('#dialog-properties-dataset-wellbore-select').empty();
+            $('#dialog-properties-dataset-dataset-select').empty();
+            // $(this).dialog('destroy');
+        }
+    });
+
+    const dataTypeOptions = [
+        {text: "GR - Gamma Ray", value: "GR"},
+        {text: "DT - Sonic", value: "DT"},
+        {text: "RT - Resistivity", value: "RT"},
+        {text: "RHOB - Density", value: "RHOB"},
+        {text: "PP - Pore Pressure Gradient", value: "PP"},
+        {text: "FG - Fracture Gradient", value: "FG"},
+        {text: "OBG - Overburden Gradient", value: "OBG"},
+        {text: "POISSON - Poisson Ratio", value: "POISSON"},
+        {text: "UNKNOWN", value: "Unknown"},
+    ];
+
+    // Define mapping between data types and units
+    // const pressureGradientUnits2 = ["sg", "ppg", "psi/ft", "g/cc", "kPa/m", "Pa/m", "MPa/m"];
+    // const dataTypeToUnits2 = {
+    //     "PP": pressureGradientUnits,
+    //     "FG": pressureGradientUnits,
+    //     "OBG": pressureGradientUnits,
+    //     "Temperature": ["Celsius", "Fahrenheit"],
+    //     "Unknown": ["unknown"],
+    //     "POISSON": ["unitless"],
+    //     "GR": ["GAPI", "API"],
+    //     "RT": ["ohmm"],
+    //     "DT": ["us/ft", "us/m"],
+    //     "RHOB": pressureGradientUnits,
+    // };
+
+    const dataTypeSelect = $("#dialog-properties-dataset-advanced-data-type-select");
+    dataTypeOptions.forEach(dataTypeOption => {
+        dataTypeSelect.append(`<option value="${dataTypeOption.value}">${dataTypeOption.text}</option>`);
     });
 });

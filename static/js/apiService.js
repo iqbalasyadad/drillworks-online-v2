@@ -38,6 +38,7 @@ $(document).ready(function () {
     });
   };
 
+  // PROJECT
   const getProjects = async () => {
       try {
           const response = await axios.get(`${config.apiUrl}/api/projects`, {
@@ -98,6 +99,28 @@ $(document).ready(function () {
     return activeProject;
   };
 
+  const closeProject = async (project) => {
+    console.log("close project called");
+    try {
+      const response = await axios.post(`${config.apiUrl}/api/close-project`, {
+        _id: '',
+        name: ''
+      }, {
+        withCredentials: true,  // Include cookies with the request
+      });
+      localStorage.setItem('activeProject', JSON.stringify({
+        _id: '',
+        name: ''
+      }));
+      refreshUI();
+      
+      return response;
+    } catch (error) {
+      console.error("Error saving project:", error.response?.data || error.message);
+      throw error;
+    }
+  };
+
   const deleteProject = async (project, deleteWells) => {
     try {
       const response = await fetch(`${config.apiUrl}/api/projects/${project._id}?delete_wells=${deleteWells}`, {
@@ -119,7 +142,20 @@ $(document).ready(function () {
       throw error;
     }
   };
+
+  const getProjectDataStructure = async (projectId) => {
+    try {
+      const response = await axios.get(`${config.apiUrl}/api/project_data_structure?project_id=${projectId}`, {
+        withCredentials: true,  // Include cookies with the request
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching projects:", error.response?.data || error.message);
+      throw error;
+    }
+  };
   
+  // WELL
   const getWells = async (projectId) => {
     try {
       const response = await axios.get(`${config.apiUrl}/api/wells?project_id=${projectId}`, {
@@ -319,14 +355,28 @@ $(document).ready(function () {
     }
   };
 
+  const getDatasetProperties = async (datasetId) => {
+    try {
+      const response = await axios.get(`${config.apiUrl}/api/dataset_properties/${datasetId}`, {
+        withCredentials: true, // Include cookies with the request
+      });
+      return response.data; // Assuming you want to return only the data portion
+    } catch (error) {
+      console.error("Error getting dataset properties:", error.response?.data || error.message);
+      throw error;
+    }
+  };
 
   // Attach functions to window if needed for global access
+
+  // Project
   window.checkSession = checkSession;
   window.logoutAccount = logoutAccount;
   window.getProjects = getProjects;
   window.setActiveProject = setActiveProject;
   window.getActiveProject = getActiveProject;
   window.getLocalActiveProject = getLocalActiveProject;
+  window.closeProject = closeProject;
   window.deleteProject = deleteProject;
 
   // well
@@ -345,7 +395,10 @@ $(document).ready(function () {
   window.addDataset = addDataset;
   window.getDatasets = getDatasets;
   window.deleteDatasets = deleteDatasets;
+  window.getDatasetProperties = getDatasetProperties;
 
+  // project structure
+  window.getProjectDataStructure = getProjectDataStructure;
 
   // call initial app function
   // getActiveProject();

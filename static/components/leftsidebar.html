@@ -1,12 +1,15 @@
 <html>
     <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+        <!-- <link rel="stylesheet" href="../css/modules/style.css" /> -->
+
         <script src="/static/js/leftSideBar.js"></script>
     </head>
     <body>
         <div id="project-explorer-container">
             <div id="project-explorer-tab-data-content" class="project-explorer-tabcontent">
-            <!-- Placeholder for JsTreeTable -->
-            <div id="jsTreeTable">Tree Table Content Here</div>
+            <!-- Placeholder for JsTree -->
+            <div id="jstree"></div>
             </div>
         
             <div id="project-explorer-tab-display-content" class="project-explorer-tabcontent">
@@ -34,7 +37,7 @@
         <div id="dragbar" onmousedown="startDragging(event)" style="cursor: col-resize;"></div>
 
         <script>
-            let sidebarWidth = 200;
+            let sidebarWidth = 250;
         
             // Initialize sidebar width
             $('#left-sidebar-container').css('width', `${sidebarWidth}px`);
@@ -80,6 +83,36 @@
                 document.removeEventListener("mousemove", handleMouseMove);
                 document.removeEventListener("mouseup", stopDragging);
             }
+
+            async function initializeTree() {
+                const activeProject = getLocalActiveProject();
+                // console.log(activeProject);
+                if (activeProject._id) {
+                    try {
+                        const treeData = await getProjectDataStructure(activeProject._id);
+                        // console.log("tree: ", treeData);
+                        $('#jstree').empty().jstree('destroy');
+                        $('#jstree').jstree({
+                            core: { data: treeData },
+                            plugins: ["table"],
+                            table: {
+                            columns: [
+                                { width: 200, header: "Node Name" },
+                                { width: 100, header: "Details" },
+                            ],
+                            resizable: true,
+                            },
+                            themes: { theme: "apple", dots: true, icons: true },
+                        });
+
+                    } catch (error) {
+                        console.error("Error fetching project structure:", error);
+                    };
+                };
+            };
+
+            initializeTree();
+            window.initializeTree = initializeTree;
 
         </script>
     </body>

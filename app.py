@@ -135,6 +135,24 @@ def get_active_project():
         return jsonify({"message": "No active project"}), 404
     return jsonify({"_id": session_project['_id'], "name": session_project['name']}), 200
 
+@app.route('/api/close-project', methods=['POST'])
+def close_project():
+    print("receive request for close project")
+    data = request.json
+    project_id = data.get('_id')
+    project_name = data.get('name')
+
+    # if not project_id:
+    #     return jsonify({"message": "Project ID is required"}), 400
+
+    # Save selected project ID to the session
+    session['active_project'] = {
+        "_id": "",
+        "name": ""
+    }
+    print(session)
+    return jsonify({"message": "Project closed: {}".format(project_id)}), 200
+
 # @app.route('/api/get_session_project', methods=['GET'])
 # def get_session_project():
 #     print("receive request for get session project")
@@ -246,6 +264,67 @@ def delete_project_with_wells(project_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+def get_project_structure(project_id):
+    # Fetch the project by ID
+    project = projects_collection.find_one({'_id': ObjectId(project_id)})
+    if not project:
+        return None
+
+    # Build the structure for the project
+    project_structure = {
+        'text': project.get('name', 'Project'),
+        'children': [],
+        'type': 'project',
+    }
+
+    # Fetch wells linked to the project
+    wells = wells_collection.find({'_id': {'$in': project.get('wells', [])}})
+    for well in wells:
+        well_structure = {
+            'text': well.get('name', 'Well'),
+            'children': [],
+            'type': 'well'
+        }
+
+        # Fetch wellbores linked to the well
+        wellbores = wellbores_collection.find({'_id': {'$in': well.get('wellbores', [])}})
+        for wellbore in wellbores:
+            wellbore_structure = {
+                'text': wellbore.get('name', 'Wellbore'),
+                'children': [],
+                'type': 'wellbore'
+            }
+
+            # Fetch datasets linked to the wellbore
+            datasets = datasets_collection.find({'_id': {'$in': wellbore.get('datasets', [])}})
+            for dataset in datasets:
+                dataset_structure = {
+                    'text': dataset.get('name', 'Dataset'),
+                    'type': 'dataset'
+                }
+                wellbore_structure['children'].append(dataset_structure)
+            well_structure['children'].append(wellbore_structure)
+        project_structure['children'].append(well_structure)
+
+    return project_structure
+
+@app.route('/api/project_data_structure', methods=['GET'])
+def project_data_structure():
+    print("Received request get project data structure by project")
+    if 'user_id' not in session:
+        print("not  in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+    
+    project_id = request.args.get('project_id')
+
+    try:
+        project_structure = get_project_structure(project_id)
+        if not project_structure:
+            return jsonify({'error': 'Project not found'}), 404
+        return jsonify(project_structure)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/wells', methods=['POST'])
@@ -475,20 +554,6 @@ def set_survey(wellbore_id):
     azimuth = data.get('azimuth')
     calculateTVDChecked = data.get('calculate_tvd_checked')
 
-    # # Check if all required fields are present
-    # if not all([md, tvd, inclination, azimuth]):
-    #     return jsonify({
-    #         "success": False, 
-    #         "message": "Missing required fields (md, tvd, inclination, azimuth)"
-    #     }), 400
-
-    # # Check if the lengths of all the survey data are the same
-    # if not (len(md) == len(tvd) == len(inclination) == len(azimuth)):
-    #     return jsonify({
-    #         "success": False, 
-    #         "message": "Survey data arrays must have the same length"
-    #     }), 400
-
     print("calculateTVDChecked: ", calculateTVDChecked)
     if calculateTVDChecked:
         print("calculate TVD")
@@ -550,7 +615,8 @@ def add_datasets():
         "symbol": data.get('symbol'),
         "symbolSize": data.get('symbol_size'),
         "hasTextColumn": data.get('has_text_column'),
-        "datasets": data.get('datasets')
+        "data": data.get('data'),
+        "dateCreated": data.get('date_created')
     }
     dataset_id = datasets_collection.insert_one(new_dataset).inserted_id
 
@@ -615,6 +681,35 @@ def delete_datasets():
     except Exception as e:
         print(f"Error deleting datasets: {str(e)}")
         return jsonify({"success": False, "message": "An error occurred while deleting datasets"}), 500
+
+@app.route('/api/dataset_properties/<dataset_id>', methods=['GET'])
+def get_dataset_properties(dataset_id):
+    """
+    Retrieve properties of a specific dataset by its ID.
+    """
+    print(f"Fetching dataset properties for ID: {dataset_id}")
+    
+    try:
+        # Query the database for the dataset
+        dataset = datasets_collection.find_one({"_id": ObjectId(dataset_id)})
+        
+        if not dataset:
+            print("Dataset not found")
+            return jsonify({"success": False, "message": "Dataset not found"}), 404
+        
+        # Convert ObjectId to string for JSON serialization
+        dataset['_id'] = str(dataset['_id'])
+        dataset['wellbore_id'] = str(dataset['wellbore_id'])
+
+        return jsonify({"success": True, "dataset": dataset}), 200
+
+    except Exception as e:
+        print(f"Error retrieving dataset: {e}")
+        return jsonify({"success": False, "message": "An error occurred while fetching the dataset"}), 500
+
+    
+
+
 
 
 
