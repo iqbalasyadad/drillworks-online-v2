@@ -85,8 +85,8 @@
             }
 
             async function initializeTree() {
-                const activeProject = getLocalActiveProject();
-                // console.log(activeProject);
+                const activeProject = await getLocalActiveProject();
+                console.log(activeProject);
                 if (activeProject._id) {
                     try {
                         const treeData = await getProjectDataStructure(activeProject._id);

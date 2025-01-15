@@ -26,11 +26,10 @@
             <li>
               Project
               <ul>
-                <li class="" id="menubar-project-create-li">
-                    <a href="javascript:void(0)">Create...<span>Ctrl+S</span></a>
-                </li>
+                <li class="" id="menubar-project-create-li"><a href="javascript:void(0)">Create...<span>Ctrl+S</span></a></li>
                 <li class="" id="menubar-project-open-li"><a href="javascript:void(0)" >Open...<span></span></a></li>
                 <li class=""><a href="javascript:void(0)">Save<span>Ctrl+S</span></a></li>
+                <li class="" id="menubar-project-properties-li"><a href="javascript:void(0)">Properties<span></span></a></li>
                 <li class="" id="menubar-project-close-li"><a href="javascript:void(0)">Close<span></span></a></li>
                 <li class="" id="menubar-project-delete-li"><a href="javascript:void(0)">Delete....<span></span></a></li>
                 <li class="" id="menubar-project-refresh-li"><a href="javascript:void(0)">Refresh<span></span></a></li>
@@ -86,6 +85,30 @@
                       <li>Submenu 3</li>
                   </ul>
                 </li>
+              </ul>
+            </li>
+
+            <li>
+              View
+              <ul>
+                <li class="" id="menubar-view-create-track-view-li"><a href="javascript:void(0)">Create a Track View...<span></span></a></li>
+                <li class="" ><a href="javascript:void(0)">Delete a Track View...<span></span></a></li>
+                <li class="" ><a href="javascript:void(0)">Track View Properties...<span></span></a></li>
+                <li>Menu
+                  <ul>
+                      <li>Submenu 1</li>
+                      <li>Submenu 2</li>
+                      <li>Submenu 3</li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+
+            <li>
+              Help
+              <ul>
+                <li class=""><a href="javascript:void(0)">About<span></span></a></li>
+                <li class="" ><a href="javascript:void(0)">Manual<span></span></a></li>
               </ul>
             </li>
 
@@ -179,6 +202,58 @@
             </div>
             <input type="checkbox" id="dialog-delete-project-delete-wells-checkbox" value="delete-wells"></input>
             <label for="dialog-delete-project-delete-wells-checkbox">Delete all wells in this project that are not shared by other projects</label>
+          </form>
+        </div>
+
+        <!-- DIALOG PROPERTIES PROJECT -->
+        <div id="dialog-properties-project" title="Project Properties" style="display: none;">
+          <form id="dialog-properties-project-form">
+            <div id="page-container-properties-project">
+
+              <div id="dialog-properties-project-tabs" style="width: 100%;">
+                <ul>
+                  <li><a href="#dialog-properties-project-tabs-1">General</a></li>
+                  <li><a href="#dialog-properties-project-tabs-2">Notes</a></li>
+                </ul>
+                <div id="dialog-properties-project-tabs-1">
+
+                  <table style="width: 100%;">
+                    <colgroup id="colgroup">
+                      <col style="width: 30%;">
+                      <col style="width: 70%;">
+                    </colgroup>
+                    <tbody>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-project-name">Project name:</label></td>
+                        <td><input type="text" class="dialog-text-input" id="dialog-properties-project-name" /></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-project-description">Description:</label></td>
+                        <td><input type="text" class="dialog-text-input" id="dialog-properties-project-description" /></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-project-analyst">Analyst:</label></td>
+                        <td><input type="text" class="dialog-text-input" id="dialog-properties-project-analyst" /></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-project-default-depth-unit-select" class="dialog-label-input">Default depth unit:</label></td>
+                        <td>
+                            <select name="dialog-properties-project-default-depth-unit-select" class="dialog-select-input" id="dialog-properties-project-default-depth-unit-select">
+                                <option value="m">meters</option>
+                                <option value="ft">feet</option>
+                            </select>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                </div>
+                <div id="dialog-properties-project-tabs-2">
+                  <textarea id="dialog-properties-project-notes" rows="15" style="width: 100%;"></textarea>
+                </div>
+              </div>
+
+            </div>
           </form>
         </div>
         
@@ -850,7 +925,7 @@
 
                 </div>
                 <div id="tabs-2">
-                  <div class="dialog-datagridxl-input" id="dialog-properties-dataset-data-grid" style="width:100%;height:240px;"></div>
+                  <div class="dialog-datagridxl-input" id="dialog-properties-dataset-data-grid" style="width:95%; height:240px;"></div>
                 </div>
                 <div id="tabs-3">
                   <textarea id="dialog-properties-dataset-parameters-textarea" name="dialog-properties-dataset-parameters-textarea" rows="15" style="width:100%; resize: none;" disabled></textarea>
@@ -920,7 +995,7 @@
               }
             });
           
-            // Bind click event to the "Create..." menu item
+
             // PROJECT
             $("li#menubar-project-create-li").click(function () {
               console.log("create-project-clicked");
@@ -934,6 +1009,11 @@
             $("li#menubar-project-delete-li").click(function () {
               console.log(getProjects());
               $("#dialog-delete-project").dialog("open");
+            });
+
+            $("li#menubar-project-properties-li").click(function () {
+              console.log("open dialog properties project");
+              $("#dialog-properties-project").dialog("open");
             });
 
             $("li#menubar-project-close-li").click(function () {
@@ -987,9 +1067,9 @@
               $("#dialog-properties-dataset").dialog("open");
             });
 
-            $( function() {
-              $( "#tabs" ).tabs();
-            } );
+            $( function() { $( "#tabs" ).tabs(); } );
+            $( function() { $( "#dialog-properties-project-tabs" ).tabs(); } );
+
 
           });
 

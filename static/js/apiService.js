@@ -39,6 +39,22 @@ $(document).ready(function () {
   };
 
   // PROJECT
+  const addProject = async (formData) => {
+    try {
+      const response = await axios.post(`${config.apiUrl}/api/projects`, formData, {
+          headers: { 
+              "Content-Type": "application/json"
+          },
+          withCredentials: true, // Include cookies in the request
+      });
+      return response.data;
+    } catch (error) {
+        // Handle any errors here, e.g., duplicate project name error
+        console.error("Error:", error);
+        alert(error.message);  // Display the error message to the user
+    }
+  };
+
   const getProjects = async () => {
       try {
           const response = await axios.get(`${config.apiUrl}/api/projects`, {
@@ -50,6 +66,48 @@ $(document).ready(function () {
           throw error;
       }
   };
+
+  const getProjectProperties = async (projectId) => {
+    try {
+        const response = await axios.get(`${config.apiUrl}/api/project_properties/${projectId}`, {
+            withCredentials: true, // Include cookies with the request
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching project properties:", error.response?.data || error.message);
+        throw error;
+    }
+  };
+
+  const updateProjectProperties = async (projectId, formData) => {
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/projects/${projectId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true, // Include cookies in the request
+        }
+      );
+      console.log("Project updated successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      // Extract error details
+      if (error.response) {
+        console.error("Server Error:", error.response.data.message);
+        alert(`Error: ${error.response.data.message}`);
+      } else if (error.request) {
+        console.error("No response from server:", error.request);
+        alert("Error: Unable to contact the server. Please try again.");
+      } else {
+        console.error("Unexpected Error:", error.message);
+        alert(`Error: ${error.message}`);
+      }
+    }
+  };
+  
 
   const setActiveProject = async (project) => {
     console.log("setActiveProject called");
@@ -367,38 +425,39 @@ $(document).ready(function () {
     }
   };
 
-  // Attach functions to window if needed for global access
-
+  // Make function as global access
   // Project
   window.checkSession = checkSession;
   window.logoutAccount = logoutAccount;
+  window.addProject = addProject;
   window.getProjects = getProjects;
+  window.getProjectProperties = getProjectProperties;
+  window.updateProjectProperties = updateProjectProperties;
   window.setActiveProject = setActiveProject;
   window.getActiveProject = getActiveProject;
   window.getLocalActiveProject = getLocalActiveProject;
   window.closeProject = closeProject;
   window.deleteProject = deleteProject;
+  window.getProjectDataStructure = getProjectDataStructure;
 
-  // well
+  // Well
   window.getWells = getWells;
   window.addWell = addWell;
   window.deleteWell = deleteWell;
 
-  // wellbore
+  // Wellbore
   window.getWellbores = getWellbores;
   window.addWellbore = addWellbore;
   window.deleteWellbore = deleteWellbore;  
   window.setWellboreSurvey = setWellboreSurvey;
   window.getWellboreSurvey = getWellboreSurvey;
 
-  // dataset
+  // Dataset
   window.addDataset = addDataset;
   window.getDatasets = getDatasets;
   window.deleteDatasets = deleteDatasets;
   window.getDatasetProperties = getDatasetProperties;
 
-  // project structure
-  window.getProjectDataStructure = getProjectDataStructure;
 
   // call initial app function
   // getActiveProject();

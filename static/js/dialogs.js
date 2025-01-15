@@ -250,21 +250,13 @@ $(document).ready(function () {
                 }
             
                 try {
-                    const response = await axios.post(`${config.apiUrl}/api/projects`, formData, {
-                        headers: { 
-                            "Content-Type": "application/json"
-                        },
-                        withCredentials: true, // Include cookies in the request
-                    });
-            
-                    // Check if the response is successful
-                    if (response.data.success) {
-                        console.log(response.data);
-                        setActiveProject(response.data.project);
+                    const response = await addProject(formData);
+                    if (response.success) {
+                        console.log(response);
+                        setActiveProject(response.project);
                         initializeTree();
-                        // alert(response.data.message);
                     } else {
-                        throw new Error(response.data.message || "Failed to add project");
+                        throw new Error(response.message || "Failed to add project");
                     }
                 } catch (error) {
                     // Handle any errors here, e.g., duplicate project name error
@@ -326,6 +318,7 @@ $(document).ready(function () {
             openProjectTable.$('tr.selected').removeClass('selected');
             $(this).addClass('selected');
             openProjectTableSelectedProject = openProjectTable.row(this).data();
+            console.log(openProjectTableSelectedProject._id);
         }
         
     });
@@ -483,6 +476,79 @@ $(document).ready(function () {
         close: function () {
             deleteProjectTable.$('tr.selected').removeClass('selected');
             deleteProjectTableSelectedProject = null;
+        }
+    });
+
+    // DIALOG PROPERTIES PROJECT
+    $("#dialog-properties-project").dialog({
+        autoOpen: false,
+        height: 400,
+        width: 400,
+        modal: true,
+        buttons: {
+            Apply: {
+                // id: "menubar-project-open-dialog-open-btn",
+                text: "Apply",
+                // disabled: true,
+                async click() {
+                    const activeProject = getLocalActiveProject();
+                    const projectId = activeProject._id;
+                    const formData = {
+                        project_id: projectId,
+                        name: $("#dialog-properties-project-name").val(),
+                        description: $("#dialog-properties-project-description").val(),
+                        analyst: $("#dialog-properties-project-analyst").val(),
+                        default_depth_unit: $("#dialog-properties-project-default-depth-unit-select").val(),
+                        notes: $("#dialog-properties-project-notes").val(),
+                        date_updated: new Date()
+                    };
+                    console.log(formData);
+                
+                    if (!formData.name) {
+                        alert("Please enter a project name!");
+                        return;
+                    }
+                
+                    try {
+                        const response = await updateProjectProperties(projectId, formData);
+                        if (response.success) {
+                            initializeTree();
+                        } else {
+                            throw new Error(response.message || "Failed to update project");
+                        }
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert(error.message);  // Display the error message to the user
+                    }
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        },
+        open: async ()=> {
+            const activeProject = getLocalActiveProject();
+            const projectId = activeProject._id;
+            try {
+                const result = await getProjectProperties(projectId);
+                if (result.success) {
+                    console.log(result.project);
+                    $("#dialog-properties-project-name").val(result.project.name);
+                    $("#dialog-properties-project-description").val(result.project.description);
+                    $("#dialog-properties-project-analyst").val(result.project.analyst);
+                    $("#dialog-properties-project-notes").val(result.project.notes);
+                    $("#dialog-properties-project-default-depth-unit-select").val(result.project.defaultDepthUnit).change();
+                };
+            } catch (error) {
+                console.error("Error get datasets:", error);
+            };
+            
+        },
+        close: function () {
+            $('#dialog-properties-project-form')[0].reset();
         }
     });
 

@@ -89,7 +89,64 @@ def logout():
         print("not  in session")
         return jsonify({"success": False, "message": "User not in session"}), 401
     session.pop('user_id', None)  # Remove user_id from session
-    return jsonify({"success": True, "message": "Logged out successfully"}), 200   
+    return jsonify({"success": True, "message": "Logged out successfully"}), 200
+
+@app.route('/api/projects', methods=['POST'])
+def add_project():
+    print("Received request to add project")
+    data = request.json
+
+    # Check if the user is authenticated
+    if 'user_id' not in session:
+        print("User not in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+
+    user_id = ObjectId(session['user_id'])
+
+    # Check for duplicate project name for the same user
+    name = data.get('name')
+    if not name:
+        return jsonify({"success": False, "message": "Project name is required"}), 400
+
+    existing_project = projects_collection.find_one({"user_id": user_id, "name": name})
+    if existing_project:
+        return jsonify({"success": True, "message": "A project with the same name already exists"}), 200
+
+    # Prepare the new project data
+    new_project = {
+        "_id": ObjectId(),
+        "name": name,
+        "description": data.get('description', ''),
+        "analyst": data.get('analyst', ''),
+        "defaultDepthUnit": data.get('default_depth_unit', ''),
+        "notes": data.get('notes', ''),
+        "dateCreated": data.get('date_created', ''),
+        "users_id": [ObjectId(user_id)],
+        "wells_id": []  # Empty wells list initially
+    }
+
+    # Insert the project into the database
+    try:
+        print("Creating project:", name)
+        project_id = projects_collection.insert_one(new_project).inserted_id
+
+        # Store project details in the session
+        session['project'] = {"id": str(project_id), "name": name}
+        print("Project session set:", session['project'])
+
+        # Return a success response
+        return jsonify({
+            "success": True,
+            "message": "Project added successfully",
+            "project": {
+                "_id": str(project_id),
+                "name": name
+            }
+        })
+
+    except Exception as e:
+        print(f"Error while adding project: {e}")
+        return jsonify({"success": False, "message": "Failed to add project"}), 500 
 
 @app.route('/api/projects', methods=['GET'])
 def get_projects():
@@ -99,7 +156,7 @@ def get_projects():
         print("not  in session")
         return jsonify({"success": False, "message": "User not in session"}), 401
     user_id = ObjectId(session['user_id'])
-    projects = projects_collection.find({"user_id": ObjectId(user_id)})
+    projects = projects_collection.find({"users_id": ObjectId(user_id)})
     result = [{"_id": str(project["_id"]), 
                "name": project["name"],
                "analyst": project["analyst"],
@@ -107,6 +164,94 @@ def get_projects():
                } 
                for project in projects]
     return jsonify(result)
+
+@app.route('/api/project_properties/<project_id>', methods=['GET'])
+def get_project_properties(project_id):
+    """
+    Retrieve properties of a specific project by its ID.
+    """
+    print(f"Fetching dataset properties for ID: {project_id}")
+    
+    try:
+        # Query the database for the project
+        project = projects_collection.find_one({"_id": ObjectId(project_id)})
+
+        print(project)
+        
+        if not project:
+            print("Project not found")
+            return jsonify({"success": False, "message": "Project not found"}), 404
+        
+        # # Convert ObjectId to string for JSON serialization
+        project['_id'] = str(project['_id'])
+        project['users_id'] = [str(user_id) for user_id in project.get('users_id', [])]
+        project['wells_id'] = [str(well_id) for well_id in project.get('wells_id', [])]
+
+
+        return jsonify({"success": True, "project": project}), 200
+    
+    except Exception as e:
+        print(f"Error retrieving project: {e}")
+        return jsonify({"success": False, "message": "An error occurred while fetching the project properties"}), 500
+    
+@app.route('/api/projects/<project_id>', methods=['PUT'])
+def update_project(project_id):
+    print(f"Received request to update project: {project_id}")
+    data = request.json
+
+    # Check if the user is authenticated
+    if 'user_id' not in session:
+        print("User not in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+
+    user_id = ObjectId(session['user_id'])
+
+    # Fetch the project by ID and verify ownership
+    try:
+        existing_project = projects_collection.find_one({"_id": ObjectId(project_id), "users_id": user_id})
+        if not existing_project:
+            print("Project not found or unauthorized access")
+            return jsonify({"success": False, "message": "Project not found or unauthorized"}), 404
+
+    except Exception as e:
+        print(f"Error while fetching project: {e}")
+        return jsonify({"success": False, "message": "Failed to fetch project"}), 500
+
+    # Update fields if provided in the request
+    updated_fields = {}
+    if 'name' in data:
+        updated_fields['name'] = data['name']
+    if 'description' in data:
+        updated_fields['description'] = data['description']
+    if 'analyst' in data:
+        updated_fields['analyst'] = data['analyst']
+    if 'default_depth_unit' in data:
+        updated_fields['defaultDepthUnit'] = data['default_depth_unit']
+    if 'notes' in data:
+        updated_fields['notes'] = data['notes']
+
+    # Add the updated date
+    updated_fields['dateUpdated'] = data.get('date_updated', '')
+
+    # Update the project in the database
+    try:
+        print(f"Updating project: {project_id} with fields: {updated_fields}")
+        result = projects_collection.update_one(
+            {"_id": ObjectId(project_id)},
+            {"$set": updated_fields}
+        )
+
+        if result.modified_count == 0:
+            print("No changes made to the project")
+            return jsonify({"success": False, "message": "No changes made"}), 200
+
+        print("Project updated successfully")
+        return jsonify({"success": True, "message": "Project updated successfully"})
+
+    except Exception as e:
+        print(f"Error while updating project: {e}")
+        return jsonify({"success": False, "message": "Failed to update project"}), 500
+
 
 @app.route('/api/set-active-project', methods=['POST'])
 def set_active_project():
@@ -153,74 +298,6 @@ def close_project():
     print(session)
     return jsonify({"message": "Project closed: {}".format(project_id)}), 200
 
-# @app.route('/api/get_session_project', methods=['GET'])
-# def get_session_project():
-#     print("receive request for get session project")
-
-#     session_project = session.get('project')
-#     if not session_project:
-#         return jsonify({"message": "No project selected"}), 404
-#     return jsonify({"id": session_project['id'], "name": session_project['name']}), 200
-
-@app.route('/api/projects', methods=['POST'])
-def add_project():
-    print("Received request to add project")
-    data = request.json
-
-    # Check if the user is authenticated
-    if 'user_id' not in session:
-        print("User not in session")
-        return jsonify({"success": False, "message": "User not in session"}), 401
-
-    user_id = ObjectId(session['user_id'])
-
-    # Check for duplicate project name for the same user
-    name = data.get('name')
-    if not name:
-        return jsonify({"success": False, "message": "Project name is required"}), 400
-
-    existing_project = projects_collection.find_one({"user_id": user_id, "name": name})
-    if existing_project:
-        return jsonify({"success": True, "message": "A project with the same name already exists"}), 200
-
-    # Prepare the new project data
-    new_project = {
-        "_id": ObjectId(),
-        "name": name,
-        "description": data.get('description', ''),
-        "analyst": data.get('analyst', ''),
-        "defaultDepthUnit": data.get('default_depth_unit', ''),
-        "notes": data.get('notes', ''),
-        "dateCreated": data.get('date_created', ''),
-        "user_id": [ObjectId(user_id)],
-        "wells": []  # Empty wells list initially
-    }
-
-    # Insert the project into the database
-    try:
-        print("Creating project:", name)
-        project_id = projects_collection.insert_one(new_project).inserted_id
-
-        # Store project details in the session
-        session['project'] = {"id": str(project_id), "name": name}
-        print("Project session set:", session['project'])
-
-        # Return a success response
-        return jsonify({
-            "success": True,
-            "message": "Project added successfully",
-            "project": {
-                "_id": str(project_id),
-                "name": name
-            }
-        })
-
-    except Exception as e:
-        print(f"Error while adding project: {e}")
-        return jsonify({"success": False, "message": "Failed to add project"}), 500
-
-
-
 @app.route('/api/projects/<project_id>', methods=['DELETE'])
 def delete_project_with_wells(project_id):
     print("Received request delete project")
@@ -242,15 +319,15 @@ def delete_project_with_wells(project_id):
 
         # Remove the project reference from wells
         wells_collection.update_many(
-            {"projects": project_id_obj},
-            {"$pull": {"projects": project_id_obj}}
+            {"projects_id": project_id_obj},
+            {"$pull": {"projects_id": project_id_obj}}
         )
 
         wells_deleted_count = 0
 
         if delete_wells:
             # Find and delete wells no longer associated with any project
-            wells_to_delete = wells_collection.find({"projects": {"$size": 0}})
+            wells_to_delete = wells_collection.find({"projects_id": {"$size": 0}})
             well_ids_to_delete = [well["_id"] for well in wells_to_delete]
 
             if well_ids_to_delete:
@@ -279,7 +356,7 @@ def get_project_structure(project_id):
     }
 
     # Fetch wells linked to the project
-    wells = wells_collection.find({'_id': {'$in': project.get('wells', [])}})
+    wells = wells_collection.find({'_id': {'$in': project.get('wells_id', [])}})
     for well in wells:
         well_structure = {
             'text': well.get('name', 'Well'),
@@ -288,7 +365,7 @@ def get_project_structure(project_id):
         }
 
         # Fetch wellbores linked to the well
-        wellbores = wellbores_collection.find({'_id': {'$in': well.get('wellbores', [])}})
+        wellbores = wellbores_collection.find({'_id': {'$in': well.get('wellbores_id', [])}})
         for wellbore in wellbores:
             wellbore_structure = {
                 'text': wellbore.get('name', 'Wellbore'),
@@ -297,7 +374,7 @@ def get_project_structure(project_id):
             }
 
             # Fetch datasets linked to the wellbore
-            datasets = datasets_collection.find({'_id': {'$in': wellbore.get('datasets', [])}})
+            datasets = datasets_collection.find({'_id': {'$in': wellbore.get('datasets_id', [])}})
             for dataset in datasets:
                 dataset_structure = {
                     'text': dataset.get('name', 'Dataset'),
@@ -360,13 +437,13 @@ def add_well():
         "defaultUnitDepth": data.get('default_unit_depth'),
         "defaultUnitDensity": data.get('default_unit_density'),
         "notes": data.get('notes'),
-        "projects": [ObjectId(project_id)],
-        "wellbores": []
+        "projects_id": [ObjectId(project_id)],
+        "wellbores_id": []
     }
     well_id = wells_collection.insert_one(new_well).inserted_id
 
     # Update project to include the new well
-    projects_collection.update_one({"_id": ObjectId(project_id)}, {"$push": {"wells": well_id}})
+    projects_collection.update_one({"_id": ObjectId(project_id)}, {"$push": {"wells_id": well_id}})
     return jsonify({"success": True, "message": "Well added successfully", "well_id": str(well_id)}) 
 
 @app.route('/api/wells', methods=['GET'])
@@ -377,7 +454,7 @@ def get_wells():
         return jsonify({"success": False, "message": "User not in session"}), 401
     
     project_id = request.args.get('project_id')
-    wells = wells_collection.find({"projects": ObjectId(project_id)})
+    wells = wells_collection.find({"projects_id": ObjectId(project_id)})
     result = [{"_id": str(well["_id"]), "name": well["name"]} for well in wells]
     return jsonify(result)
 
@@ -412,12 +489,12 @@ def delete_well(well_id):
         return jsonify({"success": False, "message": f"Well {well_id} not found"}), 404
     
     # Delete all wellbores associated with the well
-    wellbores_collection.delete_many({"well_id": ObjectId(well_id)})
+    wellbores_collection.delete_many({"wells_id": ObjectId(well_id)})
 
     # Remove the well from all projects
     projects_collection.update_many(
-        {"wells": ObjectId(well_id)},  # Find projects that contain the well
-        {"$pull": {"wells": ObjectId(well_id)}}  # Remove the well from the wells array
+        {"wells_id": ObjectId(well_id)},  # Find projects that contain the well
+        {"$pull": {"wells_id": ObjectId(well_id)}}  # Remove the well from the wells array
     )
 
     # Now, delete the well itself
@@ -461,18 +538,13 @@ def add_wellbore():
         "totalTVD": data.get('total_tvd'),
         "spudDate": data.get('spud_date'),
         "completionDate": data.get('completion_date'),
-        "datasets": [],
-        "survey": {
-            "md": [],
-            "tvd": [],
-            "inclination": [],
-            "azimuth": []
-        }
+        "survey": { "md": [], "tvd": [], "inclination": [], "azimuth": [] },
+        "datasets_id": []
     }
     wellbore_id = wellbores_collection.insert_one(new_wellbore).inserted_id
 
     # Update well to include the new wellbore
-    wells_collection.update_one({"_id": ObjectId(well_id)}, {"$push": {"wellbores": wellbore_id}})
+    wells_collection.update_one({"_id": ObjectId(well_id)}, {"$push": {"wellbores_id": wellbore_id}})
     return jsonify({"success": True, 
                     "message": "Wellbore added successfully", 
                     "welbore_id": str(wellbore_id)})
@@ -510,7 +582,7 @@ def delete_wellbore(wellbore_id):
     wellbores_collection.delete_one({"_id": ObjectId(wellbore_id)})
     wells_collection.update_one(
         {"_id": ObjectId(well_id)},
-        {"$pull": {"wellbores": ObjectId(wellbore_id)}}
+        {"$pull": {"wellbores_id": ObjectId(wellbore_id)}}
     )
     return jsonify({"success": True, "message": "Wellbore deleted successfully"})
 
@@ -621,7 +693,7 @@ def add_datasets():
     dataset_id = datasets_collection.insert_one(new_dataset).inserted_id
 
     # Update wellbore to include the new dataset
-    wellbores_collection.update_one({"_id": ObjectId(wellbore_id)}, {"$push": {"datasets": dataset_id}})
+    wellbores_collection.update_one({"_id": ObjectId(wellbore_id)}, {"$push": {"datasets_id": dataset_id}})
     return jsonify({"success": True, "message": "Dataset added successfully", "dataset_id": str(dataset_id)})
 
 @app.route('/api/datasets', methods=['GET'])
