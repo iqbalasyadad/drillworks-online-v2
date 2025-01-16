@@ -298,6 +298,7 @@ def close_project():
     print(session)
     return jsonify({"message": "Project closed: {}".format(project_id)}), 200
 
+# NEED TO BE CHECKED (IF DELETE PROJECT AND WELL ASSOSIATED REFINE CODE TO DELETE WELLBORE AND DATASET)
 @app.route('/api/projects/<project_id>', methods=['DELETE'])
 def delete_project_with_wells(project_id):
     print("Received request delete project")
@@ -444,7 +445,7 @@ def add_well():
 
     # Update project to include the new well
     projects_collection.update_one({"_id": ObjectId(project_id)}, {"$push": {"wells_id": well_id}})
-    return jsonify({"success": True, "message": "Well added successfully", "well_id": str(well_id)}) 
+    return jsonify({"success": True, "message": "Well added successfully", "well_id": str(well_id)})
 
 @app.route('/api/wells', methods=['GET'])
 def get_wells():
@@ -479,28 +480,40 @@ def get_wells():
 @app.route('/api/wells/<well_id>', methods=['DELETE'])
 def delete_well(well_id):
     print("Received request: delete well")
+    
     if 'user_id' not in session:
         print("not in session")
         return jsonify({"success": False, "message": "User not in session"}), 401
 
-    # Find the well to get its associated wellbores
-    well = wells_collection.find_one({"_id": ObjectId(well_id)})
-    if not well:
-        return jsonify({"success": False, "message": f"Well {well_id} not found"}), 404
-    
-    # Delete all wellbores associated with the well
-    wellbores_collection.delete_many({"wells_id": ObjectId(well_id)})
+    try:
+        # Find the well to get its associated wellbores
+        well = wells_collection.find_one({"_id": ObjectId(well_id)})
+        if not well:
+            return jsonify({"success": False, "message": f"Well {well_id} not found"}), 404
+        
+        # Get the list of wellbores associated with this well
+        wellbores = wellbores_collection.find({"well_id": ObjectId(well_id)})
 
-    # Remove the well from all projects
-    projects_collection.update_many(
-        {"wells_id": ObjectId(well_id)},  # Find projects that contain the well
-        {"$pull": {"wells_id": ObjectId(well_id)}}  # Remove the well from the wells array
-    )
+        # Delete all datasets associated with each wellbore
+        for wellbore in wellbores:
+            wellbore_id = wellbore["_id"]
+            datasets_collection.delete_many({"wellbore_id": ObjectId(wellbore_id)})
+            wellbores_collection.delete_one({"_id": ObjectId(wellbore_id)})
 
-    # Now, delete the well itself
-    wells_collection.delete_one({"_id": ObjectId(well_id)})
+        # Remove the well from all projects
+        projects_collection.update_many(
+            {"wells_id": ObjectId(well_id)},  # Find projects that contain the well
+            {"$pull": {"wells_id": ObjectId(well_id)}}  # Remove the well from the wells array
+        )
 
-    return jsonify({"success": True, "message": f"Well {well_id} and its wellbores deleted successfully"})
+        # Now, delete the well itself
+        wells_collection.delete_one({"_id": ObjectId(well_id)})
+
+        return jsonify({"success": True, "message": f"Well {well_id} and its associated wellbores and datasets deleted successfully"})
+
+    except Exception as e:
+        print(f"Error deleting well: {e}")
+        return jsonify({"success": False, "message": "An error occurred while deleting the well"}), 500
 
 @app.route('/api/wellbores', methods=['POST'])
 def add_wellbore():
@@ -572,19 +585,27 @@ def get_wellbores():
 @app.route('/api/wellbores/<wellbore_id>', methods=['DELETE'])
 def delete_wellbore(wellbore_id):
     print("Received request: delete wellbore")
+    
     if 'user_id' not in session:
         print("not in session")
         return jsonify({"success": False, "message": "User not in session"}), 401
-    wellbore = wellbores_collection.find_one({"_id": ObjectId(wellbore_id)})
-    if not wellbore:
-        return jsonify({"success": False, "message": "Wellbore not found"}), 404
-    well_id = wellbore.get('well_id')
-    wellbores_collection.delete_one({"_id": ObjectId(wellbore_id)})
-    wells_collection.update_one(
-        {"_id": ObjectId(well_id)},
-        {"$pull": {"wellbores_id": ObjectId(wellbore_id)}}
-    )
-    return jsonify({"success": True, "message": "Wellbore deleted successfully"})
+    try:
+        wellbore = wellbores_collection.find_one({"_id": ObjectId(wellbore_id)})
+        if not wellbore:
+            return jsonify({"success": False, "message": "Wellbore not found"}), 404
+
+        well_id = wellbore.get('well_id')
+        datasets_collection.delete_many({"wellbore_id": ObjectId(wellbore_id)})
+        wellbores_collection.delete_one({"_id": ObjectId(wellbore_id)})
+        wells_collection.update_one(
+            {"_id": ObjectId(well_id)},
+            {"$pull": {"wellbores_id": ObjectId(wellbore_id)}}
+        )
+        return jsonify({"success": True, "message": "Wellbore and its datasets deleted successfully"})
+
+    except Exception as e:
+        print(f"Error deleting wellbore: {e}")
+        return jsonify({"success": False, "message": "An error occurred while deleting the wellbore"}), 500
 
 @app.route('/api/wellbore-survey', methods=['GET'])
 def get_wellbore_survey():
@@ -744,7 +765,7 @@ def delete_datasets():
         # Remove references from the wellbores collection
         update_result = wellbores_collection.update_one(
             {"_id": ObjectId(wellbore_id)},
-            {"$pull": {"datasets": {"$in": object_ids}}}
+            {"$pull": {"datasets_id": {"$in": object_ids}}}
         )
         print(f"Updated wellbores_collection: {update_result.modified_count} documents modified")
 

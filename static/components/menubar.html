@@ -26,16 +26,16 @@
             <li>
               Project
               <ul>
-                <li class="" id="menubar-project-create-li"><a href="javascript:void(0)">Create...<span>Ctrl+S</span></a></li>
+                <li class="" id="menubar-project-create-li"><a href="javascript:void(0)">Create...<span></span></a></li>
                 <li class="" id="menubar-project-open-li"><a href="javascript:void(0)" >Open...<span></span></a></li>
                 <li class=""><a href="javascript:void(0)">Save<span>Ctrl+S</span></a></li>
-                <li class="" id="menubar-project-properties-li"><a href="javascript:void(0)">Properties<span></span></a></li>
                 <li class="" id="menubar-project-close-li"><a href="javascript:void(0)">Close<span></span></a></li>
                 <li class="" id="menubar-project-delete-li"><a href="javascript:void(0)">Delete....<span></span></a></li>
                 <li class="" id="menubar-project-refresh-li"><a href="javascript:void(0)">Refresh<span></span></a></li>
+                <li class="" id="menubar-project-properties-li"><a href="javascript:void(0)">Properties...<span></span></a></li>
+                <li class="separator"></li>
                 <li>Import</li>
                 <li>Export</li>
-                <li class="separator"></li>
               </ul>
             </li>
 
@@ -43,8 +43,11 @@
               Well
               <ul>
               <li class="" id="menubar-well-create-li"><a href="javascript:void(0)">Create...<span></span></a></li>
+              <li>Add</li>
+              <li>Remove</li>
               <li class="" id="menubar-well-delete-li"><a href="javascript:void(0)">Delete...<span></span></a></li>
-              <li class=""><a href="javascript:void(0)">Properties...<span>Ctrl+S</span></a></li>
+              <li class=""><a href="javascript:void(0)">Properties...<span></span></a></li>
+              <li class="separator"></li>
               <li>Import</li>
               <li>Export</li>
               </ul>
@@ -55,12 +58,16 @@
               <ul>
                   <li class="" id="menubar-wellbore-create-li"><a href="javascript:void(0)">Create...<span></span></a></li>
                   <li class="" id="menubar-wellbore-delete-li"><a href="javascript:void(0)">Delete...<span></span></a></li>
-                  <li class=""><a href="javascript:void(0)">Properties...<span>Ctrl+S</span></a></li>
+                  <li class=""><a href="javascript:void(0)">Properties...<span></span></a></li>
+                  <li class="separator"></li>
                   <li class="" id="menubar-wellbore-edit-survey-data-li"><a href="javascript:void(0)">Edit Survey Data....<span></span></a></li>
                   <li>Import Survey Data....</li>
+                  <li>Export Survey Data....</li>
+                  <li class="separator"></li>
                   <li>Create a Top Table....</li>
                   <li>Top Table Properties....</li>
                   <li>Delete Top Tables....</li>
+                  <li class="separator"></li>
                   <li>Create Temperature Profile....</li>
               </ul>
             </li>
@@ -71,14 +78,35 @@
                 <li class="" id="menubar-dataset-create-li"><a href="javascript:void(0)">Create a Dataset...<span></span></a></li>
                 <li class="" id="menubar-dataset-delete-li"><a href="javascript:void(0)">Delete Datasets...<span></span></a></li>
                 <li class="" id="menubar-dataset-properties-li"><a href="javascript:void(0)">Dataset Properties...<span></span></a></li>
-                <li>Import From a File....</li>
-                <li>Export to a File....</li>
+                <li class="separator"></li>
+                <li>Import....</li>
+                <li>Export....</li>
+                <li>Import Volume Data from a File....</li>
+                <li>Import Borehole Image....</li>
+                <li>Import Caliper Data....</li>
+                <li class="separator"></li>
                 <li>Average....</li>
                 <li>Composite....</li>
                 <li>MWA Filter....</li>
+                <li class="separator"></li>
                 <li>Create a Lithology Column....</li>
                 <li>Edit a Lithology Column....</li>
+                <li class="separator"></li>
                 <li>Utilities
+                  <ul>
+                      <li>Submenu 1</li>
+                      <li>Submenu 2</li>
+                      <li>Submenu 3</li>
+                  </ul>
+                </li>
+                <li>Line Groups
+                  <ul>
+                      <li>Submenu 1</li>
+                      <li>Submenu 2</li>
+                      <li>Submenu 3</li>
+                  </ul>
+                </li>                
+                <li>Project Data Folder
                   <ul>
                       <li>Submenu 1</li>
                       <li>Submenu 2</li>
@@ -92,23 +120,97 @@
               View
               <ul>
                 <li class="" id="menubar-view-create-track-view-li"><a href="javascript:void(0)">Create a Track View...<span></span></a></li>
-                <li class="" ><a href="javascript:void(0)">Delete a Track View...<span></span></a></li>
-                <li class="" ><a href="javascript:void(0)">Track View Properties...<span></span></a></li>
-                <li>Menu
+                <li>Create a Cross Plot....</li>
+                <li>Open....</li>
+                <li>Delete....</li>
+                <li>Properties....</li>
+                <li class="separator"></li>
+                <li>Full Screen</li>
+                <li class="separator"></li>
+                <li>Project Explorer</li>
+                <li>3D</li>
+                <li class="separator"></li>
+                <li>Zoom In</li>
+                <li>Zoom Out</li>
+                <li>Custom Zoom</li>
+                <li>Wells in Drillworks Explorer
                   <ul>
                       <li>Submenu 1</li>
                       <li>Submenu 2</li>
                       <li>Submenu 3</li>
                   </ul>
                 </li>
+                <li class="separator"></li>
+                <li>Tools Bar
+                  <ul>
+                      <li>Submenu 1</li>
+                      <li>Submenu 2</li>
+                      <li>Submenu 3</li>
+                  </ul>
+                </li>
+                <li>Status Bar</li>
+                
+              </ul>
+            </li>
+
+            <li>
+              Analyze
+              <ul>
+                <li class="" id="menubar-analyze-density-li"><a href="javascript:void(0)">Density...<span></span></a></li>
+                <li>Porosity....</li>
+                <li>Shale Point....</li>
+                <li>Overburden Gradient....</li>
+                <li>Normal Compaction Trend....</li>
+                <li>Pore Pressure Gradient....</li>
+                <li>Overlay....</li>
+                <li>Fracture Gradient....</li>
+                <li class="separator"></li>
+                <li>Safe Seal....</li>
+                <li>LOT Analyzer....</li>
+                <li>Uncertainty....
+                  <ul>
+                      <li>Submenu 1</li>
+                      <li>Submenu 2</li>
+                      <li>Submenu 3</li>
+                  </ul>
+                </li>
+                <li class="separator"></li>
+                <li>Elastic Rock Property....
+                  <ul>
+                      <li>Submenu 1</li>
+                  </ul>
+                </li>
+                <li>Minimum Horizontal Stress....</li>
+                <li>Maximum Horizontal Stress....</li>
+                <li>Near Wellbore Stress....</li>
+                <li>Wellbore Enlargement....</li>
+                <li>Breakout....</li>
+                <li>Shear Failure Stress Gradient....</li>
+                <li>Geostress....</li>
+                <li class="separator"></li>
+                <li>User Defined Method....</li>
+                <li>User Defined Program....</li>
+                <li class="separator"></li>
+
+                <li>Velocity....
+                  <ul>
+                      <li>Submenu 1</li>
+                  </ul>
+                </li>
+                <li>Advanced....
+                  <ul>
+                      <li>Submenu 1</li>
+                  </ul>
+                </li>
+
               </ul>
             </li>
 
             <li>
               Help
               <ul>
-                <li class=""><a href="javascript:void(0)">About<span></span></a></li>
-                <li class="" ><a href="javascript:void(0)">Manual<span></span></a></li>
+                <li class=""><a href="javascript:void(0)">Application Help<span></span></a></li>
+                <li class="" ><a href="javascript:void(0)">About<span></span></a></li>
               </ul>
             </li>
 
