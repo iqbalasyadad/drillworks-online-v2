@@ -425,6 +425,34 @@ $(document).ready(function () {
     }
   };
 
+  const updateDatasetProperties = async (datasetId, formData) => {
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/datasets/${datasetId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true, 
+        }
+      );
+      console.log("Dataset updated successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error("Server Error:", error.response.data.message);
+        alert(`Error: ${error.response.data.message}`);
+      } else if (error.request) {
+        console.error("No response from server:", error.request);
+        alert("Error: Unable to contact the server. Please try again.");
+      } else {
+        console.error("Unexpected Error:", error.message);
+        alert(`Error: ${error.message}`);
+      }
+    }
+  };
+
   // Make function as global access
   // Project
   window.checkSession = checkSession;
@@ -457,6 +485,7 @@ $(document).ready(function () {
   window.getDatasets = getDatasets;
   window.deleteDatasets = deleteDatasets;
   window.getDatasetProperties = getDatasetProperties;
+  window.updateDatasetProperties = updateDatasetProperties;
 
 
   // call initial app function

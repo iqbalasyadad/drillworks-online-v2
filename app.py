@@ -175,20 +175,38 @@ def get_project_properties(project_id):
     try:
         # Query the database for the project
         project = projects_collection.find_one({"_id": ObjectId(project_id)})
-
-        print(project)
         
         if not project:
             print("Project not found")
             return jsonify({"success": False, "message": "Project not found"}), 404
         
-        # # Convert ObjectId to string for JSON serialization
-        project['_id'] = str(project['_id'])
-        project['users_id'] = [str(user_id) for user_id in project.get('users_id', [])]
-        project['wells_id'] = [str(well_id) for well_id in project.get('wells_id', [])]
+        project_properties = {
+            'name': project['name'],
+            'description': project['description'],
+            'analyst': project['analyst'],
+            'defaultDepthUnit': project['defaultDepthUnit'],
+            'notes': project['notes'],
+            '_id': str(project['_id']),
+            'users_id': [str(user_id) for user_id in project.get('users_id', [])],
+            'wells_properties': [],
+            'wellbores_properties': [],
+            'datasets_properties': []
+        }
 
+        for well_id in project.get('wells_id'):
+            well_properties = get_well_properties_by_id(well_id)
+            project_properties['wells_properties'].append(well_properties)
 
-        return jsonify({"success": True, "project": project}), 200
+            for wellbore_id in well_properties['wellbores_id']:
+                wellbore_properties = get_wellbore_properties_by_id(wellbore_id)
+                project_properties['wellbores_properties'].append(wellbore_properties)
+
+                for dataset_id in wellbore_properties['datasets_id']:
+                    dataset_properties = get_dataset_properties_by_id(dataset_id)
+                    # dataset_properties["wellName"] = well_properties["name"]
+                    project_properties['datasets_properties'].append(dataset_properties)
+
+        return jsonify({"success": True, "project": project_properties}), 200
     
     except Exception as e:
         print(f"Error retrieving project: {e}")
@@ -515,6 +533,129 @@ def delete_well(well_id):
         print(f"Error deleting well: {e}")
         return jsonify({"success": False, "message": "An error occurred while deleting the well"}), 500
 
+def get_well_properties_by_id(well_id):
+    try:
+        # Validate the well_id
+        well_object_id = ObjectId(well_id)
+    except Exception as e:
+        print(f"Invalid well ID: {e}")
+        # return jsonify({"success": False, "message": "Invalid well ID"}), 400
+        return {}
+
+    # Query the database for the well
+    well = wells_collection.find_one({"_id": well_object_id})
+
+    if not well:
+        print("Well not found")
+        # return jsonify({"success": False, "message": "Well not found"}), 404
+        return {}
+
+    # Serialize the well object
+    well_properties = {
+        "id": str(well["_id"]),
+        "name": well.get("name"),
+        "uid": well.get("uid"),
+        "description": well.get("description"),
+        "commonName": well.get("commonName"),
+        "status": well.get("status"),
+        "basinName": well.get("basinName"),
+        "dominantGeology": well.get("dominantGeology"),
+        "waterVelocity": well.get("waterVelocity"),
+        "groundElevation": well.get("groundElevation"),
+        "waterDepth": well.get("waterDepth"),
+        "waterDensity": well.get("waterDensity"),
+        "formationFluidDensity": well.get("formationFluidDensity"),
+        "defaultUnitDepth": well.get("defaultUnitDepth"),
+        "defaultUnitDensity": well.get("defaultUnitDensity"),
+        "notes": well.get("notes"),
+        "projects_id": [str(project_id) for project_id in well.get("projects_id", [])],
+        "wellbores_id": [str(wellbore_id) for wellbore_id in well.get("wellbores_id", [])]
+    }
+    return well_properties
+
+def get_wellbore_properties_by_id(wellbore_id):
+    try:
+        wellbore_object_id = ObjectId(wellbore_id)
+    except Exception as e:
+        print(f"Invalid wellbore ID: {e}")
+        return {}
+    
+    wellbore = wellbores_collection.find_one({"_id": wellbore_object_id})
+
+    if not wellbore:
+        print("wellbore not found")
+        return {}
+    
+    well = wells_collection.find_one({"_id": ObjectId(wellbore.get("well_id"))})
+    
+    wellbore_properties = {
+        "id": str(wellbore["_id"]),
+        "name": wellbore.get("name"),
+        "well_id": str(wellbore.get("well_id")),
+        "wellName": well.get("name"),
+        "uid": wellbore.get("uid"),
+        "description": wellbore.get("description"),
+        "operator": wellbore.get("operator"),
+        "status": wellbore.get("status"),
+        "purpose": wellbore.get("purpose"),
+        "analysisType": wellbore.get("analysisType"),
+        "trajectoryShape": wellbore.get("trajectoryShape"),
+        "rigName": wellbore.get("rigName"),
+        "objectiveInformation": wellbore.get("objectiveInformation"),
+        "waterDepth": well.get("waterDepth"),
+        "airGap": wellbore.get("airGap"),
+        "totalMD": wellbore.get("totalMD"),
+        "totalTVD": wellbore.get("totalTVD"),
+        "spudDate": wellbore.get("spudDate"),
+        "completionDate": wellbore.get("completionDate"),
+        "datasets_id": [str(dataset_id) for dataset_id in wellbore.get("datasets_id", [])],
+    }
+
+    return wellbore_properties
+
+def get_dataset_properties_by_id(dataset_id):
+    try:
+        dataset_object_id = ObjectId(dataset_id)
+    except Exception as e:
+        print(f"Invalid dataset ID: {e}")
+        return {}
+    
+    dataset = datasets_collection.find_one({"_id": dataset_object_id})
+    wellbore = wellbores_collection.find_one({"_id": dataset.get("wellbore_id")})
+    well = wells_collection.find_one({"_id": ObjectId(wellbore.get("well_id"))})
+
+    if not dataset:
+        print("dataset not found")
+        return {}
+    
+    dataset_properties = {
+        "_id": dataset_id,
+        "wellbore_id": str(dataset.get("wellbore_id")),
+        "wellboreName": wellbore.get("name"),
+        "well_id": str(wellbore.get("well_id")),
+        "wellName": well.get("name"),
+        "method": dataset.get('method'),
+        "name": dataset.get('name'),
+        "description": dataset.get('description'),
+        "indexType": dataset.get('indexType'),
+        "indexUnit": dataset.get('indexUnit'),
+        "referenceLevel": dataset.get('referenceLevel'),
+        "referenceDate": dataset.get('referenceDate'),
+        "dataType": dataset.get('dataType'),
+        "dataUnit": dataset.get('dataUnit'),
+        "color": dataset.get('color'),
+        "lineStyle": dataset.get('lineStyle'),
+        "lineWidth": dataset.get('lineWidth'),
+        "symbol": dataset.get('symbol'),
+        "symbolSize": dataset.get('symbolSize'),
+        "hasTextColumn": dataset.get('hasTextColumn'),
+        # "data": dataset.get('data'),
+        "dateCreated": dataset.get('dateCreated')
+    }
+
+    return dataset_properties
+
+
 @app.route('/api/wellbores', methods=['POST'])
 def add_wellbore():
     print("Received request: add wellbore")
@@ -524,6 +665,7 @@ def add_wellbore():
 
     data = request.json
     well_id = data.get('well_id')
+    well = wells_collection.find_one({"_id": ObjectId(well_id)})
 
     # Check for duplicate project name for the same user
     wellbore_uid = data.get('uid')
@@ -694,6 +836,7 @@ def add_datasets():
     new_dataset = {
         "_id": ObjectId(),
         "wellbore_id": ObjectId(wellbore_id),
+        "method": data.get('method'),
         "name": data.get('name'),
         "description": data.get('description'),
         "indexType": data.get('index_type'),
@@ -800,11 +943,59 @@ def get_dataset_properties(dataset_id):
         print(f"Error retrieving dataset: {e}")
         return jsonify({"success": False, "message": "An error occurred while fetching the dataset"}), 500
 
-    
+@app.route('/api/datasets/<dataset_id>', methods=['PUT'])
+def update_dataset(dataset_id):
+    print(f"Received request to update dataset: {dataset_id}")
+    data = request.json
 
+    # Check if the user is authenticated
+    if 'user_id' not in session:
+        print("User not in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
 
+    # Fetch the project by ID and verify ownership
+    try:
+        existing_dataset = datasets_collection.find_one({"_id": ObjectId(dataset_id)})
+        if not existing_dataset:
+            print("Dataset not found or unauthorized access")
+            return jsonify({"success": False, "message": "Project not found or unauthorized"}), 404
 
+    except Exception as e:
+        print(f"Error while fetching dataset: {e}")
+        return jsonify({"success": False, "message": "Failed to fetch dataset"}), 500
 
+    # Update fields if provided in the request
+    updated_fields = {}
+    updated_fields['name'] = data['name']
+    updated_fields['description'] = data['description']
+    updated_fields['dataType'] = data['data_type']
+    updated_fields['dataUnit'] = data['data_unit']
+    updated_fields['indexType'] = data['index_type']
+    updated_fields['indexUnit'] = data['index_unit']
+    updated_fields['referenceLevel'] = data['reference_level']
+    updated_fields['data'] = data['data']
+
+    # Add the updated date
+    updated_fields['dateUpdated'] = data.get('date_updated', '')
+
+    # Update the project in the database
+    try:
+        # print(f"Updating dataset: {dataset_id} with fields: {updated_fields}")
+        result = datasets_collection.update_one(
+            {"_id": ObjectId(dataset_id)},
+            {"$set": updated_fields}
+        )
+
+        if result.modified_count == 0:
+            print("No changes made to the dataset")
+            return jsonify({"success": False, "message": "No changes made"}), 200
+
+        print("Dataset updated successfully")
+        return jsonify({"success": True, "message": "Dataset updated successfully"})
+
+    except Exception as e:
+        print(f"Error while updating dataset: {e}")
+        return jsonify({"success": False, "message": "Failed to update dataset"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

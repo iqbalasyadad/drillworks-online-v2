@@ -315,7 +315,12 @@
               <div id="dialog-properties-project-tabs" style="width: 100%;">
                 <ul>
                   <li><a href="#dialog-properties-project-tabs-1">General</a></li>
-                  <li><a href="#dialog-properties-project-tabs-2">Notes</a></li>
+                  <li><a href="#dialog-properties-project-tabs-2">Boundaries</a></li>
+                  <li><a href="#dialog-properties-project-tabs-3">Notes</a></li>
+                  <li><a href="#dialog-properties-project-tabs-4">Wells</a></li>
+                  <li><a href="#dialog-properties-project-tabs-5">Wellbores</a></li>
+                  <li><a href="#dialog-properties-project-tabs-6">View</a></li>
+                  <li><a href="#dialog-properties-project-tabs-7">Dataset</a></li>
                 </ul>
                 <div id="dialog-properties-project-tabs-1">
 
@@ -351,7 +356,22 @@
 
                 </div>
                 <div id="dialog-properties-project-tabs-2">
+                  <p>Booundaries</p>
+                </div>
+                <div id="dialog-properties-project-tabs-3">
                   <textarea id="dialog-properties-project-notes" rows="15" style="width: 100%;"></textarea>
+                </div>
+                <div id="dialog-properties-project-tabs-4">
+                  <table id="dialog-properties-project-well-table" class="display compact" width="100%"></table>
+                </div>
+                <div id="dialog-properties-project-tabs-5">
+                  <table id="dialog-properties-project-wellbore-table" class="display compact" width="100%"></table>
+                </div>
+                <div id="dialog-properties-project-tabs-6">
+                  <p>Views</p>
+                </div>
+                <div id="dialog-properties-project-tabs-7">
+                  <table id="dialog-properties-project-dataset-table" class="display compact" width="100%"></table>
                 </div>
               </div>
 
@@ -770,7 +790,7 @@
                       <td>
                         <select name="dialog-create-dataset-reference-level-select" class="dialog-select-input" id="dialog-create-dataset-reference-level-select">
                           <option value="MSL">Mean sea level</option>
-                          <option value="RT">Measured depth</option>
+                          <option value="RT">Rotary Table</option>
                         </select>
                       </td>
                       <td></td>
@@ -958,25 +978,25 @@
               <div style="width: 30%; margin-right: 10px;">
                 <div style="margin-bottom:10px">
                   <p>Select a well:</p>
-                  <select id="dialog-properties-dataset-well-select" size="3" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+                  <select id="dialog-properties-dataset-well-select" size="1" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
                 </div>
                 <div style="margin-bottom:10px">
                   <p>Select a wellbore:</p>
-                  <select id="dialog-properties-dataset-wellbore-select" size="3" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+                  <select id="dialog-properties-dataset-wellbore-select" size="1" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
                 </div>
                 <div style="margin-bottom:10px">
                   <p>Select datasets:</p>
-                  <select id="dialog-properties-dataset-dataset-select" size="8" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+                  <select id="dialog-properties-dataset-dataset-select" size="12" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
                 </div>
               </div>
-              <div id="tabs" style="width: 70%;">
+              <div id="dialog-properties-dataset-tabs" style="width: 70%;">
                 <ul>
-                  <li><a href="#tabs-1">Properties</a></li>
-                  <li><a href="#tabs-2">Data</a></li>
-                  <li><a href="#tabs-3">Parameters</a></li>
-                  <li><a href="#tabs-4">Advanced</a></li>
+                  <li><a href="#dialog-properties-dataset-tabs-1">Properties</a></li>
+                  <li><a href="#dialog-properties-dataset-tabs-2">Data</a></li>
+                  <li><a href="#dialog-properties-dataset-tabs-3">Parameters</a></li>
+                  <li><a href="#dialog-properties-dataset-tabs-4">Advanced</a></li>
                 </ul>
-                <div id="tabs-1">
+                <div id="dialog-properties-dataset-tabs-1">
 
                   <table style="width: 100%;">
                     <colgroup id="colgroup">
@@ -1026,18 +1046,18 @@
                   </table>
 
                 </div>
-                <div id="tabs-2">
+                <div id="dialog-properties-dataset-tabs-2">
                   <div class="dialog-datagridxl-input" id="dialog-properties-dataset-data-grid" style="width:95%; height:240px;"></div>
                 </div>
-                <div id="tabs-3">
+                <div id="dialog-properties-dataset-tabs-3">
                   <textarea id="dialog-properties-dataset-parameters-textarea" name="dialog-properties-dataset-parameters-textarea" rows="15" style="width:100%; resize: none;" disabled></textarea>
                 </div>
-                <div id="tabs-4">
+                <div id="dialog-properties-dataset-tabs-4">
 
                   <table style="width: 70%;">
                     <colgroup id="colgroup">
-                      <col style="width: 30%;">
-                      <col style="width: 20%;">
+                      <col style="width: 40%;">
+                      <col style="width: 60%;">
                     </colgroup>
                     <tbody>
                       <tr class="dialog-input-table-tr">
@@ -1050,15 +1070,25 @@
                       </tr>
                       <tr class="dialog-input-table-tr">
                         <td><label for="dialog-properties-dataset-advanced-index-type-select" class="dialog-label-input">Index type:</label></td>
-                        <td><select name="dialog-properties-dataset-advanced-index-type-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-index-type-select" size="1"></select></td>
+                        <td><select name="dialog-properties-dataset-advanced-index-type-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-index-type-select" size="1">
+                          <option value="TVD">True vertical depth</option>
+                          <option value="MD">Measured depth</option>
+                        </select></td>
                       </tr>
                       <tr class="dialog-input-table-tr">
                         <td><label for="dialog-properties-dataset-advanced-index-unit-select" class="dialog-label-input">Index unit:</label></td>
-                        <td><select name="dialog-properties-dataset-advanced-index-unit-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-index-unit-select" size="1"></select></td>
+                        <td><select name="dialog-properties-dataset-advanced-index-unit-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-index-unit-select" size="1" disabled>
+                          <option value="m">meters</option>
+                          <option value="ft">feet</option>
+                        </select></td>
                       </tr>
                       <tr class="dialog-input-table-tr">
                         <td><label for="dialog-properties-dataset-advanced-reference-level-select" class="dialog-label-input">Reference level:</label></td>
-                        <td><select name="dialog-properties-dataset-advanced-reference-level-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-reference-level-select" size="1"></select></td>
+                        <td><select name="dialog-properties-dataset-advanced-reference-level-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-reference-level-select" size="1">
+                          <option value="MSL">Mean sea level</option>
+                          <option value="RT">Rotary Table</option>
+                        </select>
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -1169,7 +1199,7 @@
               $("#dialog-properties-dataset").dialog("open");
             });
 
-            $( function() { $( "#tabs" ).tabs(); } );
+            $( function() { $( "#dialog-properties-dataset-tabs" ).tabs(); } );
             $( function() { $( "#dialog-properties-project-tabs" ).tabs(); } );
 
 
