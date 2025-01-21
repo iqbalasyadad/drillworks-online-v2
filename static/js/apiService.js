@@ -425,6 +425,18 @@ $(document).ready(function () {
     }
   };
 
+  // const getDatasetParameters = async (datasetId) => {
+  //   try {
+  //     const response = await axios.get(`${config.apiUrl}/api/dataset_parameters/${datasetId}`, {
+  //       withCredentials: true, // Include cookies with the request
+  //     });
+  //     return response.data; // Assuming you want to return only the data portion
+  //   } catch (error) {
+  //     console.error("Error getting dataset properties:", error.response?.data || error.message);
+  //     throw error;
+  //   }
+  // };
+
   const updateDatasetProperties = async (datasetId, formData) => {
     try {
       const response = await axios.put(
@@ -486,6 +498,7 @@ $(document).ready(function () {
   window.deleteDatasets = deleteDatasets;
   window.getDatasetProperties = getDatasetProperties;
   window.updateDatasetProperties = updateDatasetProperties;
+  // window.getDatasetParameters = getDatasetParameters;
 
 
   // call initial app function

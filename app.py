@@ -30,7 +30,6 @@ wells_collection = db['wells']
 wellbores_collection = db['wellbores']
 datasets_collection = db['datasets']
 
-
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -332,9 +331,40 @@ def delete_project_with_wells(project_id):
 
         # Parse the checkbox value from the query parameters
         delete_wells = request.args.get('delete_wells', 'false').lower() == 'true'
+        print("delete wells not shared: ", delete_wells)
 
         # Delete the project itself
         projects_collection.delete_one({"_id": project_id_obj})
+
+        wells_deleted_count = 0
+        wellbores_deleted_count = 0
+        datasets_deleted_count = 0
+
+        if delete_wells:
+            # Find wells with projects_id length==1 and projects_id == deleted project id
+            wells_to_delete = wells_collection.find({"projects_id": {"$size": 1, "$all": [project_id_obj]}})
+
+            for well in wells_to_delete:
+                print(well["name"])
+                # print("well: ", well)
+                well_id = well["_id"]
+
+                # Delete associated wellbores
+                wellbores = wellbores_collection.find({"well_id": well_id})
+                for wellbore in wellbores:
+                    wellbore_id = wellbore["_id"]
+
+                    # Delete associated datasets
+                    result = datasets_collection.delete_many({"wellbore_id": wellbore_id})
+                    datasets_deleted_count += result.deleted_count
+
+                    # Delete wellbore
+                    result = wellbores_collection.delete_one({"_id": wellbore_id})
+                    wellbores_deleted_count += result.deleted_count
+
+                # Delete the well
+                result = wells_collection.delete_one({"_id": well_id})
+                wells_deleted_count += result.deleted_count
 
         # Remove the project reference from wells
         wells_collection.update_many(
@@ -342,20 +372,9 @@ def delete_project_with_wells(project_id):
             {"$pull": {"projects_id": project_id_obj}}
         )
 
-        wells_deleted_count = 0
-
-        if delete_wells:
-            # Find and delete wells no longer associated with any project
-            wells_to_delete = wells_collection.find({"projects_id": {"$size": 0}})
-            well_ids_to_delete = [well["_id"] for well in wells_to_delete]
-
-            if well_ids_to_delete:
-                wells_deleted_count = wells_collection.delete_many({"_id": {"$in": well_ids_to_delete}}).deleted_count
-
         return jsonify({
             "success": True,
-            "message": f"Successfully deleted project {project_id}.",
-            "wells_deleted": wells_deleted_count if delete_wells else 0
+            "message": f"Deleted {wells_deleted_count} wells, {wellbores_deleted_count} wellbores, and {datasets_deleted_count} datasets"
         }), 200
 
     except Exception as e:
@@ -613,49 +632,6 @@ def get_wellbore_properties_by_id(wellbore_id):
 
     return wellbore_properties
 
-def get_dataset_properties_by_id(dataset_id):
-    try:
-        dataset_object_id = ObjectId(dataset_id)
-    except Exception as e:
-        print(f"Invalid dataset ID: {e}")
-        return {}
-    
-    dataset = datasets_collection.find_one({"_id": dataset_object_id})
-    wellbore = wellbores_collection.find_one({"_id": dataset.get("wellbore_id")})
-    well = wells_collection.find_one({"_id": ObjectId(wellbore.get("well_id"))})
-
-    if not dataset:
-        print("dataset not found")
-        return {}
-    
-    dataset_properties = {
-        "_id": dataset_id,
-        "wellbore_id": str(dataset.get("wellbore_id")),
-        "wellboreName": wellbore.get("name"),
-        "well_id": str(wellbore.get("well_id")),
-        "wellName": well.get("name"),
-        "method": dataset.get('method'),
-        "name": dataset.get('name'),
-        "description": dataset.get('description'),
-        "indexType": dataset.get('indexType'),
-        "indexUnit": dataset.get('indexUnit'),
-        "referenceLevel": dataset.get('referenceLevel'),
-        "referenceDate": dataset.get('referenceDate'),
-        "dataType": dataset.get('dataType'),
-        "dataUnit": dataset.get('dataUnit'),
-        "color": dataset.get('color'),
-        "lineStyle": dataset.get('lineStyle'),
-        "lineWidth": dataset.get('lineWidth'),
-        "symbol": dataset.get('symbol'),
-        "symbolSize": dataset.get('symbolSize'),
-        "hasTextColumn": dataset.get('hasTextColumn'),
-        # "data": dataset.get('data'),
-        "dateCreated": dataset.get('dateCreated')
-    }
-
-    return dataset_properties
-
-
 @app.route('/api/wellbores', methods=['POST'])
 def add_wellbore():
     print("Received request: add wellbore")
@@ -833,6 +809,23 @@ def add_datasets():
     data = request.json
     wellbore_id = data.get('wellbore_id')
 
+    print(data.get('data'))
+
+    try:
+        dataRange = {
+            "minIndex": min(data.get('data')['index']),
+            "maxIndex": max(data.get('data')['index']),
+            "minValue": min(data.get('data')['value']),
+            "maxValue": max(data.get('data')['value'])
+        }
+    except:
+        dataRange = {
+            "minIndex": 0,
+            "maxIndex": 0,
+            "minValue": 0,
+            "maxValue": 0
+        }
+
     new_dataset = {
         "_id": ObjectId(),
         "wellbore_id": ObjectId(wellbore_id),
@@ -852,9 +845,12 @@ def add_datasets():
         "symbolSize": data.get('symbol_size'),
         "hasTextColumn": data.get('has_text_column'),
         "data": data.get('data'),
-        "dateCreated": data.get('date_created')
+        "dataRange": dataRange,
+        "dateCreated": data.get('date_created'),
     }
     dataset_id = datasets_collection.insert_one(new_dataset).inserted_id
+
+    # print(new_dataset["dataRange"])
 
     # Update wellbore to include the new dataset
     wellbores_collection.update_one({"_id": ObjectId(wellbore_id)}, {"$push": {"datasets_id": dataset_id}})
@@ -918,6 +914,49 @@ def delete_datasets():
         print(f"Error deleting datasets: {str(e)}")
         return jsonify({"success": False, "message": "An error occurred while deleting datasets"}), 500
 
+def get_dataset_properties_by_id(dataset_id):
+    try:
+        dataset_object_id = ObjectId(dataset_id)
+    except Exception as e:
+        print(f"Invalid dataset ID: {e}")
+        return {}
+    
+    dataset = datasets_collection.find_one({"_id": dataset_object_id})
+    wellbore = wellbores_collection.find_one({"_id": dataset.get("wellbore_id")})
+    well = wells_collection.find_one({"_id": ObjectId(wellbore.get("well_id"))})
+
+    if not dataset:
+        print("dataset not found")
+        return {}
+    
+    dataset_properties = {
+        "_id": dataset_id,
+        "wellbore_id": str(dataset.get("wellbore_id")),
+        "wellboreName": wellbore.get("name"),
+        "well_id": str(wellbore.get("well_id")),
+        "wellName": well.get("name"),
+        "method": dataset.get('method'),
+        "name": dataset.get('name'),
+        "description": dataset.get('description'),
+        "indexType": dataset.get('indexType'),
+        "indexUnit": dataset.get('indexUnit'),
+        "referenceLevel": dataset.get('referenceLevel'),
+        "referenceDate": dataset.get('referenceDate'),
+        "dataType": dataset.get('dataType'),
+        "dataUnit": dataset.get('dataUnit'),
+        "color": dataset.get('color'),
+        "lineStyle": dataset.get('lineStyle'),
+        "lineWidth": dataset.get('lineWidth'),
+        "symbol": dataset.get('symbol'),
+        "symbolSize": dataset.get('symbolSize'),
+        "hasTextColumn": dataset.get('hasTextColumn'),
+        # "dataRange": dataset.get('dataRange'),
+        "data": dataset.get('data'),
+        "dateCreated": dataset.get('dateCreated')
+    }
+
+    return dataset_properties
+
 @app.route('/api/dataset_properties/<dataset_id>', methods=['GET'])
 def get_dataset_properties(dataset_id):
     """
@@ -926,23 +965,24 @@ def get_dataset_properties(dataset_id):
     print(f"Fetching dataset properties for ID: {dataset_id}")
     
     try:
-        # Query the database for the dataset
-        dataset = datasets_collection.find_one({"_id": ObjectId(dataset_id)})
-        
-        if not dataset:
-            print("Dataset not found")
-            return jsonify({"success": False, "message": "Dataset not found"}), 404
-        
-        # Convert ObjectId to string for JSON serialization
-        dataset['_id'] = str(dataset['_id'])
-        dataset['wellbore_id'] = str(dataset['wellbore_id'])
-
-        return jsonify({"success": True, "dataset": dataset}), 200
+        dataset_properties = get_dataset_properties_by_id(dataset_id) 
+        return jsonify({"success": True, "dataset_properties": dataset_properties}), 200
 
     except Exception as e:
         print(f"Error retrieving dataset: {e}")
         return jsonify({"success": False, "message": "An error occurred while fetching the dataset"}), 500
+    
+# @app.route('/api/dataset_parameters/<dataset_id>', methods=['GET'])
+# def get_dataset_parameters(dataset_id):
+#     try:
+#         dp = get_dataset_properties_by_id(dataset_id)
+#         parameters_text = f'Method: {dp["method"]}\nDataset name: {dp["name"]}\nMin value: {dp["dataRange"]["minValue"]}\nMax value: {dp["dataRange"]["maxValue"]}\nMin depth: {dp["dataRange"]["minIndex"]}\nMax depth: {dp["dataRange"]["maxIndex"]}'
+#         return jsonify({"success": True, "parameters_text": parameters_text}), 200
 
+#     except Exception as e:
+#         print(f"Error retrieving dataset: {e}")
+#         return jsonify({"success": False, "message": "An error occurred while fetching the dataset parameters"}), 500
+    
 @app.route('/api/datasets/<dataset_id>', methods=['PUT'])
 def update_dataset(dataset_id):
     print(f"Received request to update dataset: {dataset_id}")

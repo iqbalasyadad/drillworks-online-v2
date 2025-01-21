@@ -6,10 +6,12 @@ $(document).ready(function () {
             try {
                 const wells = await getWells(projectId);
                 wellSelect.empty();
-                // wellSelect.append(`<option value=""></option>`);
                 wells.forEach(well => {
                     wellSelect.append(`<option value="${well._id}">${well.name}</option>`);
                 });
+                // if (wellSelect.find('option').length > 0) {
+                //     wellSelect.prop('selectedIndex', 0).change();
+                // }
             } catch (error) {
                 console.error("Error populating wells:", error);
             }
@@ -21,10 +23,12 @@ $(document).ready(function () {
             try {
                 const wellbores = await getWellbores(selectedWellId);
                 wellboreSelect.empty();
-                // wellboreSelect.append(`<option value=""></option>`);
                 wellbores.forEach(wellbore => {
                     wellboreSelect.append(`<option value="${wellbore._id}">${wellbore.name}</option>`);
                 });
+                // if (wellboreSelect.find('option').length > 0) {
+                //     wellboreSelect.prop('selectedIndex', 0).change(); // Select the first option
+                // }
             } catch (error) {
                 console.error("Error populating wellbores:", error);
             }
@@ -446,7 +450,7 @@ $(document).ready(function () {
                     
                                 if (response.success) {
                                     // alert("Project deleted successfully!");
-                                    // dialog.dialog("close");  // Use the stored reference to close the dialog
+                                    dialog.dialog("close");  // Use the stored reference to close the dialog
                                 }
                             } catch (error) {
                                 console.error("Failed to delete project:", error.message);
@@ -490,6 +494,15 @@ $(document).ready(function () {
     });
 
     // PROPERTIES PROJECT
+    function datasetPropertiesToParametersText(datasetProperties) {
+        const parametersText = `Method: ${datasetProperties.method}\n\
+        Dataset name: ${datasetProperties.name}\n\
+        Date created: ${datasetProperties.dateCreated}\n\
+        Min value: ${Math.min(...datasetProperties.data.value)}\n\
+        Max value: ${Math.max(...datasetProperties.data.value)}`;
+        return parametersText;
+    };
+
     var propertiesProjectWellTable = $('#dialog-properties-project-well-table').DataTable({
         searching: false,
         paging: false,
@@ -652,20 +665,24 @@ $(document).ready(function () {
                     $("#dialog-properties-project-analyst").val(result.project.analyst);
                     $("#dialog-properties-project-notes").val(result.project.notes);
                     $("#dialog-properties-project-default-depth-unit-select").val(result.project.defaultDepthUnit).change();
-
-                    propertiesProjectWellTable.clear();
-                    propertiesProjectWellTable.rows.add(result.project.wells_properties);
-                    // propertiesProjectWellTable.draw();
-                    propertiesProjectWellTable.columns.adjust().draw();
-
-                    propertiesProjectWellboreTable.clear();
-                    propertiesProjectWellboreTable.rows.add(result.project.wellbores_properties);
-                    propertiesProjectWellboreTable.columns.adjust().draw();
-
-                    propertiesProjectDatasetTable.clear();
-                    propertiesProjectDatasetTable.rows.add(result.project.datasets_properties);
-                    propertiesProjectDatasetTable.columns.adjust().draw();
-
+                    $("#dialog-properties-project-tabs").tabs({
+                        activate: function (event, ui) {
+                            const activeTabId = ui.newPanel.attr("id"); // Get the ID of the activated tab
+                            if (activeTabId==="dialog-properties-project-tabs-4") {
+                                propertiesProjectWellTable.clear();
+                                propertiesProjectWellTable.rows.add(result.project.wells_properties);
+                                propertiesProjectWellTable.columns.adjust().draw();
+                            } else if (activeTabId==="dialog-properties-project-tabs-5") {
+                                propertiesProjectWellboreTable.clear();
+                                propertiesProjectWellboreTable.rows.add(result.project.wellbores_properties);
+                                propertiesProjectWellboreTable.columns.adjust().draw();
+                            } else if (activeTabId==="dialog-properties-project-tabs-7") {
+                                propertiesProjectDatasetTable.clear();
+                                propertiesProjectDatasetTable.rows.add(result.project.datasets_properties);
+                                propertiesProjectDatasetTable.columns.adjust().draw();
+                            }
+                        },
+                    });
                 };
             } catch (error) {
                 console.error("Error get datasets:", error);
@@ -673,6 +690,39 @@ $(document).ready(function () {
         },
         close: function () {
             $('#dialog-properties-project-form')[0].reset();
+        }
+    });
+
+    // DIALOG PROPERTIES PROJECT
+    $("#dialog-properties-project-dataset-parameters").dialog({
+        autoOpen: false,
+        height: 400,
+        width: 300,
+        modal: true,
+        buttons: {
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        },
+        open: async ()=> {
+            try {
+                const result = await getDatasetProperties(propertiesProjectDatasetTableSelectedDataset._id)
+                if (result.success) {
+                    console.log(result.dataset_properties);
+                    const parametersText = datasetPropertiesToParametersText(result.dataset_properties);
+
+                    $("#dialog-properties-project-dataset-parameters-textarea").val(parametersText);
+                }
+            } catch (error) {
+                console.error("Error get datasets:", error);
+            };
+        },
+        close: function () {
+            // $('#dialog-properties-project-form')[0].reset();
+            $("#dialog-properties-project-dataset-parameters-textarea").val("");
         }
     });
 
@@ -1424,9 +1474,9 @@ $(document).ready(function () {
 
         // data = col_to_row(surveyData.md, surveyData.tvd, surveyData.inclination, surveyData.azimuth);
         headers = [
-            { title: "INDEX", type: 'number', format: '0,0.00' },
-            { title: "VALUE", type: 'number', format: '0,0.00' } ];
-        if (hasTextColumn) { headers.push( { title: "DESCRIPTION", type: 'text', format: '0,0.00' }) };
+            { title: "Index", type: 'number', format: '0,0.00' },
+            { title: "Value", type: 'number', format: '0,0.00' } ];
+        if (hasTextColumn) { headers.push( { title: "Description", type: 'text', format: '0,0.00' }) };
         
         datasetInputGrid = new DataGridXL("dialog-create-dataset-data-grid", {
             data: DataGridXL.createEmptyData(20, 3),
@@ -1677,25 +1727,25 @@ $(document).ready(function () {
                     try {
                         const result = await getDatasetProperties(selectedDatasetId);
                         if (result.success) {
-                            console.log(result.dataset);
-                            $('#dialog-properties-dataset-name').val(result.dataset.name);
-                            $('#dialog-properties-dataset-description').val(result.dataset.description);
-                            $('#dialog-properties-dataset-data-type').val(result.dataset.dataType);
-                            $('#dialog-properties-dataset-data-unit').val(result.dataset.dataUnit);
-                            $('#dialog-properties-dataset-index-type').val(result.dataset.indexType);
-                            $('#dialog-properties-dataset-index-unit').val(result.dataset.indexUnit);
-                            $('#dialog-properties-dataset-reference-level').val(result.dataset.referenceLevel);
-                            $('#dialog-properties-dataset-reference-date').val(result.dataset.referenceDate);
+                            console.log(result.dataset_properties);
+                            $('#dialog-properties-dataset-name').val(result.dataset_properties.name);
+                            $('#dialog-properties-dataset-description').val(result.dataset_properties.description);
+                            $('#dialog-properties-dataset-data-type').val(result.dataset_properties.dataType);
+                            $('#dialog-properties-dataset-data-unit').val(result.dataset_properties.dataUnit);
+                            $('#dialog-properties-dataset-index-type').val(result.dataset_properties.indexType);
+                            $('#dialog-properties-dataset-index-unit').val(result.dataset_properties.indexUnit);
+                            $('#dialog-properties-dataset-reference-level').val(result.dataset_properties.referenceLevel);
+                            $('#dialog-properties-dataset-reference-date').val(result.dataset_properties.referenceDate);
 
-                            renderGridDatasetPropertiesData(result.dataset.hasTextColumn, result.dataset.data, empty=false);
-                            datasetPropertiesDataHasTextColumn = result.dataset.hasTextColumn;
+                            renderGridDatasetPropertiesData(result.dataset_properties.hasTextColumn, result.dataset_properties.data, empty=false);
+                            datasetPropertiesDataHasTextColumn = result.dataset_properties.hasTextColumn;
 
                             $("#dialog-properties-dataset-tabs").tabs({
                                 activate: function (event, ui) {
                                     const activeTabId = ui.newPanel.attr("id"); // Get the ID of the activated tab
                                     if (activeTabId==="dialog-properties-dataset-tabs-2") {
                                         if (datasetSelect.val()) {
-                                            renderGridDatasetPropertiesData(result.dataset.hasTextColumn, result.dataset.data, empty=false);
+                                            renderGridDatasetPropertiesData(result.dataset_properties.hasTextColumn, result.dataset_properties.data, empty=false);
                                         } else {
                                             console.log("open tab data with no selected dataset");
                                             renderGridDatasetPropertiesData(false, null, empty=true);
@@ -1705,16 +1755,18 @@ $(document).ready(function () {
                             });
                             
                             // set tab parameters
-                            const parametersText = `Method: ${result.dataset.method}\nDataset name: ${result.dataset.name}\nDate created: ${result.dataset.dateCreated}\nMin value: ${Math.min(...result.dataset.data.value)}\nMax value: ${Math.max(...result.dataset.data.value)}`;
+                            // const parametersText = `Method: ${result.dataset_properties.method}\nDataset name: ${result.dataset_properties.name}\nDate created: ${result.dataset_properties.dateCreated}\nMin value: ${Math.min(...result.dataset_properties.data.value)}\nMax value: ${Math.max(...result.dataset_properties.data.value)}`;
+                            const parametersText = datasetPropertiesToParametersText(result.dataset_properties);
                             $("#dialog-properties-dataset-parameters-textarea").val(parametersText);
+
                             
                             // set tab advanced
                             const dataTypeSelect = $("#dialog-properties-dataset-advanced-data-type-select");
                             const dataUnitSelect = $("#dialog-properties-dataset-advanced-data-unit-select");
-                            addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, result.dataset.dataType, result.dataset.dataUnit)
-                            $('#dialog-properties-dataset-advanced-index-type-select').val(result.dataset.indexType);
-                            $('#dialog-properties-dataset-advanced-index-unit-select').val(result.dataset.indexUnit);
-                            $('#dialog-properties-dataset-advanced-reference-level-select').val(result.dataset.referenceLevel);
+                            addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, result.dataset_properties.dataType, result.dataset_properties.dataUnit)
+                            $('#dialog-properties-dataset-advanced-index-type-select').val(result.dataset_properties.indexType);
+                            $('#dialog-properties-dataset-advanced-index-unit-select').val(result.dataset_properties.indexUnit);
+                            $('#dialog-properties-dataset-advanced-reference-level-select').val(result.dataset_properties.referenceLevel);
                         };
                     } catch(error) {
                         console.error("Error get datasets:", error);
