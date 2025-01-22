@@ -103,8 +103,11 @@ $(document).ready(function () {
     }
 
     function transposeAndConvert(array, skipColumn, skipColumnIndex=null) {
-        const nEmptyRow = 10;
-        const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow).fill(null));
+        const nEmptyRow = 0;
+        // const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow).fill(null));
+        const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow));
+        console.log(emptyArray);
+
     
         // If the array is empty or contains only null values, return a 2D null array with 5 columns and n rows
         if (array.length === 0 || array.every(row => row.every(cell => cell === null))) {
@@ -497,7 +500,10 @@ $(document).ready(function () {
     function datasetPropertiesToParametersText(datasetProperties) {
         const parametersText = `Method: ${datasetProperties.method}\n\
         Dataset name: ${datasetProperties.name}\n\
+        Datatype: ${datasetProperties.dataType}\n\
         Date created: ${datasetProperties.dateCreated}\n\
+        Min depth: ${Math.min(...datasetProperties.data.index)}\n\
+        Max depth: ${Math.max(...datasetProperties.data.index)}\n\
         Min value: ${Math.min(...datasetProperties.data.value)}\n\
         Max value: ${Math.max(...datasetProperties.data.value)}`;
         return parametersText;
@@ -507,7 +513,7 @@ $(document).ready(function () {
         searching: false,
         paging: false,
         scrollCollapse: true,
-        scrollY: 200,
+        scrollY: 150,
         info: false,
         retrieve: true,
         ordering: false,
@@ -538,7 +544,7 @@ $(document).ready(function () {
         searching: false,
         paging: false,
         scrollCollapse: true,
-        scrollY: 200,
+        scrollY: 150,
         info: false,
         retrieve: true,
         ordering: false,
@@ -572,7 +578,7 @@ $(document).ready(function () {
         searching: false,
         paging: false,
         scrollCollapse: true,
-        scrollY: 200,
+        scrollY: 150,
         info: false,
         retrieve: true,
         ordering: false,
@@ -1390,7 +1396,7 @@ $(document).ready(function () {
                         datasetInputGrid.getData(),
                         hasTextColumnChecked,
                         hasTextColumnChecked ? 2 : null
-                    );                
+                    );
                     let datasetGridData = { index: gridData.data[0], value: gridData.data[1] };
                     if (hasTextColumnChecked) {
                         datasetGridData.description = gridData.data[2];
@@ -1571,9 +1577,9 @@ $(document).ready(function () {
     function renderGridDatasetPropertiesData(hasTextColumn=false, datasetData, empty=false) {
         let data, cols;
         headers = [
-            { title: "INDEX", type: 'number', format: '0,0.00' },
-            { title: "VALUE", type: 'number', format: '0,0.00' } ];
-        if (hasTextColumn) {  headers.push( { title: "DESCRIPTION", type: 'text', format: '0,0.00' }) }
+            { title: "Index", type: 'number', format: '0,0.00' },
+            { title: "Value", type: 'number', format: '0,0.00' } ];
+        if (hasTextColumn) {  headers.push( { title: "Description", type: 'text', format: '0,0.00' }) }
 
         if(empty || datasetData.index.length==0) {
             data = DataGridXL.createEmptyData(20, headers.length)
