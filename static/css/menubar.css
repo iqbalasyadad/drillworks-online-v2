@@ -74,11 +74,24 @@ ul.main-menu li ul li
     text-indent: 30px;
     white-space:nowrap;
 }
+
 ul.main-menu li:hover
+{
+    background-color: #d4e8ff;
+    border-radius: 3px;
+    /* color: white; */
+}
+ul.main-menu li ul li:hover
+{
+    background-color: #0078d7;
+    color: white;
+    border-radius: 3px;
+}
+/* ul.main-menu li:hover
 {
     background-color: #1e90ff;
     color: white;
-}
+} */
 ul.main-menu li a:hover
 {
     color: rgb(255, 255, 255);

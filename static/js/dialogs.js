@@ -207,8 +207,8 @@ $(document).ready(function () {
     }
              
     // const apiUrl = config.apiUrl; // Replace with your API URL
-    let currentPage = 1;
-    const totalPages = 2;
+    let dialogProjectCreateCurrentPage = 1;
+    const dialogProjectCreateTotalPages = 3;
 
     function showPage(page) {
         $(".page-dialog-create-project").hide();
@@ -216,16 +216,17 @@ $(document).ready(function () {
 
         const stepTitles = {
             1: "Step 1: Basic Details",
-            2: "Step 2: Project Notes",
+            2: "Step 2: Specify Project Boundary Information",
+            3: "Step 3: Project Notes"
         };
         $("#dialog-create-project").dialog("option", "title", stepTitles[page]);
         updateButtonStates();
     }
 
     function updateButtonStates() {
-        $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", currentPage === 1);
-        $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", currentPage === totalPages);
-        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", currentPage < totalPages-1);
+        $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", dialogProjectCreateCurrentPage === 1);
+        $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", dialogProjectCreateCurrentPage === dialogProjectCreateTotalPages);
+        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", dialogProjectCreateCurrentPage < dialogProjectCreateTotalPages-1);
     }  
 
     // DIALOG CREATE PROJECT
@@ -237,15 +238,15 @@ $(document).ready(function () {
         position: { my: "center", at: "center", of: window },
         buttons: {
             "< Back": function () {
-                if (currentPage > 1) {
-                    currentPage--;
-                    showPage(currentPage);
+                if (dialogProjectCreateCurrentPage > 1) {
+                    dialogProjectCreateCurrentPage--;
+                    showPage(dialogProjectCreateCurrentPage);
                 }
             },
             "Next >": function () {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    showPage(currentPage);
+                if (dialogProjectCreateCurrentPage < dialogProjectCreateTotalPages) {
+                    dialogProjectCreateCurrentPage++;
+                    showPage(dialogProjectCreateCurrentPage);
                 }
             },
             Finish: async function () {
@@ -290,8 +291,8 @@ $(document).ready(function () {
         },
         open: ()=> {
             console.log("open dialog");
-            currentPage=1;
-            showPage(currentPage);
+            dialogProjectCreateCurrentPage=1;
+            showPage(dialogProjectCreateCurrentPage);
         },
         close: () => {
             $("#form-create-project")[0].reset();
@@ -699,7 +700,7 @@ $(document).ready(function () {
         }
     });
 
-    // DIALOG PROPERTIES PROJECT
+    // DIALOG PROPERTIES PROJECT DATASET PARAMETERS
     $("#dialog-properties-project-dataset-parameters").dialog({
         autoOpen: false,
         height: 400,
@@ -734,7 +735,7 @@ $(document).ready(function () {
 
     // CREATE WELL
     let dialogWellCreateCurrentPage = 1;
-    const dialogWellCreatetotalPages = 2;
+    const dialogWellCreateTotalPages = 2;
 
     function dialogWellCreateShowPage(page) {
         $(".page-dialog-create-well").hide();
@@ -752,8 +753,8 @@ $(document).ready(function () {
 
     function dialogWellCreateUpdateButtonStates() {
         $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", dialogWellCreateCurrentPage === 1);
-        $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", dialogWellCreateCurrentPage === dialogWellCreatetotalPages);
-        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", dialogWellCreateCurrentPage < dialogWellCreatetotalPages-1);
+        $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", dialogWellCreateCurrentPage === dialogWellCreateTotalPages);
+        $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", dialogWellCreateCurrentPage < dialogWellCreateTotalPages-1);
     }
     // DIALOG CREATE WELL
     $("#dialog-create-well").dialog({
@@ -769,7 +770,7 @@ $(document).ready(function () {
                 }
             },
             "Next >": function () {
-                if (dialogWellCreateCurrentPage < dialogWellCreatetotalPages) {
+                if (dialogWellCreateCurrentPage < dialogWellCreateTotalPages) {
                     dialogWellCreateCurrentPage++;
                     dialogWellCreateShowPage(dialogWellCreateCurrentPage);
                 }
@@ -1787,7 +1788,43 @@ $(document).ready(function () {
             $('#dialog-properties-dataset-well-select').empty();
             $('#dialog-properties-dataset-wellbore-select').empty();
             $('#dialog-properties-dataset-dataset-select').empty();
-            // $(this).dialog('destroy');
+        }
+    });
+
+
+    // ON PROGRESS
+    // DIALOG PROPERTIES WELL
+    $("#dialog-properties-well").dialog({
+        autoOpen: false,
+        height: 410,
+        width: 650,
+        modal: true,
+        buttons: {
+            Apply: {
+                text: "Apply",
+                async click() {
+
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close")
+                }
+            }
+        },
+        open: async ()=> {
+            $('#dialog-properties-well-tabs').tabs({ active: 0 });
+            const activeProject = getLocalActiveProject();
+            const projectId = activeProject._id;
+            const wellSelect = $("#dialog-properties-well-well-select");
+            try {
+                await fetchWellsToSelect(projectId, wellSelect);
+            } catch (error) {};
+
+        },
+        close: function () {
+            // $('#dialog-properties-well-well-select').empty();
         }
     });
 

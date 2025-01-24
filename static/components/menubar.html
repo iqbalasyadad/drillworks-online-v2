@@ -46,7 +46,7 @@
               <li class="disabled">Add</li>
               <li class="disabled">Remove</li>
               <li class="" id="menubar-well-delete-li"><a href="javascript:void(0)">Delete...<span></span></a></li>
-              <li class=""><a href="javascript:void(0)">Properties...<span></span></a></li>
+              <li class="" id="menubar-well-properties-li"><a href="javascript:void(0)">Properties...<span></span></a></li>
               <li class="separator"></li>
               <li class="disabled">Import</li>
               <li class="disabled">Export</li>
@@ -207,6 +207,18 @@
             </li>
 
             <li>
+              Tool
+              <ul>
+                <li class=""><a href="javascript:void(0)">Datatype<span></span></a></li>
+                <li class=""><a href="javascript:void(0)">Unit Group<span></span></a></li>
+                <!-- <li class=""><a href="javascript:void(0)">Properties...<span></span></a></li>
+                <li class="separator"></li>
+                <li class="disabled">Import</li>
+                <li class="disabled">Export</li> -->
+              </ul>
+            </li>
+
+            <li>
               Help
               <ul>
                 <li class="disabled"><a href="javascript:void(0)">Application Help<span></span></a></li>
@@ -281,8 +293,89 @@
                 </div>
                 <!-- Page 2 -->
                 <div class="page-dialog-create-project" data-page="2" style="display: none;">
-                  <textarea id="dialog-create-project-notes" rows="15" style="width: 100%;"></textarea>
+                  <table style="width: 100%;">
+                    <colgroup>
+                      <col style="width: 40%;">
+                      <col style="width: 60%;">
+                    </colgroup>
+                    <tbody>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-create-project-coordinate-system-select">Coordinate system:</label></td>
+                        <td>
+                          <select name="dialog-create-project-coordinate-system-select" class="dialog-select-input" id="dialog-create-project-coordinate-system-select">
+                            <option value="unknown">Unknown</option>
+                            <option value="utm">UTM</option>
+                          </select>
+                        </td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td colspan="2">
+                          <fieldset disabled>
+                            <legend>Origin</legend>
+                            <table style="width: 100%;">
+                              <colgroup>
+                                <col style="width: 40%;">
+                                <col style="width: 30%;">
+                                <col style="width: 30%;">
+                              </colgroup>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-create-project-utm-zone-number-select" class="dialog-label-input">UTM zone number:</label></td>
+                                <td>
+                                  <select name="dialog-create-project-utm-zone-number-select" class="dialog-select-input" id="dialog-create-project-utm-zone-number-select">
+                                    <option value=""></option>
+                                    <option value="30N">30N</option>
+                                    <option value="31N">31N</option>
+                                  </select>
+                                </td>
+                                <td></td>
+                              </tr>
+                            </table>
+                          </fieldset>
+                        </td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td colspan="2">
+                          <fieldset disabled>
+                            <legend>Boundaries</legend>
+                            <table style="width: 100%;">
+                              <colgroup>
+                                <col style="width: 40%;">
+                                <col style="width: 30%;">
+                                <col style="width: 30%;">
+                              </colgroup>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-create-project-boundaries-min-north" class="dialog-label-input">Min North:</label></td>
+                                <td><input type="text" name="dialog-create-project-boundaries-min-north" class="dialog-text-input" id="dialog-create-project-boundaries-min-north"/></td>
+                                <td></td>
+                              </tr>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-create-project-boundaries-max-north" class="dialog-label-input">Max North:</label></td>
+                                <td><input type="text" name="dialog-create-project-boundaries-max-north" class="dialog-text-input" id="dialog-create-project-boundaries-max-north"/></td>
+                                <td></td>
+                              </tr>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-create-project-boundaries-min-east" class="dialog-label-input">Min East:</label></td>
+                                <td><input type="text" name="dialog-create-project-boundaries-min-east" class="dialog-text-input" id="dialog-create-project-boundaries-min-east"/></td>
+                                <td></td>
+                              </tr>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-create-project-boundaries-max-east" class="dialog-label-input">Max East:</label></td>
+                                <td><input type="text" name="dialog-create-project-boundaries-max-east" class="dialog-text-input" id="dialog-create-project-boundaries-max-east"/></td>
+                                <td></td>
+                              </tr>
+                            </table>
+                          </fieldset>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
                 </div>
+                <!-- Page 3 -->
+                <div class="page-dialog-create-project" data-page="3" style="display: none;">
+                  <textarea id="dialog-create-project-notes" rows="14" style="width: 100%;"></textarea>
+                </div>
+                
               </div>
             </form>
         </div>
@@ -569,6 +662,190 @@
         <div id="dialog-delete-well" title="Delete a Well" style="display: none;">
           <form>
             <select class="dialog-select-input" id="dialog-delete-well-select" size="8"></select>
+          </form>
+        </div>
+
+        <!-- DIALOG PROPERTIES well -->
+        <div id="dialog-properties-well" title="Well Properties" style="display: none;">
+          <form>
+            <div style="display: flex; flex-direction: row;">
+              <div style="width: 30%; margin-right: 10px;">
+                <div style="margin-bottom:10px">
+                  <p>Select a well:</p>
+                  <select id="dialog-properties-well-well-select" size="19" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+                </div>
+              </div>
+              <div id="dialog-properties-well-tabs" style="width: 70%;">
+                <ul>
+                  <li><a href="#dialog-properties-well-tabs-1">General</a></li>
+                  <li><a href="#dialog-properties-well-tabs-2">Location</a></li>
+                  <li><a href="#dialog-properties-well-tabs-3">Datasets</a></li>
+                  <li><a href="#dialog-properties-well-tabs-4">Notes</a></li>
+                </ul>
+                <div id="dialog-properties-well-tabs-1">
+                  <table style="width: 100%;">
+                    <colgroup id="colgroup">
+                      <col style="width: 30%;">
+                      <col style="width: 25%;">
+                      <col style="width: 3%;">
+                      <col style="width: 27%;">
+                      <col style="width: 15%;">
+                    </colgroup>
+                    <tbody>
+                      <tr class="dialog-input-table-tr">
+                        <td><label class="dialog-label-input" for="dialog-properties-well-name">Well name:</label></td>
+                        <td colspan="4"><input type="text" name="dialog-properties-well-name" class="dialog-text-input" id="dialog-properties-well-name" required/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr"> 
+                        <td><label for="dialog-properties-well-description" class="dialog-label-input">Description:</label></td>
+                        <td colspan="4"><input type="text" name="dialog-properties-well-description" class="dialog-text-input" id="dialog-properties-well-description"/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                          <td><label for="dialog-properties-well-uid" class="dialog-label-input">Unique well identifier:</label></td>
+                          <td colspan="4"><input type="text" name="dialog-properties-well-uid" class="dialog-text-input" id="dialog-properties-well-uid" required/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                          <td><label for="dialog-properties-well-common-well-name" class="dialog-label-input">Common well name:</label></td>
+                          <td colspan="4"><input type="text" name="dialog-properties-well-common-well-name" class="dialog-text-input" id="dialog-properties-well-common-well-name"/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-status-select" class="dialog-label-input">Well status:</label></td>
+                        <td>
+                            <select name="dialog-properties-well-status-select" class="dialog-select-input" id="dialog-properties-well-status-select">
+                                <option value="post-mortem">Post-mortem</option>
+                                <option value="pre-spud">Pre-spud</option>
+                                <option value="abandoned">Abandoned</option>
+                            </select>
+                        </td>
+                        <td></td>
+                        <td colspan="2" rowspan="3">
+                          <fieldset>
+                            <legend>Depth Information</legend>
+                            <table>
+                              <colgroup id="colgroup">
+                                <col style="width: 60%;">
+                                <col style="width: 40%;">
+                              </colgroup>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-properties-well-water-depth" class="dialog-label-input">Water depth:</label></td>
+                                <td><input type="number" name="dialog-properties-well-water-depth" class="dialog-text-input" id="dialog-properties-well-water-depth"  value="0"/></td>
+                              </tr>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-properties-well-ground-elevation" class="dialog-label-input">Elevation:</label></td>
+                                <td><input type="number" name="dialog-properties-well-ground-elevation" class="dialog-text-input" id="dialog-properties-well-ground-elevation" value="0"/></td>
+                              </tr>
+                            </table>
+                          </fieldset>
+                        </td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-basin-name" class="dialog-label-input">Basin name:</label></td>
+                        <td><input type="text" name="dialog-properties-well-basin-name" class="dialog-text-input" id="dialog-properties-well-basin-name"/></td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-dominan-geology-select" class="dialog-label-input">Dominant geology:</label></td>
+                        <td>
+                            <select name="dialog-properties-well-dominan-geology-select" class="dialog-select-input" id="dialog-properties-well-dominan-geology-select">
+                                <option value="sand">Sand</option>
+                                <option value="shale">Shale</option>
+                            </select>
+                        </td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-water-velocity" class="dialog-label-input">Water velocity:</label></td>
+                        <td><input type="text" name="dialog-properties-well-water-velocity" class="dialog-text-input" id="dialog-properties-well-water-velocity" value="5000"/></td>
+                        <td></td>
+                        <td colspan="2" rowspan="3">
+                          <fieldset>
+                            <legend>Density Information</legend>
+                            <table>
+                              <colgroup id="colgroup">
+                                <col style="width: 60%;">
+                                <col style="width: 40%;">
+                              </colgroup>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-properties-well-density-water" class="dialog-label-input">Water:</label></td>
+                                <td><input type="number" name="dialog-properties-well-density-water" class="dialog-text-input" id="dialog-properties-well-density-water" value="1.03"/></td>
+                              </tr>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-properties-well-density-formation-fluid" class="dialog-label-input">Formation fluid:</label></td>
+                                <td><input type="number" name="dialog-properties-well-density-formation-fluid" class="dialog-text-input" id="dialog-properties-well-density-formation-fluid" value="1.05"/></td>
+                              </tr>
+                            </table>
+                          </fieldset>
+                        </td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td colspan="2" rowspan="3">
+                          <fieldset>
+                            <legend>Default Units</legend>
+                            <table>
+                              <colgroup id="colgroup">
+                                <col style="width: 60%;">
+                                <col style="width: 40%;">
+                              </colgroup>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-properties-well-default-unit-depth-select" class="dialog-label-input">Depth:</label></td>
+                                <td>
+                                    <select name="dialog-properties-well-default-unit-depth-select" class="dialog-select-input" id="dialog-properties-well-default-unit-depth-select">
+                                        <option value="m">meters</option>
+                                        <option value="ft">feet</option>
+                                    </select>
+                                </td>
+                              </tr>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-properties-well-default-unit-density-select" class="dialog-label-input">Density:</label></td>
+                                <td>
+                                    <select name="dialog-properties-well-default-unit-density-select" class="dialog-select-input" id="dialog-properties-well-default-unit-density-select">
+                                        <option value="sg">sg</option>
+                                        <option value="ppg">ppg</option>
+                                    </select>
+                                </td> 
+                              </tr>
+                            </table>
+                          </fieldset>
+                        </td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div id="dialog-properties-well-tabs-2">
+                  <p>Tab 2</p>
+                </div>
+                <div id="dialog-properties-well-tabs-3">
+                  <table id="dialog-properties-well-dataset-table" class="display compact" width="100%"></table>
+                  <input id="dialog-properties-well-dataset-parameters-btn" type="button" value="Parameters">
+                </div>
+                <div id="dialog-properties-well-tabs-4">
+                  <textarea id="dialog-properties-well-notes" name="dialog-properties-well-notes" rows="15" style="width:100%"></textarea>
+                </div>
+              </div>
+            </div>
           </form>
         </div>
 
@@ -988,7 +1265,7 @@
           </form>
         </div>
 
-        <!-- DIALOG PROPERTIES DATASETS -->
+        <!-- DIALOG PROPERTIES DATASET -->
         <div id="dialog-properties-dataset" title="Dataset Properties" style="display: none;">
           <form>
             <div style="display: flex; flex-direction: row;">
@@ -1195,6 +1472,9 @@
             $("li#menubar-well-delete-li").click(function () {
               $("#dialog-delete-well").dialog("open");
             });
+            $("li#menubar-well-properties-li").click(function () {
+              $("#dialog-properties-well").dialog("open");
+            });
             
             // WELLBORE
             $("li#menubar-wellbore-create-li").click(function () {
@@ -1219,9 +1499,10 @@
               $("#dialog-properties-dataset").dialog("open");
             });
 
-            $( function() { $( "#dialog-properties-dataset-tabs" ).tabs(); } );
             $( function() { $( "#dialog-properties-project-tabs" ).tabs(); } );
             $( function() { $( "#dialog-properties-project-dataset-parameters-tabs" ).tabs(); } );
+            $( function() { $( "#dialog-properties-well-tabs" ).tabs(); } );
+            $( function() { $( "#dialog-properties-dataset-tabs" ).tabs(); } );
 
           });
 
