@@ -84,36 +84,6 @@
                 document.removeEventListener("mouseup", stopDragging);
             }
 
-            async function initializeTree() {
-                const activeProject = await getLocalActiveProject();
-                console.log(activeProject);
-                if (activeProject._id) {
-                    try {
-                        const treeData = await getProjectDataStructure(activeProject._id);
-                        // console.log("tree: ", treeData);
-                        $('#jstree').empty().jstree('destroy');
-                        $('#jstree').jstree({
-                            core: { data: treeData },
-                            plugins: ["table"],
-                            table: {
-                            columns: [
-                                { width: 200, header: "Node Name" },
-                                { width: 100, header: "Details" },
-                            ],
-                            resizable: true,
-                            },
-                            themes: { theme: "apple", dots: true, icons: true },
-                        });
-
-                    } catch (error) {
-                        console.error("Error fetching project structure:", error);
-                    };
-                };
-            };
-
-            initializeTree();
-            window.initializeTree = initializeTree;
-
         </script>
     </body>
 </html>

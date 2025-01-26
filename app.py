@@ -29,6 +29,7 @@ projects_collection = db['projects']
 wells_collection = db['wells']
 wellbores_collection = db['wellbores']
 datasets_collection = db['datasets']
+users_config_collection = db['users_config']
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -70,7 +71,15 @@ def login():
             return jsonify({"success": True}), 200  # Login successful
         else:
             return jsonify({"success": False, "message": "Invalid username or password"}), 401
-
+        
+@app.route("/logout")
+def logout():
+    print("logout request")
+    if 'user_id' not in session:
+        print("not  in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+    session.pop('user_id', None)  # Remove user_id from session
+    return jsonify({"success": True, "message": "Logged out successfully"}), 200
 
 @app.route("/check-session", methods=["GET"])
 def check_session():
@@ -80,15 +89,56 @@ def check_session():
     else:
         print("check session, not log in")
         return jsonify({"logged_in": False}), 200  # User is not logged in
-
-@app.route("/logout")
-def logout():
-    print("logout request")
+    
+@app.route("/user-session", methods=["GET"])
+def user_session():
     if 'user_id' not in session:
-        print("not  in session")
+        print("User is not logged in")
+        return jsonify({"user_id": ""}), 200  # User is not logged in
+
+    try:
+        print("Fetching user session")
+        # Convert the session 'user_id' to an ObjectId
+        user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
+        
+        if not user:
+            print("User not found in database")
+            return jsonify({"user_id": "", "message": "User not found"}), 404
+
+        # Return user details if found
+        return jsonify({"user_id": str(user['_id']), "name": user['username']}), 200
+    
+    except Exception as e:
+        print(f"Error retrieving user session: {e}")
+        return jsonify({"success": False, "message": "An error occurred while fetching the user session"}), 500
+    
+@app.route('/api/user_config/<user_id>', methods=['GET'])
+def get_user_config(user_id):
+    print("Received request for get user config: ", user_id)  # Logging for debugging
+
+    if 'user_id' not in session:
+        print("User not in session")
         return jsonify({"success": False, "message": "User not in session"}), 401
-    session.pop('user_id', None)  # Remove user_id from session
-    return jsonify({"success": True, "message": "Logged out successfully"}), 200
+    
+    try:
+        # Use find_one() to get a single document
+        config = users_config_collection.find_one({"user_id": ObjectId(user_id)})
+        
+        if not config:
+            print("Config not found")
+            return jsonify({"success": False, "message": "Config not found"}), 404
+        
+        # Build the response
+        config_properties = {
+            '_id': str(config['_id']),
+            'data_types': config['data_types'],
+            'unit_groups': config.get('unit_groups'),
+        }
+        return jsonify({"success": True, "config_properties": config_properties}), 200
+
+    except Exception as e:
+        print(f"Error retrieving config properties: {e}")
+        return jsonify({"success": False, "message": "An error occurred while fetching the config properties"}), 500
 
 @app.route('/api/projects', methods=['POST'])
 def add_project():
@@ -114,14 +164,20 @@ def add_project():
     # Prepare the new project data
     new_project = {
         "_id": ObjectId(),
+        "dateCreated": data.get('date_created', ''),
         "name": name,
         "description": data.get('description', ''),
         "analyst": data.get('analyst', ''),
         "defaultDepthUnit": data.get('default_depth_unit', ''),
         "notes": data.get('notes', ''),
-        "dateCreated": data.get('date_created', ''),
         "users_id": [ObjectId(user_id)],
-        "wells_id": []  # Empty wells list initially
+        "wells_id": [],
+        "coordinateSystem": data.get('coordinate_system'),
+        "UTMZoneNumber": data.get('utm_zone_number'),
+        "minNorth": data.get('min_north'),
+        "maxNorth": data.get('max_north'),
+        "minEast": data.get('min_east'),
+        "maxEast": data.get('max_east')
     }
 
     # Insert the project into the database
@@ -168,48 +224,61 @@ def get_projects():
 def get_project_properties(project_id):
     """
     Retrieve properties of a specific project by its ID.
+    Supports `mode` query parameter to fetch full or partial project properties.
     """
-    print(f"Fetching dataset properties for ID: {project_id}")
-    
+    mode = request.args.get('mode', 'basic')  # Default to 'full' if mode is not specified
+    print(f"Fetching project properties for ID: {project_id} with mode: {mode}")
+
     try:
         # Query the database for the project
         project = projects_collection.find_one({"_id": ObjectId(project_id)})
-        
         if not project:
             print("Project not found")
             return jsonify({"success": False, "message": "Project not found"}), 404
-        
+
+        # Basic project properties
         project_properties = {
+            '_id': str(project['_id']),
             'name': project['name'],
             'description': project['description'],
-            'analyst': project['analyst'],
-            'defaultDepthUnit': project['defaultDepthUnit'],
-            'notes': project['notes'],
-            '_id': str(project['_id']),
-            'users_id': [str(user_id) for user_id in project.get('users_id', [])],
-            'wells_properties': [],
-            'wellbores_properties': [],
-            'datasets_properties': []
+            'analyst': project.get('analyst'),
+            'default_depth_unit': project.get('defaultDepthUnit'),
         }
 
-        for well_id in project.get('wells_id'):
-            well_properties = get_well_properties_by_id(well_id)
-            project_properties['wells_properties'].append(well_properties)
+        if mode == 'full':  # Fetch additional details for 'full' mode
+            project_properties.update({
+                'users_id': [str(user_id) for user_id in project.get('users_id', [])],
+                'notes': project.get('notes'),
+                'coordinate_system': project.get('coordinateSystem'),
+                'utm_zone_number': project.get('UTMZoneNumber'),
+                'min_north': project.get('minNorth'),
+                'max_north': project.get('maxNorth'),
+                'min_east': project.get('minEast'),
+                'max_east': project.get('maxEast'),
+                'wells_properties': [],
+                'wellbores_properties': [],
+                'datasets_properties': [],
+            })
 
-            for wellbore_id in well_properties['wellbores_id']:
-                wellbore_properties = get_wellbore_properties_by_id(wellbore_id)
-                project_properties['wellbores_properties'].append(wellbore_properties)
+            # Populate well, wellbore, and dataset properties
+            for well_id in project.get('wells_id', []):
+                well_properties = get_well_properties_by_id(well_id)
+                project_properties['wells_properties'].append(well_properties)
 
-                for dataset_id in wellbore_properties['datasets_id']:
-                    dataset_properties = get_dataset_properties_by_id(dataset_id)
-                    # dataset_properties["wellName"] = well_properties["name"]
-                    project_properties['datasets_properties'].append(dataset_properties)
+                for wellbore_id in well_properties.get('wellbores_id', []):
+                    wellbore_properties = get_wellbore_properties_by_id(wellbore_id)
+                    project_properties['wellbores_properties'].append(wellbore_properties)
 
-        return jsonify({"success": True, "project": project_properties}), 200
-    
+                    for dataset_id in wellbore_properties.get('datasets_id', []):
+                        dataset_properties = get_dataset_properties_by_id(dataset_id)
+                        project_properties['datasets_properties'].append(dataset_properties)
+
+        return jsonify({"success": True, "project_properties": project_properties}), 200
+
     except Exception as e:
-        print(f"Error retrieving project: {e}")
+        print(f"Error retrieving project properties: {e}")
         return jsonify({"success": False, "message": "An error occurred while fetching the project properties"}), 500
+
     
 @app.route('/api/projects/<project_id>', methods=['PUT'])
 def update_project(project_id):
@@ -301,8 +370,8 @@ def get_active_project():
 def close_project():
     print("receive request for close project")
     data = request.json
-    project_id = data.get('_id')
-    project_name = data.get('name')
+    # project_id = data.get('_id')
+    # project_name = data.get('name')
 
     # if not project_id:
     #     return jsonify({"message": "Project ID is required"}), 400
@@ -313,7 +382,7 @@ def close_project():
         "name": ""
     }
     print(session)
-    return jsonify({"message": "Project closed: {}".format(project_id)}), 200
+    return jsonify({"success": True, "message": "Current project closed"}), 200
 
 # NEED TO BE CHECKED (IF DELETE PROJECT AND WELL ASSOSIATED REFINE CODE TO DELETE WELLBORE AND DATASET)
 @app.route('/api/projects/<project_id>', methods=['DELETE'])
@@ -460,6 +529,7 @@ def add_well():
     
     new_well = {
         "_id": ObjectId(),
+        "dateCreated": data.get('date_created'),
         "name": data.get('name'),
         "uid": data.get('uid'),
         "description": data.get('description'),
@@ -470,13 +540,23 @@ def add_well():
         "waterVelocity": data.get('water_velocity'),
         "groundElevation": data.get('ground_elevation'),
         "waterDepth": data.get('water_depth'),
-        "waterDensity": data.get('density_water'),
-        "formationFluidDensity": data.get('density_formation_fluid'),
+        "waterDensity": data.get('water_density'),
+        "formationFluidDensity": data.get('formation_fluid_density'),
         "defaultUnitDepth": data.get('default_unit_depth'),
         "defaultUnitDensity": data.get('default_unit_density'),
         "notes": data.get('notes'),
         "projects_id": [ObjectId(project_id)],
-        "wellbores_id": []
+        "wellbores_id": [],
+        "worldLocation": data.get('world_location'),
+        "area": data.get('area'),
+        "country": data.get('country'),
+        "field": data.get('field'),
+        "blockNumber": data.get('block_number'),
+        "coordinateSystem": data.get('coordinate_system'),
+        "region": data.get('region'),
+        "gridZoneDatum": data.get('grid_zone_datum'),
+        "northing": data.get('northing'),
+        "easting": data.get('easting')
     }
     well_id = wells_collection.insert_one(new_well).inserted_id
 
@@ -495,24 +575,6 @@ def get_wells():
     wells = wells_collection.find({"projects_id": ObjectId(project_id)})
     result = [{"_id": str(well["_id"]), "name": well["name"]} for well in wells]
     return jsonify(result)
-
-# remove well
-# @app.route('/api/wells/<well_id>', methods=['DELETE'])
-# def delete_well(well_id):
-#     print("Received request: delete well")
-#     if 'user_id' not in session:
-#         print("not  in session")
-#         return jsonify({"success": False, "message": "User not in session"}), 401
-    
-#     project_id = request.json.get('project_id')
-
-#     wells_collection.delete_one({"_id": ObjectId(well_id)})
-
-#     projects_collection.update_one(
-#         {"_id": ObjectId(project_id)},
-#         {"$pull": {"wells": ObjectId(well_id)}}
-#     )
-#     return jsonify({"success": True, "message": "Well {} deleted successfully".format(well_id)})
 
 @app.route('/api/wells/<well_id>', methods=['DELETE'])
 def delete_well(well_id):
@@ -552,6 +614,34 @@ def delete_well(well_id):
         print(f"Error deleting well: {e}")
         return jsonify({"success": False, "message": "An error occurred while deleting the well"}), 500
 
+@app.route('/api/well_properties/<well_id>', methods=['GET'])
+def get_well_properties(well_id):
+    """
+    Retrieve properties of a specific well by its ID.
+    """
+    mode = request.args.get('mode', 'basic')  # Default to 'full' if mode is not specified
+    print(f"Fetching well properties for ID: {well_id} with mode: {mode}")
+    
+    try:
+        well_properties = get_well_properties_by_id(well_id)
+
+        if mode=="full":
+            well_properties.update({
+                'datasets_properties': []
+            })
+                    
+            for wellbore_id in well_properties['wellbores_id']:
+                wellbore_properties = get_wellbore_properties_by_id(wellbore_id)
+                for dataset_id in wellbore_properties['datasets_id']:
+                    dataset_properties = get_dataset_properties_by_id(dataset_id)
+                    well_properties['datasets_properties'].append(dataset_properties)
+
+        return jsonify({"success": True, "well_properties": well_properties}), 200
+
+    except Exception as e:
+        print(f"Error retrieving well: {e}")
+        return jsonify({"success": False, "message": "An error occurred while fetching the well properties"}), 500
+
 def get_well_properties_by_id(well_id):
     try:
         # Validate the well_id
@@ -575,23 +665,58 @@ def get_well_properties_by_id(well_id):
         "name": well.get("name"),
         "uid": well.get("uid"),
         "description": well.get("description"),
-        "commonName": well.get("commonName"),
+        "common_name": well.get("commonName"),
         "status": well.get("status"),
-        "basinName": well.get("basinName"),
-        "dominantGeology": well.get("dominantGeology"),
-        "waterVelocity": well.get("waterVelocity"),
-        "groundElevation": well.get("groundElevation"),
-        "waterDepth": well.get("waterDepth"),
-        "waterDensity": well.get("waterDensity"),
-        "formationFluidDensity": well.get("formationFluidDensity"),
-        "defaultUnitDepth": well.get("defaultUnitDepth"),
-        "defaultUnitDensity": well.get("defaultUnitDensity"),
+        "basin_name": well.get("basinName"),
+        "dominant_geology": well.get("dominantGeology"),
+        "water_velocity": well.get("waterVelocity"),
+        "ground_elevation": well.get("groundElevation"),
+        "water_depth": well.get("waterDepth"),
+        "water_density": well.get("waterDensity"),
+        "formation_fluid_density": well.get("formationFluidDensity"),
+        "default_unit_depth": well.get("defaultUnitDepth"),
+        "default_unit_density": well.get("defaultUnitDensity"),
         "notes": well.get("notes"),
         "projects_id": [str(project_id) for project_id in well.get("projects_id", [])],
-        "wellbores_id": [str(wellbore_id) for wellbore_id in well.get("wellbores_id", [])]
+        "wellbores_id": [str(wellbore_id) for wellbore_id in well.get("wellbores_id", [])],
+        "world_location": well.get("worldLocation"),
+        "area": well.get("area"),
+        "country": well.get("country"),
+        "field": well.get("field"),
+        "block_number": well.get("blockNumber"),
+        "coordinate_system": well.get("coordinateSystem"),
+        "region": well.get("region"),
+        "grid_zone_datum": well.get("gridZoneDatum"),
+        "northing": well.get("northing"),
+        "easting": well.get("easting")
     }
     return well_properties
 
+@app.route('/api/wellbore_properties/<wellbore_id>', methods=['GET'])
+def get_wellbore_properties(wellbore_id):
+    """
+    Retrieve properties of a specific wellbore by its ID.
+    """
+    mode = request.args.get('mode', 'basic')  # Default to 'full' if mode is not specified
+    print(f"Fetching well properties for ID: {wellbore_id} with mode: {mode}")
+    
+    try:
+        wellbore_properties = get_wellbore_properties_by_id(wellbore_id)
+
+        if mode=="full":
+            wellbore_properties.update({
+                'datasets_properties': []
+            })    
+            for dataset_id in wellbore_properties['datasets_id']:
+                dataset_properties = get_dataset_properties_by_id(dataset_id)
+                wellbore_properties['datasets_properties'].append(dataset_properties)
+
+        return jsonify({"success": True, "wellbore_properties": wellbore_properties}), 200
+
+    except Exception as e:
+        print(f"Error retrieving well: {e}")
+        return jsonify({"success": False, "message": "An error occurred while fetching the well properties"}), 500
+    
 def get_wellbore_properties_by_id(wellbore_id):
     try:
         wellbore_object_id = ObjectId(wellbore_id)
@@ -611,22 +736,22 @@ def get_wellbore_properties_by_id(wellbore_id):
         "id": str(wellbore["_id"]),
         "name": wellbore.get("name"),
         "well_id": str(wellbore.get("well_id")),
-        "wellName": well.get("name"),
+        "well_name": well.get("name"),
         "uid": wellbore.get("uid"),
         "description": wellbore.get("description"),
         "operator": wellbore.get("operator"),
         "status": wellbore.get("status"),
         "purpose": wellbore.get("purpose"),
-        "analysisType": wellbore.get("analysisType"),
-        "trajectoryShape": wellbore.get("trajectoryShape"),
-        "rigName": wellbore.get("rigName"),
-        "objectiveInformation": wellbore.get("objectiveInformation"),
-        "waterDepth": well.get("waterDepth"),
-        "airGap": wellbore.get("airGap"),
-        "totalMD": wellbore.get("totalMD"),
-        "totalTVD": wellbore.get("totalTVD"),
-        "spudDate": wellbore.get("spudDate"),
-        "completionDate": wellbore.get("completionDate"),
+        "analysis_type": wellbore.get("analysisType"),
+        "trajectory_shape": wellbore.get("trajectoryShape"),
+        "rig_name": wellbore.get("rigName"),
+        "objective_information": wellbore.get("objectiveInformation"),
+        "water_depth": well.get("waterDepth"),
+        "air_gap": wellbore.get("airGap"),
+        "total_md": wellbore.get("totalMD"),
+        "total_tvd": wellbore.get("totalTVD"),
+        "spud_date": wellbore.get("spudDate"),
+        "completion_date": wellbore.get("completionDate"),
         "datasets_id": [str(dataset_id) for dataset_id in wellbore.get("datasets_id", [])],
     }
 
@@ -972,17 +1097,6 @@ def get_dataset_properties(dataset_id):
         print(f"Error retrieving dataset: {e}")
         return jsonify({"success": False, "message": "An error occurred while fetching the dataset"}), 500
     
-# @app.route('/api/dataset_parameters/<dataset_id>', methods=['GET'])
-# def get_dataset_parameters(dataset_id):
-#     try:
-#         dp = get_dataset_properties_by_id(dataset_id)
-#         parameters_text = f'Method: {dp["method"]}\nDataset name: {dp["name"]}\nMin value: {dp["dataRange"]["minValue"]}\nMax value: {dp["dataRange"]["maxValue"]}\nMin depth: {dp["dataRange"]["minIndex"]}\nMax depth: {dp["dataRange"]["maxIndex"]}'
-#         return jsonify({"success": True, "parameters_text": parameters_text}), 200
-
-#     except Exception as e:
-#         print(f"Error retrieving dataset: {e}")
-#         return jsonify({"success": False, "message": "An error occurred while fetching the dataset parameters"}), 500
-    
 @app.route('/api/datasets/<dataset_id>', methods=['PUT'])
 def update_dataset(dataset_id):
     print(f"Received request to update dataset: {dataset_id}")
@@ -1037,5 +1151,74 @@ def update_dataset(dataset_id):
         print(f"Error while updating dataset: {e}")
         return jsonify({"success": False, "message": "Failed to update dataset"}), 500
 
+@app.route('/api/wells/<well_id>', methods=['PUT'])
+def update_well(well_id):
+    print(f"Received request to update well: {well_id}")
+    data = request.json
+
+    if 'user_id' not in session:
+        print("not  in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+    
+    data = request.json
+    project_id = data.get('project_id')
+
+    try:
+        existing_well = wells_collection.find_one({"_id": ObjectId(well_id)})
+        if not existing_well:
+            print("Well not found or unauthorized access")
+            return jsonify({"success": False, "message": "Well not found or unauthorized"}), 404
+
+    except Exception as e:
+        print(f"Error while fetching dataset: {e}")
+        return jsonify({"success": False, "message": "Failed to fetch well"}), 500
+    
+    updated_fields = {
+        "name": data.get('name'),
+        "description": data.get('description'),
+        "uid": data.get('uid'),
+        "commonName": data.get('common_name'),
+        "status": data.get('status'),
+        "basinName": data.get('basin_name'),
+        "dominantGeology": data.get('dominant_geology'),
+        "waterVelocity": data.get('water_velocity'),
+        "groundElevation": data.get('ground_elevation'),
+        "waterDepth": data.get('water_depth'),
+        "waterDensity": data.get('water_density'),
+        "formationFluidDensity": data.get('formation_fluid_density'),
+        "defaultUnitDepth": data.get('default_unit_depth'),
+        "defaultUnitDensity": data.get('default_unit_density'),
+        "notes": data.get('notes'),
+        "projects_id": [ObjectId(project_id)],
+        "wellbores_id": [],
+        "worldLocation": data.get('world_location'),
+        "area": data.get('area'),
+        "country": data.get('country'),
+        "field": data.get('field'),
+        "blockNumber": data.get('block_number'),
+        "coordinateSystem": data.get('coordinate_system'),
+        "region": data.get('region'),
+        "gridZoneDatum": data.get('grid_zone_datum'),
+        "northing": data.get('northing'),
+        "easting": data.get('easting')
+    }
+    try:
+        print(f"Updating well: {well_id} with fields: {updated_fields}")
+        result = wells_collection.update_one(
+            {"_id": ObjectId(well_id)},
+            {"$set": updated_fields}
+        )
+
+        if result.modified_count == 0:
+            print("No changes made to the well")
+            return jsonify({"success": False, "message": "No changes made"}), 200
+
+        print("Well updated successfully")
+        return jsonify({"success": True, "message": "Well updated successfully"})
+
+    except Exception as e:
+        print(f"Error while updating well: {e}")
+        return jsonify({"success": False, "message": "Failed to update well"}), 500
+    
 if __name__ == "__main__":
     app.run(debug=True)

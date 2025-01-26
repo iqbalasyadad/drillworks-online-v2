@@ -45,11 +45,10 @@
             // });
 
             $("#login-form").on("submit", function (e) {
+                $("#submit-btn").prop("disabled", true);
                 e.preventDefault();
-
                 const username = $("#username-input").val();
                 const password = $("#password-input").val();
-
                 const credentials = { username, password };
 
                 $.ajax({
@@ -58,15 +57,14 @@
                     contentType: "application/json",
                     data: JSON.stringify(credentials),
                     xhrFields: {
-                        withCredentials: true, // Ensure cookies are sent with the request
+                        withCredentials: true,
                     },
                     success: function (result) {
                         console.log(result);
-                        // Redirect to the dashboard on success
                         window.location.href = "/";
                     },
                     error: function (xhr) {
-                        // Display the error message
+                        $("#submit-btn").removeAttr('disabled');
                         const errorMessage = xhr.responseJSON?.message || "Login failed";
                         $("#error-message").text(errorMessage).show();
                     },

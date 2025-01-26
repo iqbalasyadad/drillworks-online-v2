@@ -1,6 +1,6 @@
 $(document).ready(function () {
 
-
+  // GLOBAL FUNCTION
   function setAppHeader() {
     const activeProject = getLocalActiveProject();
     console.log(activeProject);
@@ -9,10 +9,55 @@ $(document).ready(function () {
     $('#app-header-p').text(`Project: ${projectName} - View: ${viewName} --- ` );
   };
 
+  async function initializeTree() {
+    const activeProject = getLocalActiveProject();
+    console.log("initializeTree: ", activeProject);
+    $('#jstree').empty().jstree('destroy');
+    if (activeProject._id) {
+        try {
+            const treeData = await getProjectDataStructure(activeProject._id);
+            // console.log("tree: ", treeData);
+            $('#jstree').jstree({
+                core: { data: treeData },
+                plugins: ["table"],
+                table: {
+                columns: [
+                    { width: 200, header: "Node Name" },
+                    { width: 100, header: "Details" },
+                ],
+                resizable: true,
+                },
+                themes: { theme: "apple", dots: true, icons: true },
+            });
+        } catch (error) {
+            console.error("Error fetching project structure:", error);
+        };
+    };
+  };
+
   function refreshUI() {
     setAppHeader();
+    initializeTree();
     console.log("called refresh UI");
   };
+  window.setAppHeader = setAppHeader;
+  window.initializeTree = initializeTree;
+
+  // END FOR GLOBAL FUNCTION
+
+  const getUserSession = async () => {
+    try {
+        const response = await axios.get(`${config.apiUrl}/user-session`, {
+            withCredentials: true, // Include cookies in the request
+        });
+        console.log(response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching session:", error.response?.data || error.message);
+    }
+  };
+  window.getUserSession = getUserSession;
+
 
   const checkSession = async () => {
     try {
@@ -27,16 +72,43 @@ $(document).ready(function () {
 
   function logoutAccount() {
     $.ajax({
-        url: "/logout",
-        method: "GET",
-        success: function(response) {
-            window.location.href = "/login"; // Redirect to login page
-        },
-        error: function() {
-            alert("Error logging out.");
-        }
+      url: "/logout",
+      method: "GET",
+      success: function(response) {
+        closeProject();
+        window.location.href = "/login"; // Redirect to login page
+      },
+      error: function() {
+        alert("Error logging out.");
+      }
     });
   };
+
+  const getServerUserConfig = async (userId) => {
+    try {
+        const response = await axios.get(`${config.apiUrl}/api/user_config/${userId}`, {
+            withCredentials: true,
+        });
+        if (response.data.success) {
+          window.userConfig = response.data.config_properties;
+        }
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching user config:", error.response?.data || error.message);
+        throw error;
+    }
+  };
+  window.getServerUserConfig = getServerUserConfig;
+
+  async function initConfig() {
+    try {
+      const user = await getUserSession();
+      const result = await getServerUserConfig(user.user_id);
+    } catch (error) {
+        console.error("Error fetching user config:", error.message || error);
+    }
+  }
+  window.initConfig = initConfig;
 
   // PROJECT
   const addProject = async (formData) => {
@@ -67,9 +139,10 @@ $(document).ready(function () {
       }
   };
 
-  const getProjectProperties = async (projectId) => {
+  const getProjectProperties = async (projectId, mode="basic") => {
     try {
         const response = await axios.get(`${config.apiUrl}/api/project_properties/${projectId}`, {
+            params: { mode }, // Send mode as a query parameter
             withCredentials: true, // Include cookies with the request
         });
         return response.data;
@@ -78,6 +151,7 @@ $(document).ready(function () {
         throw error;
     }
   };
+
 
   const updateProjectProperties = async (projectId, formData) => {
     try {
@@ -107,6 +181,36 @@ $(document).ready(function () {
       }
     }
   };
+
+  const updateWellProperties = async (wellId, formData) => {
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/wells/${wellId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true, // Include cookies in the request
+        }
+      );
+      console.log("Project updated successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      // Extract error details
+      if (error.response) {
+        console.error("Server Error:", error.response.data.message);
+        alert(`Error: ${error.response.data.message}`);
+      } else if (error.request) {
+        console.error("No response from server:", error.request);
+        alert("Error: Unable to contact the server. Please try again.");
+      } else {
+        console.error("Unexpected Error:", error.message);
+        alert(`Error: ${error.message}`);
+      }
+    }
+  };
+  window.updateWellProperties = updateWellProperties;
   
 
   const setActiveProject = async (project) => {
@@ -118,10 +222,7 @@ $(document).ready(function () {
       }, {
         withCredentials: true,  // Include cookies with the request
       });
-      localStorage.setItem('activeProject', JSON.stringify({
-        _id: project._id,
-        name: project.name
-      }));
+      setLocalActiveProject(project);
       refreshUI();
       
       return response;
@@ -137,15 +238,25 @@ $(document).ready(function () {
       const response = await axios.get(`${config.apiUrl}/api/get-active-project`, {
         withCredentials: true, // Include cookies with the request
       });
-      // console.log(response);
-      localStorage.setItem('activeProject', JSON.stringify(response.data));
-
+      // localStorage.setItem('activeProject', JSON.stringify(response.data));
+      setLocalActiveProject(response.data);
       return response.data;
     } catch (error) {
         console.error("Error fetching projects:", error.response?.data || error.message);
-        localStorage.setItem('activeProject', JSON.stringify({}));
+        // localStorage.setItem('activeProject', JSON.stringify({}));
+        setLocalActiveProject(JSON.stringify({
+          _id: '',
+          name: ''
+        }));
         throw error;
     }
+  };
+
+  function setLocalActiveProject(project) {
+    localStorage.setItem('activeProject', JSON.stringify({
+      _id: project._id,
+      name: project.name
+    }));
   };
 
   function getLocalActiveProject() {
@@ -157,7 +268,7 @@ $(document).ready(function () {
     return activeProject;
   };
 
-  const closeProject = async (project) => {
+  const closeProject = async () => {
     console.log("close project called");
     try {
       const response = await axios.post(`${config.apiUrl}/api/close-project`, {
@@ -166,12 +277,11 @@ $(document).ready(function () {
       }, {
         withCredentials: true,  // Include cookies with the request
       });
-      localStorage.setItem('activeProject', JSON.stringify({
-        _id: '',
-        name: ''
-      }));
-      refreshUI();
-      
+      if (response.data.success) {
+        console.log(response);
+        setLocalActiveProject(JSON.stringify({ _id: '', name: '' }));
+        refreshUI();
+      }
       return response;
     } catch (error) {
       console.error("Error saving project:", error.response?.data || error.message);
@@ -425,17 +535,33 @@ $(document).ready(function () {
     }
   };
 
-  // const getDatasetParameters = async (datasetId) => {
-  //   try {
-  //     const response = await axios.get(`${config.apiUrl}/api/dataset_parameters/${datasetId}`, {
-  //       withCredentials: true, // Include cookies with the request
-  //     });
-  //     return response.data; // Assuming you want to return only the data portion
-  //   } catch (error) {
-  //     console.error("Error getting dataset properties:", error.response?.data || error.message);
-  //     throw error;
-  //   }
-  // };
+  const getWellProperties = async (wellId, mode="basic") => {
+    try {
+        const response = await axios.get(`${config.apiUrl}/api/well_properties/${wellId}`, {
+            params: { mode }, // Send mode as a query parameter
+            withCredentials: true, // Include cookies with the request
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching well properties:", error.response?.data || error.message);
+        throw error;
+    }
+  };
+  window.getWellProperties = getWellProperties;
+
+  const getWellboreProperties = async (wellboreId, mode="basic") => {
+    try {
+        const response = await axios.get(`${config.apiUrl}/api/wellbore_properties/${wellboreId}`, {
+            params: { mode }, // Send mode as a query parameter
+            withCredentials: true, // Include cookies with the request
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching wellbore properties:", error.response?.data || error.message);
+        throw error;
+    }
+  };
+  window.getWellboreProperties = getWellboreProperties;
 
   const updateDatasetProperties = async (datasetId, formData) => {
     try {
@@ -475,6 +601,7 @@ $(document).ready(function () {
   window.updateProjectProperties = updateProjectProperties;
   window.setActiveProject = setActiveProject;
   window.getActiveProject = getActiveProject;
+  window.setLocalActiveProject - setLocalActiveProject;
   window.getLocalActiveProject = getLocalActiveProject;
   window.closeProject = closeProject;
   window.deleteProject = deleteProject;
@@ -504,5 +631,8 @@ $(document).ready(function () {
   // call initial app function
   // getActiveProject();
   // refreshUI();
+
+
+
 
 });

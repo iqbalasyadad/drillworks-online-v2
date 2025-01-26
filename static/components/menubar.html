@@ -238,7 +238,9 @@
               API
               <ul>
                 <li><a href="javascript:void(0)" id="test-api-link">Check Login<span>Ctrl+</span></a></li>
-                <li id="check-active-project"><a href="javascript:void(0)">Active Project<span></span></a></li>
+                <li><a href="javascript:void(0)" id="user-session-li">Get User<span></span></a></li>
+                <li id="user-config-li"><a href="javascript:void(0)">Get User Config<span></span></a></li>
+                <li id="check-active-project"><a href="javascript:void(0)">Get Local Active Project<span></span></a></li>
                 <li id="add-dummy-project-li"><a href="javascript:void(0)">Add Dummy Project<span></span></a></li>
                 <li id="add-dummy-well-li"><a href="javascript:void(0)">Add Dummy Well<span></span></a></li>
                 <li id="add-dummy-wellbore-li"><a href="javascript:void(0)">Add Dummy Wellbore<span></span></a></li>
@@ -323,8 +325,8 @@
                                 <td>
                                   <select name="dialog-create-project-utm-zone-number-select" class="dialog-select-input" id="dialog-create-project-utm-zone-number-select">
                                     <option value=""></option>
-                                    <option value="30N">30N</option>
-                                    <option value="31N">31N</option>
+                                    <option value="49S">49S</option>
+                                    <option value="50S">50S</option>
                                   </select>
                                 </td>
                                 <td></td>
@@ -369,7 +371,6 @@
                       </tr>
                     </tbody>
                   </table>
-
                 </div>
                 <!-- Page 3 -->
                 <div class="page-dialog-create-project" data-page="3" style="display: none;">
@@ -449,7 +450,82 @@
 
                 </div>
                 <div id="dialog-properties-project-tabs-2">
-                  <p>Booundaries</p>
+                  <table style="width: 100%;">
+                    <colgroup>
+                      <col style="width: 40%;">
+                      <col style="width: 60%;">
+                    </colgroup>
+                    <tbody>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-project-coordinate-system-select">Coordinate system:</label></td>
+                        <td>
+                          <select name="dialog-properties-project-coordinate-system-select" class="dialog-select-input" id="dialog-properties-project-coordinate-system-select">
+                            <option value="unknown">Unknown</option>
+                            <option value="utm">UTM</option>
+                          </select>
+                        </td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td colspan="2">
+                          <fieldset disabled>
+                            <legend>Origin</legend>
+                            <table style="width: 100%;">
+                              <colgroup>
+                                <col style="width: 40%;">
+                                <col style="width: 30%;">
+                                <col style="width: 30%;">
+                              </colgroup>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-properties-project-utm-zone-number-select" class="dialog-label-input">UTM zone number:</label></td>
+                                <td>
+                                  <select name="dialog-properties-project-utm-zone-number-select" class="dialog-select-input" id="dialog-properties-project-utm-zone-number-select">
+                                    <option value=""></option>
+                                    <option value="49S">49S</option>
+                                    <option value="50S">50S</option>
+                                  </select>
+                                </td>
+                                <td></td>
+                              </tr>
+                            </table>
+                          </fieldset>
+                        </td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td colspan="2">
+                          <fieldset disabled>
+                            <legend>Boundaries</legend>
+                            <table style="width: 100%;">
+                              <colgroup>
+                                <col style="width: 40%;">
+                                <col style="width: 30%;">
+                                <col style="width: 30%;">
+                              </colgroup>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-properties-project-boundaries-min-north" class="dialog-label-input">Min North:</label></td>
+                                <td><input type="text" name="dialog-properties-project-boundaries-min-north" class="dialog-text-input" id="dialog-properties-project-boundaries-min-north"/></td>
+                                <td></td>
+                              </tr>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-properties-project-boundaries-max-north" class="dialog-label-input">Max North:</label></td>
+                                <td><input type="text" name="dialog-properties-project-boundaries-max-north" class="dialog-text-input" id="dialog-properties-project-boundaries-max-north"/></td>
+                                <td></td>
+                              </tr>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-properties-project-boundaries-min-east" class="dialog-label-input">Min East:</label></td>
+                                <td><input type="text" name="dialog-properties-project-boundaries-min-east" class="dialog-text-input" id="dialog-properties-project-boundaries-min-east"/></td>
+                                <td></td>
+                              </tr>
+                              <tr class="dialog-input-table-tr">
+                                <td><label for="dialog-properties-project-boundaries-max-east" class="dialog-label-input">Max East:</label></td>
+                                <td><input type="text" name="dialog-properties-project-boundaries-max-east" class="dialog-text-input" id="dialog-properties-project-boundaries-max-east"/></td>
+                                <td></td>
+                              </tr>
+                            </table>
+                          </fieldset>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
                 <div id="dialog-properties-project-tabs-3">
                   <textarea id="dialog-properties-project-notes" rows="15" style="width: 100%;"></textarea>
@@ -464,8 +540,8 @@
                   <p>Views</p>
                 </div>
                 <div id="dialog-properties-project-tabs-7">
+                  <input id="dialog-properties-project-dataset-parameters-btn" type="button" value="Parameters" disabled>
                   <table id="dialog-properties-project-dataset-table" class="display compact" width="100%"></table>
-                  <input id="dialog-properties-project-dataset-parameters-btn" type="button" value="Parameters">
                 </div>
               </div>
 
@@ -473,16 +549,16 @@
           </form>
         </div>
 
-        <!-- DIALOG PROPERTIES PROJECT DATASET PARAMETERS -->
-        <div id="dialog-properties-project-dataset-parameters" title="Dataset Paramaters" style="display: none;">
-          <div id="page-container-properties-project-dataset-parameters">
+        <!-- DIALOG GLOBAL DATASET PARAMETERS -->
+        <div id="dialog-global-dataset-parameters" title="Dataset Paramaters" style="display: none;">
+          <div id="page-container-global-dataset-parameters">
 
-            <div id="dialog-properties-project-dataset-parameters-tabs" style="width: 100%;">
+            <div id="dialog-global-dataset-parameters-tabs" style="width: 100%;">
               <ul>
-                <li><a href="#dialog-properties-project-dataset-parameters-tabs-1">Parameters</a></li>
+                <li><a href="#dialog-global-dataset-parameters-tabs-1">Parameters</a></li>
               </ul>
-              <div id="dialog-properties-project-dataset-parameters-tabs-1">
-                <textarea id="dialog-properties-project-dataset-parameters-textarea" rows="15" style="width: 100%;"></textarea>
+              <div id="dialog-global-dataset-parameters-tabs-1">
+                <textarea id="dialog-global-dataset-parameters-textarea" rows="15" style="width: 100%;"></textarea>
               </div>
             </div>
 
@@ -557,9 +633,9 @@
                       <td></td>
                     </tr>
                     <tr class="dialog-input-table-tr">
-                      <td><label for="dialog-create-well-dominan-geology-select" class="dialog-label-input">Dominant geology:</label></td>
+                      <td><label for="dialog-create-well-dominant-geology-select" class="dialog-label-input">Dominant geology:</label></td>
                       <td>
-                          <select name="dialog-create-well-dominan-geology-select" class="dialog-select-input" id="dialog-create-well-dominan-geology-select">
+                          <select name="dialog-create-well-dominant-geology-select" class="dialog-select-input" id="dialog-create-well-dominant-geology-select">
                               <option value="sand">Sand</option>
                               <option value="shale">Shale</option>
                           </select>
@@ -579,12 +655,12 @@
                               <col style="width: 40%;">
                             </colgroup>
                             <tr class="dialog-input-table-tr">
-                              <td><label for="dialog-create-well-density-water" class="dialog-label-input">Water:</label></td>
-                              <td><input type="number" name="dialog-create-well-density-water" class="dialog-text-input" id="dialog-create-well-density-water" value="1.03"/></td>
+                              <td><label for="dialog-create-well-water-density" class="dialog-label-input">Water:</label></td>
+                              <td><input type="number" name="dialog-create-well-water-density" class="dialog-text-input" id="dialog-create-well-water-density" value="1.03"/></td>
                             </tr>
                             <tr class="dialog-input-table-tr">
-                              <td><label for="dialog-create-well-density-formation-fluid" class="dialog-label-input">Formation fluid:</label></td>
-                              <td><input type="number" name="dialog-create-well-density-formation-fluid" class="dialog-text-input" id="dialog-create-well-density-formation-fluid" value="1.05"/></td>
+                              <td><label for="dialog-create-well-formation-fluid-density" class="dialog-label-input">Formation fluid:</label></td>
+                              <td><input type="number" name="dialog-create-well-formation-fluid-density" class="dialog-text-input" id="dialog-create-well-formation-fluid-density" value="1.05"/></td>
                             </tr>
                           </table>
                         </fieldset>
@@ -615,7 +691,7 @@
                             <tr class="dialog-input-table-tr">
                               <td><label for="dialog-create-well-default-unit-depth-select" class="dialog-label-input">Depth:</label></td>
                               <td>
-                                  <select name="dialog-create-well-default-unit-depth-select" class="dialog-select-input" id="dialog-create-well-default-unit-depth-select">
+                                  <select name="dialog-create-well-default-unit-depth-select" class="dialog-select-input" id="dialog-create-well-default-unit-depth-select" disabled>
                                       <option value="m">meters</option>
                                       <option value="ft">feet</option>
                                   </select>
@@ -650,6 +726,85 @@
     
               <!-- {/* Page 2 */} -->
               <div class="page-dialog-create-well" data-page="2" style="display: none">
+                <table style="width: 100%;">
+                  <colgroup id="colgroup">
+                    <col style="width: 30%;">
+                    <col style="width: 30%;">
+                    <col style="width: 5%;">
+                    <col style="width: 15%;">
+                    <col style="width: 20%;">
+                  </colgroup>
+                  <tbody>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-well-location-world-location">World location:</label></td>
+                      <td colspan="4"><input type="text" class="dialog-text-input" id="dialog-create-well-location-world-location" /></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-well-location-area">Area:</label></td>
+                      <td colspan="4"><input type="text" class="dialog-text-input" id="dialog-create-well-location-area" /></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-well-location-country">Country:</label></td>
+                      <td colspan="4"><input type="text" class="dialog-text-input" id="dialog-create-well-location-country" /></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-well-location-field">Field:</label></td>
+                      <td colspan="4"><input type="text" class="dialog-text-input" id="dialog-create-well-location-field" /></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-well-location-block-number">Block number:</label></td>
+                      <td colspan="4"><input type="text" class="dialog-text-input" id="dialog-create-well-location-block-number" /></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td>&nbsp;</td>
+                      <td>&nbsp;</td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-well-location-coordinate-system-select">Coordinate system:</label></td>
+                      <td>
+                        <select name="dialog-create-well-location-coordinate-system-select" class="dialog-select-input" id="dialog-create-well-location-coordinate-system-select">
+                          <option value="projected-system">Projected system</option>
+                        </select>
+                      </td>
+                      <td></td>
+                      <td><label for="dialog-create-well-location-region-select">Region:</label></td>
+                      <td>
+                        <select name="dialog-create-well-location-region-select" class="dialog-select-input" id="dialog-create-well-location-region-select">
+                          <option value="all">All</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-well-location-grid-zone-datum-select">Grid/Zone/Datum:</label></td>
+                      <td colspan="4">
+                        <select name="dialog-create-well-location-grid-zone-datum-select" class="dialog-select-input" id="dialog-create-well-location-grid-zone-datum-select">
+                          <option value="Indonesian_UTM_Zone_50S">Indonesian_UTM_Zone_50S</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td>&nbsp;</td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-well-location-northing">Northing:</label></td>
+                      <td><input type="text" class="dialog-text-input" id="dialog-create-well-location-northing" /></td>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td><label for="dialog-create-well-location-easting">Easting:</label></td>
+                      <td><input type="text" class="dialog-text-input" id="dialog-create-well-location-easting" /></td>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- {/* Page 3 */} -->
+              <div class="page-dialog-create-well" data-page="3" style="display: none">
                 <textarea id="dialog-create-well-notes" name="dialog-create-well-notes" rows="15" style="width:100%"></textarea>
               </div>
     
@@ -665,7 +820,7 @@
           </form>
         </div>
 
-        <!-- DIALOG PROPERTIES well -->
+        <!-- DIALOG PROPERTIES WELL -->
         <div id="dialog-properties-well" title="Well Properties" style="display: none;">
           <form>
             <div style="display: flex; flex-direction: row;">
@@ -744,9 +899,9 @@
                         <td></td>
                       </tr>
                       <tr class="dialog-input-table-tr">
-                        <td><label for="dialog-properties-well-dominan-geology-select" class="dialog-label-input">Dominant geology:</label></td>
+                        <td><label for="dialog-properties-well-dominant-geology-select" class="dialog-label-input">Dominant geology:</label></td>
                         <td>
-                            <select name="dialog-properties-well-dominan-geology-select" class="dialog-select-input" id="dialog-properties-well-dominan-geology-select">
+                            <select name="dialog-properties-well-dominant-geology-select" class="dialog-select-input" id="dialog-properties-well-dominant-geology-select">
                                 <option value="sand">Sand</option>
                                 <option value="shale">Shale</option>
                             </select>
@@ -766,12 +921,12 @@
                                 <col style="width: 40%;">
                               </colgroup>
                               <tr class="dialog-input-table-tr">
-                                <td><label for="dialog-properties-well-density-water" class="dialog-label-input">Water:</label></td>
-                                <td><input type="number" name="dialog-properties-well-density-water" class="dialog-text-input" id="dialog-properties-well-density-water" value="1.03"/></td>
+                                <td><label for="dialog-properties-well-water-density" class="dialog-label-input">Water:</label></td>
+                                <td><input type="number" name="dialog-properties-well-water-density" class="dialog-text-input" id="dialog-properties-well-water-density" value="1.03"/></td>
                               </tr>
                               <tr class="dialog-input-table-tr">
-                                <td><label for="dialog-properties-well-density-formation-fluid" class="dialog-label-input">Formation fluid:</label></td>
-                                <td><input type="number" name="dialog-properties-well-density-formation-fluid" class="dialog-text-input" id="dialog-properties-well-density-formation-fluid" value="1.05"/></td>
+                                <td><label for="dialog-properties-well-formation-fluid-density" class="dialog-label-input">Formation fluid:</label></td>
+                                <td><input type="number" name="dialog-properties-well-formation-fluid-density" class="dialog-text-input" id="dialog-properties-well-formation-fluid-density" value="1.05"/></td>
                               </tr>
                             </table>
                           </fieldset>
@@ -802,7 +957,7 @@
                               <tr class="dialog-input-table-tr">
                                 <td><label for="dialog-properties-well-default-unit-depth-select" class="dialog-label-input">Depth:</label></td>
                                 <td>
-                                    <select name="dialog-properties-well-default-unit-depth-select" class="dialog-select-input" id="dialog-properties-well-default-unit-depth-select">
+                                    <select name="dialog-properties-well-default-unit-depth-select" class="dialog-select-input" id="dialog-properties-well-default-unit-depth-select" disabled>
                                         <option value="m">meters</option>
                                         <option value="ft">feet</option>
                                     </select>
@@ -835,11 +990,85 @@
                   </table>
                 </div>
                 <div id="dialog-properties-well-tabs-2">
-                  <p>Tab 2</p>
+                  <table style="width: 100%;">
+                    <colgroup id="colgroup">
+                      <col style="width: 30%;">
+                      <col style="width: 30%;">
+                      <col style="width: 5%;">
+                      <col style="width: 15%;">
+                      <col style="width: 20%;">
+                    </colgroup>
+                    <tbody>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-location-world-location">World location:</label></td>
+                        <td colspan="4"><input type="text" class="dialog-text-input" id="dialog-properties-well-location-world-location" /></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-location-area">Area:</label></td>
+                        <td colspan="4"><input type="text" class="dialog-text-input" id="dialog-properties-well-location-area" /></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-location-country">Country:</label></td>
+                        <td colspan="4"><input type="text" class="dialog-text-input" id="dialog-properties-well-location-country" /></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-location-field">Field:</label></td>
+                        <td colspan="4"><input type="text" class="dialog-text-input" id="dialog-properties-well-location-field" /></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-location-block-number">Block number:</label></td>
+                        <td colspan="4"><input type="text" class="dialog-text-input" id="dialog-properties-well-location-block-number" /></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-location-coordinate-system-select">Coordinate system:</label></td>
+                        <td>
+                          <select name="dialog-properties-well-location-coordinate-system-select" class="dialog-select-input" id="dialog-properties-well-location-coordinate-system-select">
+                            <option value="projected-system">Projected system</option>
+                          </select>
+                        </td>
+                        <td></td>
+                        <td><label for="dialog-properties-well-location-region-select">Region:</label></td>
+                        <td>
+                          <select name="dialog-properties-well-location-region-select" class="dialog-select-input" id="dialog-properties-well-location-region-select">
+                            <option value="all">All</option>
+                          </select>
+                        </td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-location-grid-zone-datum-select">Grid/Zone/Datum:</label></td>
+                        <td colspan="4">
+                          <select name="dialog-properties-well-location-grid-zone-datum-select" class="dialog-select-input" id="dialog-properties-well-location-grid-zone-datum-select">
+                            <option value="Indonesian_UTM_Zone_50S">Indonesian_UTM_Zone_50S</option>
+                          </select>
+                        </td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td>&nbsp;</td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-location-northing">Northing:</label></td>
+                        <td><input type="text" class="dialog-text-input" id="dialog-properties-well-location-northing" /></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-well-location-easting">Easting:</label></td>
+                        <td><input type="text" class="dialog-text-input" id="dialog-properties-well-location-easting" /></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
                 <div id="dialog-properties-well-tabs-3">
+                  <input id="dialog-properties-well-dataset-parameters-btn" type="button" value="Parameters" disabled>
                   <table id="dialog-properties-well-dataset-table" class="display compact" width="100%"></table>
-                  <input id="dialog-properties-well-dataset-parameters-btn" type="button" value="Parameters">
                 </div>
                 <div id="dialog-properties-well-tabs-4">
                   <textarea id="dialog-properties-well-notes" name="dialog-properties-well-notes" rows="15" style="width:100%"></textarea>
@@ -934,7 +1163,7 @@
                       </td>                     
                       <td></td>
                       <td><label for="dialog-create-wellbore-spud-date" class="dialog-label-input">Spud date:</label></td>
-                      <td><input type="date" name="dialog-create-wellbore-spud-date" class="dialog-text-input" id="dialog-create-wellbore-spud-date"/></td>
+                      <td><input type="date" name="dialog-create-wellbore-spud-date" class="dialog-text-input" id="dialog-create-wellbore-spud-date" value="1980-07-22"/></td>
                     </tr>
                     <tr class="dialog-input-table-tr">
                       <td><label for="dialog-create-wellbore-analysis-type-select" class="dialog-label-input">Analysis type:</label></td>
@@ -1073,7 +1302,7 @@
                       <td></td>
                       <td><label for="dialog-create-dataset-index-unit-select" class="dialog-label-input">Index unit:</label></td>
                       <td>
-                        <select name="dialog-create-dataset-index-unit-select" class="dialog-select-input" id="dialog-create-dataset-index-unit-select">
+                        <select name="dialog-create-dataset-index-unit-select" class="dialog-select-input" id="dialog-create-dataset-index-unit-select" disabled>
                           <option value="m">meters</option>
                           <option value="ft">feet</option>
                         </select>
@@ -1084,12 +1313,12 @@
                       <td>
                         <select name="dialog-create-dataset-reference-level-select" class="dialog-select-input" id="dialog-create-dataset-reference-level-select">
                           <option value="MSL">Mean sea level</option>
-                          <option value="RT">Rotary Table</option>
+                          <option value="RT">Kelly bushing level</option>
                         </select>
                       </td>
                       <td></td>
                       <td><label for="dialog-create-dataset-reference-date" class="dialog-label-input">Reference date:</label></td>
-                      <td><input type="date" name="dialog-create-dataset-reference-date" id="dialog-create-dataset-reference-date"/></td>
+                      <td><input type="date" name="dialog-create-dataset-reference-date" id="dialog-create-dataset-reference-date" disabled/></td>
                     </tr>
                     <tr class="dialog-input-table-tr">
                       <td colspan="2" rowspan="8">
@@ -1380,7 +1609,7 @@
                         <td><label for="dialog-properties-dataset-advanced-reference-level-select" class="dialog-label-input">Reference level:</label></td>
                         <td><select name="dialog-properties-dataset-advanced-reference-level-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-reference-level-select" size="1">
                           <option value="MSL">Mean sea level</option>
-                          <option value="RT">Rotary Table</option>
+                          <option value="RT">Kelly bushing level</option>
                         </select>
                         </td>
                       </tr>
@@ -1397,6 +1626,7 @@
         <script>
           $(document).ready(function () {
 
+            // API TEST
             $("li#add-dummy-project-li").click(function () {
               console.log("create-project-clicked");
               addDummyProject();
@@ -1420,7 +1650,34 @@
                 console.log("error");
               }
             });
-          
+            $("#user-session-li").click(function () {
+              console.log("User session clicked");
+              getUserSession();
+            });
+
+            $("li#user-config-li").click(async function () {
+                console.log("User config clicked");
+                // const userId = '679625ef22ec1224d8daa485';
+                try {
+                    const user = await getUserSession();
+                    const result = await getServerUserConfig(user.user_id);
+                    console.log("User config result:", result);
+                } catch (error) {
+                    console.error("Error fetching user config:", error.message || error);
+                }
+            });
+
+            $("#menubar-logout-li").click(function () {
+              logoutAccount();
+            }); 
+            $("a#test-api-link").click(function () {
+              checkSession();
+            });
+            $("#check-active-project").click(function () {
+              getActiveProject();
+              const activeProject = JSON.parse(localStorage.getItem('activeProject'));
+              console.log("test active project local: ", activeProject);              
+            });
 
             // PROJECT
             $("li#menubar-project-create-li").click(function () {
@@ -1438,7 +1695,6 @@
             });
 
             $("li#menubar-project-properties-li").click(function () {
-              console.log("open dialog properties project");
               $("#dialog-properties-project").dialog("open");
             });
 
@@ -1447,22 +1703,6 @@
             });
             $("li#menubar-project-refresh-li").click(function () {
               location.reload();
-            });
-            $("#dialog-properties-project-dataset-parameters-btn").click(function () {
-              $("#dialog-properties-project-dataset-parameters").dialog("open");
-            });
-
-
-            $("#menubar-logout-li").click(function () {
-              logoutAccount();
-            }); 
-            $("a#test-api-link").click(function () {
-              checkSession();
-            });
-            $("#check-active-project").click(function () {
-              getActiveProject();
-              const activeProject = JSON.parse(localStorage.getItem('activeProject'));
-              console.log("test active project local: ", activeProject);              
             });
             
             // WELL
@@ -1474,6 +1714,9 @@
             });
             $("li#menubar-well-properties-li").click(function () {
               $("#dialog-properties-well").dialog("open");
+            });
+            $("#dialog-properties-well-dataset-parameters-btn").click(function () {
+              $("#dialog-global-dataset-parameters").dialog("open");
             });
             
             // WELLBORE
@@ -1500,7 +1743,7 @@
             });
 
             $( function() { $( "#dialog-properties-project-tabs" ).tabs(); } );
-            $( function() { $( "#dialog-properties-project-dataset-parameters-tabs" ).tabs(); } );
+            $( function() { $( "#dialog-global-dataset-parameters-tabs" ).tabs(); } );
             $( function() { $( "#dialog-properties-well-tabs" ).tabs(); } );
             $( function() { $( "#dialog-properties-dataset-tabs" ).tabs(); } );
 

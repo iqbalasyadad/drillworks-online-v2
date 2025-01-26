@@ -1,5 +1,11 @@
 $(document).ready(function () {
 
+    // Function to format the date as YYYY/MM/DD
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.getFullYear() + '/' + (date.getMonth() + 1).toString().padStart(2, '0') + '/' + date.getDate().toString().padStart(2, '0');
+    };
+
     // Fetch to select
     const fetchWellsToSelect = async(projectId, wellSelect) => {
         if (projectId) {
@@ -106,9 +112,6 @@ $(document).ready(function () {
         const nEmptyRow = 0;
         // const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow).fill(null));
         const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow));
-        console.log(emptyArray);
-
-    
         // If the array is empty or contains only null values, return a 2D null array with 5 columns and n rows
         if (array.length === 0 || array.every(row => row.every(cell => cell === null))) {
             return {
@@ -205,8 +208,42 @@ $(document).ready(function () {
             data: transposed
         };
     }
+
+    // GLOBAL DIALOG: DATASET PARAMETERS
+    async function openDialogDatasetParameters(datasetId) {
+        $("#dialog-global-dataset-parameters").dialog({
+            autoOpen: false,
+            height: 400,
+            width: 300,
+            modal: true,
+            buttons: {
+                Cancel: {
+                    text: "Cancel",
+                    click: function() {
+                        $(this).dialog("close");
+                    }
+                }
+            },
+            open: async ()=> {
+                try {
+                    const result = await getDatasetProperties(datasetId)
+                    if (result.success) {
+                        console.log(result.dataset_properties);
+                        const parametersText = datasetPropertiesToParametersText(result.dataset_properties);
+                        $("#dialog-global-dataset-parameters-textarea").val(parametersText);
+                    }
+                } catch (error) {
+                    console.error("Error get dataset properties:", error);
+                };
+            },
+            close: function () {
+                $("#dialog-global-dataset-parameters-textarea").val("");
+            }
+        });
+        $("#dialog-global-dataset-parameters").dialog("open");
+    }
              
-    // const apiUrl = config.apiUrl; // Replace with your API URL
+    // CREATE PROJECT
     let dialogProjectCreateCurrentPage = 1;
     const dialogProjectCreateTotalPages = 3;
 
@@ -250,14 +287,19 @@ $(document).ready(function () {
                 }
             },
             Finish: async function () {
-                // Handle finish logic
                 const formData = {
+                    date_created: new Date(),
                     name: $("#dialog-create-project-name").val(),
                     description: $("#dialog-create-project-description").val(),
                     analyst: $("#dialog-create-project-analyst").val(),
                     default_depth_unit: $('input[name="dialog-create-project-default-depth-unit"]:checked').val(),
                     notes: $("#dialog-create-project-notes").val(),
-                    date_created: new Date()
+                    coordinate_system: $("#dialog-create-project-coordinate-system-select").val(),
+                    utm_zone_number: $("#dialog-create-project-utm-zone-number-select").val(),
+                    min_north: parseFloat($("#dialog-create-project-boundaries-min-north")),
+                    max_north: parseFloat($("#dialog-create-project-boundaries-max-north")),
+                    min_east: parseFloat($("#dialog-create-project-boundaries-min-north")),
+                    max_east: parseFloat($("#dialog-create-project-boundaries-max-north")),
                 };
                 console.log(formData);
             
@@ -271,17 +313,13 @@ $(document).ready(function () {
                     if (response.success) {
                         console.log(response);
                         setActiveProject(response.project);
-                        initializeTree();
                     } else {
                         throw new Error(response.message || "Failed to add project");
                     }
                 } catch (error) {
-                    // Handle any errors here, e.g., duplicate project name error
                     console.error("Error:", error);
                     alert(error.message);  // Display the error message to the user
                 }
-            
-                // Close the dialog after the request is finished
                 $(this).dialog("close");
             },
             
@@ -290,7 +328,6 @@ $(document).ready(function () {
             },
         },
         open: ()=> {
-            console.log("open dialog");
             dialogProjectCreateCurrentPage=1;
             showPage(dialogProjectCreateCurrentPage);
         },
@@ -298,13 +335,6 @@ $(document).ready(function () {
             $("#form-create-project")[0].reset();
         }
     });
-
-    // menubar-project-open-dialog
-    // Function to format the date as YYYY/MM/DD
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.getFullYear() + '/' + (date.getMonth() + 1).toString().padStart(2, '0') + '/' + date.getDate().toString().padStart(2, '0');
-    };
 
     // var dataSet = [];
     var openProjectTable = $('#project-open-table').DataTable({
@@ -359,8 +389,7 @@ $(document).ready(function () {
                             console.log("Save result:", result);
                 
                             if (result.statusText === "OK") {
-                                dialog.dialog("close");  // Use the stored reference to close the dialog
-                                initializeTree();
+                                dialog.dialog("close");
                             }
                         } catch (error) {
                             console.error("Failed to save project:", error.message);
@@ -402,6 +431,11 @@ $(document).ready(function () {
             openProjectTableSelectedProject = null;
         }
     });
+
+    const activeProject = getLocalActiveProject();
+    if (!activeProject._id) {
+        $("#dialog-open-project").dialog("open");
+    };
 
     // Dialog delete project
     var deleteProjectTable = $('#project-delete-table').DataTable({
@@ -520,7 +554,7 @@ $(document).ready(function () {
         ordering: false,
         columns: [
             { title: 'Name', data: 'name' },
-            { title: 'WD', data: 'waterDepth' },
+            { title: 'WD', data: 'water_depth' },
             { title: 'ID', data: 'uid' }
         ],
         data: [],
@@ -528,7 +562,6 @@ $(document).ready(function () {
 
     var propertiesProjectWellTableSelectedWell;
     $('#dialog-properties-project-well-table').on('click', 'tr', function () {
-        // toggleOpenButton();
         if ($(this).hasClass('selected')) {
             $(this).removeClass('selected');
             propertiesProjectWellTableSelectedWell=null;
@@ -537,7 +570,6 @@ $(document).ready(function () {
             propertiesProjectWellTable.$('tr.selected').removeClass('selected');
             $(this).addClass('selected');
             propertiesProjectWellTableSelectedWell = propertiesProjectWellTable.row(this).data();
-            // console.log(propertiesProjectWellTableSelectedWell._id);
         }
     });
 
@@ -550,22 +582,22 @@ $(document).ready(function () {
         retrieve: true,
         ordering: false,
         columns: [
-            { title: 'Well', data: 'wellName' },
+            { title: 'Well', data: 'well_name' },
             { title: 'Wellbore', data: 'name' },
-            { title: 'AG', data: 'airGap' },
-            { title: 'WD', data: 'waterDepth' },
-            { title: 'TVD', data: 'totalTVD' },
-            { title: 'MD', data: 'totalMD' }
+            { title: 'AG', data: 'air_gap' },
+            { title: 'WD', data: 'water_depth' },
+            { title: 'TVD', data: 'total_tvd' },
+            { title: 'MD', data: 'total_md' }
         ],
         data: [],
     });
 
-    var propertiesProjectWellboreTableSelectedWellbore;
+    // var propertiesProjectWellboreTableSelectedWellbore;
     $('#dialog-properties-project-wellbore-table').on('click', 'tr', function () {
         // toggleOpenButton();
         if ($(this).hasClass('selected')) {
             $(this).removeClass('selected');
-            propertiesProjectWellboreTableSelectedWellbore=null;
+            // propertiesProjectWellboreTableSelectedWellbore=null;
         }
         else {
             propertiesProjectWellboreTable.$('tr.selected').removeClass('selected');
@@ -593,19 +625,19 @@ $(document).ready(function () {
         data: [],
     });
 
-    var propertiesProjectDatasetTableSelectedDataset;
     $('#dialog-properties-project-dataset-table').on('click', 'tr', function () {
-        // toggleOpenButton();
         if ($(this).hasClass('selected')) {
             $(this).removeClass('selected');
-            propertiesProjectDatasetTableSelectedDataset=null;
         }
         else {
             propertiesProjectDatasetTable.$('tr.selected').removeClass('selected');
             $(this).addClass('selected');
-            propertiesProjectDatasetTableSelectedDataset = propertiesProjectDatasetTable.row(this).data();
-            // console.log(propertiesProjectWellboreTableSelectedWellbore._id);
         }
+        $("#dialog-properties-project-dataset-parameters-btn").prop("disabled", !propertiesProjectDatasetTable.row('.selected').data());
+    });
+
+    $("#dialog-properties-project-dataset-parameters-btn").click(function () {
+        openDialogDatasetParameters(propertiesProjectDatasetTable.row('.selected').data()._id);
     });
 
     // DIALOG PROPERTIES PROJECT
@@ -664,28 +696,28 @@ $(document).ready(function () {
             const projectId = activeProject._id;
             propertiesProjectWellTable.columns.adjust().draw();
             try {
-                const result = await getProjectProperties(projectId);
+                const result = await getProjectProperties(projectId, mode="full");
                 if (result.success) {
-                    console.log(result.project);
-                    $("#dialog-properties-project-name").val(result.project.name);
-                    $("#dialog-properties-project-description").val(result.project.description);
-                    $("#dialog-properties-project-analyst").val(result.project.analyst);
-                    $("#dialog-properties-project-notes").val(result.project.notes);
-                    $("#dialog-properties-project-default-depth-unit-select").val(result.project.defaultDepthUnit).change();
+                    console.log(result.project_properties);
+                    $("#dialog-properties-project-name").val(result.project_properties.name);
+                    $("#dialog-properties-project-description").val(result.project_properties.description);
+                    $("#dialog-properties-project-analyst").val(result.project_properties.analyst);
+                    $("#dialog-properties-project-notes").val(result.project_properties.notes);
+                    $("#dialog-properties-project-default-depth-unit-select").val(result.project_properties.default_depth_unit);
                     $("#dialog-properties-project-tabs").tabs({
                         activate: function (event, ui) {
                             const activeTabId = ui.newPanel.attr("id"); // Get the ID of the activated tab
                             if (activeTabId==="dialog-properties-project-tabs-4") {
                                 propertiesProjectWellTable.clear();
-                                propertiesProjectWellTable.rows.add(result.project.wells_properties);
+                                propertiesProjectWellTable.rows.add(result.project_properties.wells_properties);
                                 propertiesProjectWellTable.columns.adjust().draw();
                             } else if (activeTabId==="dialog-properties-project-tabs-5") {
                                 propertiesProjectWellboreTable.clear();
-                                propertiesProjectWellboreTable.rows.add(result.project.wellbores_properties);
+                                propertiesProjectWellboreTable.rows.add(result.project_properties.wellbores_properties);
                                 propertiesProjectWellboreTable.columns.adjust().draw();
                             } else if (activeTabId==="dialog-properties-project-tabs-7") {
                                 propertiesProjectDatasetTable.clear();
-                                propertiesProjectDatasetTable.rows.add(result.project.datasets_properties);
+                                propertiesProjectDatasetTable.rows.add(result.project_properties.datasets_properties);
                                 propertiesProjectDatasetTable.columns.adjust().draw();
                             }
                         },
@@ -700,42 +732,9 @@ $(document).ready(function () {
         }
     });
 
-    // DIALOG PROPERTIES PROJECT DATASET PARAMETERS
-    $("#dialog-properties-project-dataset-parameters").dialog({
-        autoOpen: false,
-        height: 400,
-        width: 300,
-        modal: true,
-        buttons: {
-            Cancel: {
-                text: "Cancel",
-                click: function() {
-                    $(this).dialog("close");
-                }
-            }
-        },
-        open: async ()=> {
-            try {
-                const result = await getDatasetProperties(propertiesProjectDatasetTableSelectedDataset._id)
-                if (result.success) {
-                    console.log(result.dataset_properties);
-                    const parametersText = datasetPropertiesToParametersText(result.dataset_properties);
-
-                    $("#dialog-properties-project-dataset-parameters-textarea").val(parametersText);
-                }
-            } catch (error) {
-                console.error("Error get datasets:", error);
-            };
-        },
-        close: function () {
-            // $('#dialog-properties-project-form')[0].reset();
-            $("#dialog-properties-project-dataset-parameters-textarea").val("");
-        }
-    });
-
     // CREATE WELL
     let dialogWellCreateCurrentPage = 1;
-    const dialogWellCreateTotalPages = 2;
+    const dialogWellCreateTotalPages = 3;
 
     function dialogWellCreateShowPage(page) {
         $(".page-dialog-create-well").hide();
@@ -744,7 +743,8 @@ $(document).ready(function () {
         // Dynamically update the dialog title with the current step
         const stepTitles = {
             1: "Step 1: Collect Well General Information",
-            2: "Step 2: Well Notes",
+            2: "Step 2: Collect Well Location Information",
+            3: "Step 3: Well Notes"
         };
         $("#dialog-create-well").dialog("option", "title", stepTitles[page]);
 
@@ -779,12 +779,11 @@ $(document).ready(function () {
                 text: "Finish",
                 async click() {
                     try {
-                        // Fetch the selected project ID
                         const activeProject = getLocalActiveProject();
                         const projectId = activeProject._id;
                 
-                        // Gather form data
                         const formData = {
+                            date_created: new Date().toISOString(),
                             project_id: projectId,
                             name: $("#dialog-create-well-name").val(),
                             description: $("#dialog-create-well-description").val(),
@@ -792,16 +791,25 @@ $(document).ready(function () {
                             common_name: $("#dialog-create-well-common-well-name").val(),
                             status: $("#dialog-create-well-status-select").val(),
                             basin_name: $("#dialog-create-well-basin-name").val(),
-                            dominant_geology: $("#dialog-create-well-dominan-geology-select").val(),
+                            dominant_geology: $("#dialog-create-well-dominant-geology-select").val(),
                             water_velocity: parseFloat($("#dialog-create-well-water-velocity").val()),
                             ground_elevation: parseFloat($("#dialog-create-well-ground-elevation").val()),
                             water_depth: parseFloat($("#dialog-create-well-water-depth").val()),
-                            density_water: parseFloat($("#dialog-create-well-density-water").val()) || null,
-                            density_formation_fluid: parseFloat($("#dialog-create-well-density-formation-fluid").val()) || null,
+                            water_density: parseFloat($("#dialog-create-well-water-density").val()) || null,
+                            formation_fluid_density: parseFloat($("#dialog-create-well-formation-fluid-density").val()) || null,
                             default_unit_depth: $("#dialog-create-well-default-unit-depth-select").val(),
                             default_unit_density: $("#dialog-create-well-default-unit-density-select").val(),
                             notes: $("#dialog-create-well-notes").val(),
-                            date_created: new Date().toISOString() // Current date as ISO string
+                            world_location: $("#dialog-create-well-location-world-location").val(),
+                            area: $("#dialog-create-well-location-area").val(),
+                            country: $("#dialog-create-well-location-country").val(),
+                            field: $("#dialog-create-well-location-field").val(),
+                            block_number: $("#dialog-create-well-location-block-number").val(),
+                            coordinate_system: $("#dialog-create-well-location-coordinate-system-select").val(),
+                            region: $("#dialog-create-well-location-region-select").val(),
+                            grid_zone_datum: $("#dialog-create-well-location-grid-zone-datum-select").val(),
+                            northing: parseFloat($("#dialog-create-well-location-northing").val()),
+                            easting: parseFloat($("#dialog-create-well-location-easting").val())
                         };
                 
                         // Validate required fields
@@ -837,9 +845,24 @@ $(document).ready(function () {
             },
         },
         open: ()=> {
-            console.log("open dialog");
             dialogWellCreateCurrentPage=1;
             dialogWellCreateShowPage(dialogWellCreateCurrentPage);
+
+            const activeProject = getLocalActiveProject();
+            const projectId = activeProject._id;
+
+            (async function fetchProjectProperties() {
+                try {
+                    const response  = await getProjectProperties(projectId);
+                    console.log(response);
+                    if (response.success) {
+                        $("#dialog-create-well-default-unit-depth-select").val(response.project_properties.default_depth_unit);
+                    };
+                } catch (error) {
+                    console.error("Failed to fetch project properties:", error);
+                }
+            })();
+
         },
         close: () => {
             $("#dialog-form-create-well")[0].reset();
@@ -893,7 +916,6 @@ $(document).ready(function () {
             }
         },
         open: async ()=> {
-            console.log("fetch wells called");
             try {
         
                 // Fetch the selected project ID
@@ -933,9 +955,7 @@ $(document).ready(function () {
         dialogWellboreCreateUpdateButtonStates();
 
         if (page===2) {
-            const wellSelectedName = $("#dialog-create-wellbore-well-select").find("option:selected").text();
-            console.log(wellSelectedName);
-            
+            const wellSelectedName = $("#dialog-create-wellbore-well-select").find("option:selected").text();            
             $("#dialog-create-wellbore-name").val(`${wellSelectedName}_`);
             $("#dialog-create-wellbore-uid").val(`${wellSelectedName}_`);
 
@@ -1011,7 +1031,6 @@ $(document).ready(function () {
 
                         const result = await addWellbore(formData);
                         if (result.success) {
-                            console.log("add wellbore: success")
                             $(this).dialog("close");
                             initializeTree();
                         } else {
@@ -1030,7 +1049,6 @@ $(document).ready(function () {
             },
         },
         open: ()=> {
-            console.log("open dialog");
             dialogWellboreCreateCurrentPage=1;
             dialogWellboreCreateShowPage(dialogWellboreCreateCurrentPage);
 
@@ -1063,7 +1081,6 @@ $(document).ready(function () {
                         _id: wellboreSelect.val(),
                         name: wellboreSelect.find("option:selected").text()
                     }
-                    console.log(selectedWellbore);
                     if (selectedWellbore._id) {
                         const isConfirmed = window.confirm(`Are you sure you want to delete the wellbore: ${selectedWellbore.name}?`);
                         if (isConfirmed) {
@@ -1093,7 +1110,6 @@ $(document).ready(function () {
             }
         },
         open: async ()=> {
-            console.log("fetch wellbores called");
             try {
         
                 // Fetch the selected project ID
@@ -1122,7 +1138,6 @@ $(document).ready(function () {
     let surveyInputGrid;
     function renderGridEditSurvey(surveyData) {
         let data;
-        console.log(surveyData.md.length);
         if(surveyData.md.length==0) {
             // const rowData = generateEmptyRows(colData);
             data = DataGridXL.createEmptyData(10, 4)
@@ -1162,7 +1177,6 @@ $(document).ready(function () {
         try {
             const result = await getWellboreSurvey(selectedWellboreId);
             if (result.success) {
-                console.log("get survey success ", result.survey)
                 renderGridEditSurvey(result.survey);
             } else {
                 throw new Error(response.data.message || "Failed to get survey");
@@ -1189,14 +1203,12 @@ $(document).ready(function () {
                     }
                     let calculateTVDchecked = $("#page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox").prop("checked");
                     const gridData = transposeAndConvert(surveyInputGrid.getData(), calculateTVDchecked, calculateTVDchecked?1:null);
-                    console.log(gridData);
 
                     if (!selectedWellbore._id) {
                         window.alert("Please select a wellbore")
                         return;
                     };
                     if(gridData.ok===true) {
-                        console.log("gridData OK");
                         try {
                             const formData = {
                                 md: gridData.data[0],
@@ -1210,8 +1222,6 @@ $(document).ready(function () {
                             console.log(formData);
                             const result = await setWellboreSurvey(selectedWellbore._id, formData);
                             if (result.success) {
-                                console.log("set survey: success");
-                                console.log(result);
                                 if (calculateTVDchecked) {
                                     const newSurveyData = {
                                         md: formData.md,
@@ -1241,7 +1251,6 @@ $(document).ready(function () {
             }
         },
         open: async ()=> {
-            console.log("open dialog edit survey data")
             renderGridEditSurvey({md: []})
             try {
                 const activeProject = getLocalActiveProject();
@@ -1249,14 +1258,6 @@ $(document).ready(function () {
                 const wellSelect = $('#dialog-wellbore-edit-survey-data-well-select');
                 const wellboreSelect = $('#dialog-wellbore-edit-survey-data-wellbore-select');
 
-                // fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
-                // wellboreSelect.off('change').on('change', async function () {
-                //     var selectedWellbore = {
-                //         _id: wellboreSelect.val(),
-                //         name: wellboreSelect.find("option:selected").text()
-                //     }
-                //     renderGridEditSurveyAsync(selectedWellbore._id);
-                // });
                 fetchWellsToSelect(projectId, wellSelect);
                 let selectedWellId = null;
                 let selectedWellboreId = null;
@@ -1285,56 +1286,67 @@ $(document).ready(function () {
 
     // DATASET
     function addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, dataTypeDefault, dataUnitDefault) {
-        const dataTypeOptions = [
-            {text: "GR - Gamma Ray", value: "GR"},
-            {text: "DT - Sonic", value: "DT"},
-            {text: "RT - Resistivity", value: "RT"},
-            {text: "RHOB - Density", value: "RHOB"},
-            {text: "PP - Pore Pressure Gradient", value: "PP"},
-            {text: "FG - Fracture Gradient", value: "FG"},
-            {text: "OBG - Overburden Gradient", value: "OBG"},
-            {text: "POISSON - Poisson Ratio", value: "POISSON"},
-            {text: "UNKNOWN", value: "Unknown"},
-        ];
-    
-        // Define mapping between data types and units
-        const pressureGradientUnits = ["sg", "ppg", "psi/ft", "g/cc", "kPa/m", "Pa/m", "MPa/m"];
-        const dataUnitOptions = {
-            "PP": pressureGradientUnits,
-            "FG": pressureGradientUnits,
-            "OBG": pressureGradientUnits,
-            "Temperature": ["Celsius", "Fahrenheit"],
-            "Unknown": ["unknown"],
-            "POISSON": ["unitless"],
-            "GR": ["GAPI", "API"],
-            "RT": ["ohmm"],
-            "DT": ["us/ft", "us/m"],
-            "RHOB": pressureGradientUnits,
-        };
+        const dataTypes = window.userConfig.data_types;
+        const unitGroups = window.userConfig.unit_groups;
 
+        // Populate DataType Select
         dataTypeSelect.empty();
-        dataUnitSelect.empty();
-        dataTypeOptions.forEach(dataTypeOption => {
-            dataTypeSelect.append(`<option value="${dataTypeOption.value}">${dataTypeOption.text}</option>`);
+        dataTypes.forEach(dataType => {
+            dataTypeSelect.append(
+                `<option value="${dataType.name}">${dataType.name} - ${dataType.description}</option>`
+            );
         });
 
+        // Map DataTypes to Units
+        const dataUnitOptions = {};
+        unitGroups.forEach(unitGroup => {
+            unitGroup.unit.forEach(unit => {
+                if (!dataUnitOptions[unitGroup.name]) {
+                    dataUnitOptions[unitGroup.name] = [];
+                }
+                dataUnitOptions[unitGroup.name].push(unit.name);
+            });
+        });
+
+        // Handle DataType Change
         dataTypeSelect.off('change');
         dataTypeSelect.on('change', function () {
-            const selectedDataType = $(this).val(); 
-            dataUnitSelect.empty(); 
-            if (dataUnitOptions[selectedDataType]) {
-                dataUnitOptions[selectedDataType].forEach(unit => {
-                    const option = $('<option></option>').val(unit).text(unit);
-                    dataUnitSelect.append(option);
+            const selectedDataType = $(this).val();
+            const matchedUnitGroup = dataTypes.find(dt => dt.name === selectedDataType)?.unit_group;
+            
+            dataUnitSelect.empty();
+            if (matchedUnitGroup && dataUnitOptions[matchedUnitGroup]) {
+                dataUnitOptions[matchedUnitGroup].forEach(unit => {
+                    dataUnitSelect.append(`<option value="${unit}">${unit}</option>`);
                 });
             } else {
-                const defaultOption = $('<option></option>').val('').text('-');
-                dataUnitSelect.append(defaultOption);
+                dataUnitSelect.append('<option value="">-</option>');
             }
         });
+                        
         dataTypeSelect.val(dataTypeDefault).change();
         dataUnitSelect.val(dataUnitDefault).change();
     };
+
+    function parseDatasetNameAndSelectType(inputSelector, dataTypeSelect) {
+        const datasetTypeMapping = {};
+        window.userConfig.data_types.forEach(dataType => {
+            datasetTypeMapping[dataType.name] = dataType.name; // Map code to name
+        });
+
+        $(inputSelector).off('input').on('input', function () {
+            const inputValue = $(this).val().toUpperCase(); // Convert to uppercase for consistency
+            let matchedType = 'UNKNOWN'; // Default type
+    
+            for (const keyword in datasetTypeMapping) {
+                if (inputValue.includes(keyword)) {
+                    matchedType = datasetTypeMapping[keyword];
+                    break;
+                }
+            }    
+            dataTypeSelect.val(matchedType).change();
+        });
+    }
     
     let dialogDatasetCreateCurrentPage = 1;
     const dialogDatasetCreatetotalPages = 3;
@@ -1387,7 +1399,7 @@ $(document).ready(function () {
                     
                     const hasTextColumnChecked = $('#dialog-create-dataset-has-text-column-checkbox').prop('checked');
                     renderGridCreateDataset(hasTextColumnChecked);
-                }
+                };
             },
             Finish: {
                 text: "Finish",
@@ -1456,7 +1468,6 @@ $(document).ready(function () {
             },
         },
         open: ()=> {
-            console.log("open dialog");
             dialogDatasetCreateCurrentPage=1;
             dialogDatasetCreateShowPage(dialogDatasetCreateCurrentPage);
 
@@ -1468,6 +1479,29 @@ $(document).ready(function () {
             const dataTypeSelect = $("#dialog-create-dataset-data-type-select");
             const dataUnitSelect = $("#dialog-create-dataset-data-unit-select");
             addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, "GR", "GAPI");
+            parseDatasetNameAndSelectType('#dialog-create-dataset-name', dataTypeSelect);
+
+            wellSelect.on('change', async function () {
+                try {
+                    const response  = await getWellProperties(wellSelect.val(), mode="basic");
+                    if (response.success) {
+                        $("#dialog-create-dataset-index-unit-select").val(response.well_properties.default_unit_depth);
+                    };
+                } catch (error) {
+                    console.error("Failed to fetch well properties:", error);
+                }
+            });
+            wellboreSelect.off('change');
+            wellboreSelect.on('change', async function () {
+                try {
+                    const response  = await getWellboreProperties(wellboreSelect.val(), mode="basic");
+                    if (response.success) {
+                        $("#dialog-create-dataset-reference-date").val(response.wellbore_properties.spud_date);
+                    };
+                } catch (error) {
+                    console.error("Failed to fetch wellbore properties:", error);
+                }
+            });
         },
         close: () => {
             $("#dialog-form-create-dataset")[0].reset();
@@ -1524,7 +1558,6 @@ $(document).ready(function () {
                         _ids: datasetSelect.val(),
                         names: datasetSelect.find("option:selected").toArray().map(item => item.text)
                     }
-                    console.log(selectedDatasets);
                     if (selectedDatasets._ids) {
                         const isConfirmed = window.confirm(`Are you sure you want to delete the dataset?`);
                         if (isConfirmed) {
@@ -1587,7 +1620,6 @@ $(document).ready(function () {
         } else {
             if (hasTextColumn) {
                 data = col_to_row(datasetData.index, datasetData.value, datasetData.description);
-                console.log("has text ", data);
             } else {
                 data = col_to_row(datasetData.index, datasetData.value);
             };
@@ -1661,7 +1693,6 @@ $(document).ready(function () {
             Apply: {
                 text: "Apply",
                 async click() {
-                    console.log("Apply");
                     const gridData = transposeAndConvert(
                         datasetPropertiesDataGrid.getData(),
                         datasetPropertiesDataHasTextColumn,
@@ -1673,7 +1704,6 @@ $(document).ready(function () {
                     }
 
                     const datasetId = $('#dialog-properties-dataset-dataset-select').val();
-                    console.log(datasetId);
                     const formData = {
                         name: $("#dialog-properties-dataset-name").val(),
                         description: $("#dialog-properties-dataset-description").val(),
@@ -1754,7 +1784,6 @@ $(document).ready(function () {
                                         if (datasetSelect.val()) {
                                             renderGridDatasetPropertiesData(result.dataset_properties.hasTextColumn, result.dataset_properties.data, empty=false);
                                         } else {
-                                            console.log("open tab data with no selected dataset");
                                             renderGridDatasetPropertiesData(false, null, empty=true);
                                         }
                                     };
@@ -1792,7 +1821,39 @@ $(document).ready(function () {
     });
 
 
-    // ON PROGRESS
+    // PROPERTIES WELL
+    var propertiesWellDatasetTable = $('#dialog-properties-well-dataset-table').DataTable({
+        searching: false,
+        paging: false,
+        scrollCollapse: true,
+        scrollY: 150,
+        info: false,
+        retrieve: true,
+        ordering: false,
+        columns: [
+            { title: 'Wellbore', data: 'wellboreName' },
+            { title: 'Dataset', data: 'name' },
+            { title: 'Datatype', data: 'dataType' },
+            { title: 'Unit', data: 'dataUnit' },
+        ],
+        data: [],
+    });
+
+    $('#dialog-properties-well-dataset-table').on('click', 'tr', function () {
+        if ($(this).hasClass('selected')) {
+            $(this).removeClass('selected');
+        }
+        else {
+            propertiesWellDatasetTable.$('tr.selected').removeClass('selected');
+            $(this).addClass('selected');
+        }
+        $("#dialog-properties-well-dataset-parameters-btn").prop("disabled", !propertiesWellDatasetTable.row('.selected').data());
+    });
+
+    $("#dialog-properties-well-dataset-parameters-btn").click(function () {
+        openDialogDatasetParameters(propertiesWellDatasetTable.row('.selected').data()._id);
+    });
+
     // DIALOG PROPERTIES WELL
     $("#dialog-properties-well").dialog({
         autoOpen: false,
@@ -1803,6 +1864,67 @@ $(document).ready(function () {
             Apply: {
                 text: "Apply",
                 async click() {
+                    const activeProject = getLocalActiveProject();
+                    const projectId = activeProject._id;
+
+                    var selectedWellId  = $("#dialog-properties-well-well-select").val();
+
+                    try {
+                        const formData = {
+                            date_updated: new Date().toISOString(),
+                            project_id: projectId,
+                            name: $("#dialog-properties-well-name").val(),
+                            description: $("#dialog-properties-well-description").val(),
+                            uid: $("#dialog-properties-well-uid").val(),
+                            common_name: $("#dialog-properties-well-common-well-name").val(),
+                            status: $("#dialog-properties-well-status-select").val(),
+                            basin_name: $("#dialog-properties-well-basin-name").val(),
+                            dominant_geology: $("#dialog-properties-well-dominant-geology-select").val(),
+                            water_velocity: parseFloat($("#dialog-properties-well-water-velocity").val()),
+                            ground_elevation: parseFloat($("#dialog-properties-well-ground-elevation").val()),
+                            water_depth: parseFloat($("#dialog-properties-well-water-depth").val()),
+                            water_density: parseFloat($("#dialog-properties-well-water-density").val()) || null,
+                            formation_fluid_density: parseFloat($("#dialog-properties-well-formation-fluid-density").val()) || null,
+                            default_unit_depth: $("#dialog-properties-well-default-unit-depth-select").val(),
+                            default_unit_density: $("#dialog-properties-well-default-unit-density-select").val(),
+                            notes: $("#dialog-properties-well-notes").val(),
+                            world_location: $("#dialog-properties-well-location-world-location").val(),
+                            area: $("#dialog-properties-well-location-area").val(),
+                            country: $("#dialog-properties-well-location-country").val(),
+                            field: $("#dialog-properties-well-location-field").val(),
+                            block_number: $("#dialog-properties-well-location-block-number").val(),
+                            coordinate_system: $("#dialog-properties-well-location-coordinate-system-select").val(),
+                            region: $("#dialog-properties-well-location-region-select").val(),
+                            grid_zone_datum: $("#dialog-properties-well-location-grid-zone-datum-select").val(),
+                            northing: parseFloat($("#dialog-properties-well-location-northing").val()),
+                            easting: parseFloat($("#dialog-properties-well-location-easting").val())
+                        };
+                
+                        // Validate required fields
+                        if (!formData.name) {
+                            alert("Please enter a well name!");
+                            return;
+                        }
+                        if (!formData.uid) {
+                            alert("Please enter a well UID!");
+                            return;
+                        }
+                
+                        console.log("Updating a well with the following data:", formData);
+
+                        const result = await updateWellProperties(selectedWellId, formData);
+                        if (result.success) {
+                            console.log("Update well properties: success: ", result);
+                            // $(this).dialog("close");
+                            initializeTree();
+                        } else {
+                            throw new Error(response.data.message || "Failed to update well properties");
+                        }
+                        
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert("An error occurred: " + error.message);
+                    }
 
                 }
             },
@@ -1820,11 +1942,69 @@ $(document).ready(function () {
             const wellSelect = $("#dialog-properties-well-well-select");
             try {
                 await fetchWellsToSelect(projectId, wellSelect);
+                wellSelect.off('change').on('change', async function () {
+                    const selectedWellId = $(this).val();
+                    try {
+                        const result = await getWellProperties(selectedWellId, mode="full");
+                        if (result.success) {
+                            console.log(result.well_properties);
+
+                            // tab general
+                            $('#dialog-properties-well-name').val(result.well_properties.name);
+                            $('#dialog-properties-well-description').val(result.well_properties.description);
+                            $('#dialog-properties-well-uid').val(result.well_properties.uid);
+                            $('#dialog-properties-well-common-well-name').val(result.well_properties.common_name);
+                            $('#dialog-properties-well-status-select').val(result.well_properties.status);
+                            $('#dialog-properties-well-basin-name').val(result.well_properties.basin_name);
+                            $('#dialog-properties-well-dominant-geology-select').val(result.well_properties.dominant_geology);
+                            $('#dialog-properties-well-water-velocity').val(result.well_properties.water_velocity);
+                            $('#dialog-properties-well-water-depth').val(result.well_properties.water_depth);
+                            $('#dialog-properties-well-ground-elevation').val(result.well_properties.ground_elevation);
+                            $('#dialog-properties-well-water-density').val(result.well_properties.water_density);
+                            $('#dialog-properties-well-formation-fluid-density').val(result.well_properties.formation_fluid_density);
+                            $("#dialog-properties-well-default-unit-depth-select").val(result.well_properties.default_unit_depth);
+                            $("#dialog-properties-well-default-unit-density-select").val(result.well_properties.default_unit_density);
+                            $("#dialog-properties-well-notes").val(result.well_properties.notes);
+
+                            // tab location
+                            $('#dialog-properties-well-location-world-location').val(result.well_properties.world_location);
+                            $('#dialog-properties-well-location-area').val(result.well_properties.area);
+                            $('#dialog-properties-well-location-country').val(result.well_properties.country);
+                            $('#dialog-properties-well-location-field').val(result.well_properties.field);
+                            $('#dialog-properties-well-location-block-number').val(result.well_properties.block_number);
+                            $('#dialog-properties-well-location-coordinate-system-select').val(result.well_properties.coordinate_system);
+                            $('#dialog-properties-well-location-region-select').val(result.well_properties.region);
+                            $('#dialog-properties-well-location-grid-zone-datum-select').val(result.well_properties.grid_zone_datum);
+                            $('#dialog-properties-well-location-northing').val(result.well_properties.northing);
+                            $('#dialog-properties-well-location-easting').val(result.well_properties.easting);
+
+                            $("#dialog-properties-well-tabs").tabs({
+                                activate: function (event, ui) {
+                                    handleTabActivation(ui.newPanel.attr("id"));
+                                },
+                            });
+                            
+                            const activeTabId = $("#dialog-properties-well-tabs .ui-tabs-active").attr("aria-controls");
+                            handleTabActivation(activeTabId);
+                            
+                            function handleTabActivation(tabId) {
+                                if (tabId === "dialog-properties-well-tabs-3") {
+                                    propertiesWellDatasetTable.clear();
+                                    propertiesWellDatasetTable.rows.add(result.well_properties.datasets_properties);
+                                    propertiesWellDatasetTable.columns.adjust().draw();
+                                }
+                            }
+
+                        };
+                    } catch(error) {
+                        console.error("Error get well properties:", error);
+                    };
+                });
             } catch (error) {};
 
         },
         close: function () {
-            // $('#dialog-properties-well-well-select').empty();
+            $('#dialog-properties-well-well-select').empty();
         }
     });
 

@@ -106,7 +106,18 @@ $(document).ready(function () {
             default_unit_depth: "meters",
             default_unit_density: "sg",
             notes: "some notes",
-            date_created: new Date().toISOString() // Current date as ISO string
+            date_created: new Date().toISOString(),
+
+            world_location: "Asia",
+            area: "Borneo",
+            country: "Indonesia",
+            field: "Mahakam",
+            block_number: "Field Block",
+            coordinate_system: "projected-system",
+            region: "all",
+            grid_zone_datum: "Indonesian_UTM_Zone_50S",
+            northing: 123,
+            easting: 456
         };
 
         console.log(formData);
