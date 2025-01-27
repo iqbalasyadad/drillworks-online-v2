@@ -141,7 +141,7 @@ def get_user_config(user_id):
         return jsonify({"success": False, "message": "An error occurred while fetching the config properties"}), 500
 
 @app.route('/api/projects', methods=['POST'])
-def add_project():
+def create_project():
     print("Received request to add project")
     data = request.json
 
@@ -512,8 +512,8 @@ def project_data_structure():
 
 
 @app.route('/api/wells', methods=['POST'])
-def add_well():
-    print("Received request add well")
+def create_well():
+    print("Received request create well")
     if 'user_id' not in session:
         print("not  in session")
         return jsonify({"success": False, "message": "User not in session"}), 401
@@ -566,15 +566,70 @@ def add_well():
 
 @app.route('/api/wells', methods=['GET'])
 def get_wells():
-    print("Received request get wells by project")
+    print("Received request to get wells")
+
+    # Check if user is logged in
     if 'user_id' not in session:
-        print("not  in session")
+        print("User not in session")
         return jsonify({"success": False, "message": "User not in session"}), 401
     
+    # Parse query parameters
     project_id = request.args.get('project_id')
-    wells = wells_collection.find({"projects_id": ObjectId(project_id)})
-    result = [{"_id": str(well["_id"]), "name": well["name"]} for well in wells]
-    return jsonify(result)
+    unassociated = request.args.get('unassociated', default="false").lower() == "true"
+    all_user_wells = request.args.get('all_user_wells', default="false").lower() == "true"
+    all_wells = request.args.get('all_wells', default="false").lower() == "true"
+    
+    # Initialize query
+    query = {}
+    wells = []
+
+    try:
+        if project_id:
+            query = {"projects_id": ObjectId(project_id)}
+            wells = wells_collection.find(query)
+
+        elif unassociated:
+            query = {
+                "$or": [
+                    {"projects_id": {"$exists": False}},
+                    {"projects_id": {"$size": 0}},
+                    {"projects_id": None}
+                ]
+            }
+            wells = wells_collection.find(query)
+
+        elif all_user_wells:
+            user_id = session['user_id']  # Get the current user's ID
+
+            try:
+                user_projects = projects_collection.find({"users_id": ObjectId(user_id)}, {"wells_id": 1})
+                wells_ids = []
+
+                for project in user_projects:
+                    wells_ids.extend(project.get("wells_id", []))  # Extract well IDs from each project
+                wells_ids = list(set(wells_ids))
+
+                if wells_ids:
+                    query = {"_id": {"$in": wells_ids}}  # Use the list of well IDs to query wells
+                    wells = list(wells_collection.find(query))  # Fetch wells as a list
+                else:
+                    wells = []  # No wells found for the user's projects
+
+            except Exception as e:
+                print(f"Error fetching wells for user: {e}")
+                wells = []
+
+        elif all_wells:
+            wells = wells_collection.find()  # No filter applied
+
+        result = [{"_id": str(well["_id"]), "name": well["name"], "uid": well["uid"], "description": well["description"]
+                   } for well in wells]
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        return jsonify({"success": False, "message": "An error occurred while fetching wells"}), 500
+
 
 @app.route('/api/wells/<well_id>', methods=['DELETE'])
 def delete_well(well_id):
@@ -740,6 +795,7 @@ def get_wellbore_properties_by_id(wellbore_id):
         "uid": wellbore.get("uid"),
         "description": wellbore.get("description"),
         "operator": wellbore.get("operator"),
+        "analyst": wellbore.get("analyst"),
         "status": wellbore.get("status"),
         "purpose": wellbore.get("purpose"),
         "analysis_type": wellbore.get("analysisType"),
@@ -752,14 +808,15 @@ def get_wellbore_properties_by_id(wellbore_id):
         "total_tvd": wellbore.get("totalTVD"),
         "spud_date": wellbore.get("spudDate"),
         "completion_date": wellbore.get("completionDate"),
+        "notes": wellbore.get("notes"),
         "datasets_id": [str(dataset_id) for dataset_id in wellbore.get("datasets_id", [])],
     }
 
     return wellbore_properties
 
 @app.route('/api/wellbores', methods=['POST'])
-def add_wellbore():
-    print("Received request: add wellbore")
+def create_wellbore():
+    print("Received request: create wellbore")
     if 'user_id' not in session:
         print("not  in session")
         return jsonify({"success": False, "message": "User not in session"}), 401
@@ -783,17 +840,19 @@ def add_wellbore():
         "uid": data.get('uid'),
         "description": data.get('description'),
         "operator": data.get('operator'),
+        "analyst": data.get('analyst'),
         "status": data.get('status'),
         "purpose": data.get('purpose'),
         "analysisType": data.get('analysis_type'),
         "trajectoryShape": data.get('trajectory_shape'),
         "rigName": data.get('rig_name'),
-        "objectiveInformation": data.get('objectiveInformation'),
+        "objectiveInformation": data.get('objective_information'),
         "airGap": data.get('air_gap'),
         "totalMD": data.get('total_md'),
         "totalTVD": data.get('total_tvd'),
         "spudDate": data.get('spud_date'),
         "completionDate": data.get('completion_date'),
+        "notes": data.get('notes'),
         "survey": { "md": [], "tvd": [], "inclination": [], "azimuth": [] },
         "datasets_id": []
     }
@@ -883,25 +942,12 @@ def set_survey(wellbore_id):
         print("User not in session")
         return jsonify({"success": False, "message": "User not in session"}), 401
 
-    # Get the survey data from the request JSON
     data = request.json
-    md = data.get('md')
-    inclination = data.get('inclination')
-    azimuth = data.get('azimuth')
-    calculateTVDChecked = data.get('calculate_tvd_checked')
-
-    print("calculateTVDChecked: ", calculateTVDChecked)
-    if calculateTVDChecked:
-        print("calculate TVD")
-        tvd = appcalculation.calculate_tvd(md, inclination)
-    else:
-        tvd = data.get('tvd')
-
     survey_data = {
-        "md": md,
-        "tvd": tvd,
-        "inclination": inclination,
-        "azimuth": azimuth
+        "md": data.get('md'),
+        "tvd": data.get('tvd'),
+        "inclination": data.get('inclination'),
+        "azimuth": data.get('azimuth')
     }
 
     # Find the wellbore by its ID and update the survey field
@@ -915,47 +961,48 @@ def set_survey(wellbore_id):
             "success": False,
             "message": f"No wellbore found with ID {wellbore_id}"
         }), 404
-    
     result = { "success": True, "message": "Survey data updated successfully"}
-
-    if calculateTVDChecked:
-        result['survey'] = { "tvd": tvd }
-
     return jsonify(result)
 
 # DATASETS
 @app.route('/api/datasets', methods=['POST'])
-def add_datasets():
-    print("Received request: add datasets")
+def create_dataset():
+    print("Received request: create datasets")
     if 'user_id' not in session:
-        print("not  in session")
+        print("User not in session")
         return jsonify({"success": False, "message": "User not in session"}), 401
-    
+
     data = request.json
     wellbore_id = data.get('wellbore_id')
+    dataset_name = data.get('name')
+    confirm_replace = data.get('confirm_replace', False)
 
-    print(data.get('data'))
+    # Check if a dataset with the same name exists for the given wellbore
+    existing_dataset = datasets_collection.find_one({"wellbore_id": ObjectId(wellbore_id), "name": dataset_name})
+    
+    if existing_dataset and not confirm_replace:
+        # Prompt user if they want to replace the existing dataset
+        return jsonify({
+            "success": False,
+            "message": f"A dataset with the name '{dataset_name}' already exists. Do you want to replace it?",
+            "existing_dataset_id": str(existing_dataset["_id"])
+        }), 409
 
-    try:
-        dataRange = {
-            "minIndex": min(data.get('data')['index']),
-            "maxIndex": max(data.get('data')['index']),
-            "minValue": min(data.get('data')['value']),
-            "maxValue": max(data.get('data')['value'])
-        }
-    except:
-        dataRange = {
-            "minIndex": 0,
-            "maxIndex": 0,
-            "minValue": 0,
-            "maxValue": 0
-        }
+    if existing_dataset and confirm_replace:
+        # Delete the existing dataset
+        datasets_collection.delete_one({"_id": existing_dataset["_id"]})
+        wellbores_collection.update_one(
+            {"_id": ObjectId(wellbore_id)},
+            {"$pull": {"datasets_id": existing_dataset["_id"]}}
+        )
+        print(f"Deleted existing dataset with ID: {existing_dataset['_id']}")
 
+    # Add the new dataset
     new_dataset = {
         "_id": ObjectId(),
         "wellbore_id": ObjectId(wellbore_id),
         "method": data.get('method'),
-        "name": data.get('name'),
+        "name": dataset_name,
         "description": data.get('description'),
         "indexType": data.get('index_type'),
         "indexUnit": data.get('index_unit'),
@@ -970,16 +1017,15 @@ def add_datasets():
         "symbolSize": data.get('symbol_size'),
         "hasTextColumn": data.get('has_text_column'),
         "data": data.get('data'),
-        "dataRange": dataRange,
         "dateCreated": data.get('date_created'),
     }
     dataset_id = datasets_collection.insert_one(new_dataset).inserted_id
 
-    # print(new_dataset["dataRange"])
-
     # Update wellbore to include the new dataset
     wellbores_collection.update_one({"_id": ObjectId(wellbore_id)}, {"$push": {"datasets_id": dataset_id}})
     return jsonify({"success": True, "message": "Dataset added successfully", "dataset_id": str(dataset_id)})
+
+
 
 @app.route('/api/datasets', methods=['GET'])
 def get_datasets():
@@ -1057,27 +1103,26 @@ def get_dataset_properties_by_id(dataset_id):
     dataset_properties = {
         "_id": dataset_id,
         "wellbore_id": str(dataset.get("wellbore_id")),
-        "wellboreName": wellbore.get("name"),
+        "wellbore_name": wellbore.get("name"),
         "well_id": str(wellbore.get("well_id")),
-        "wellName": well.get("name"),
+        "well_name": well.get("name"),
         "method": dataset.get('method'),
         "name": dataset.get('name'),
         "description": dataset.get('description'),
-        "indexType": dataset.get('indexType'),
-        "indexUnit": dataset.get('indexUnit'),
-        "referenceLevel": dataset.get('referenceLevel'),
-        "referenceDate": dataset.get('referenceDate'),
-        "dataType": dataset.get('dataType'),
-        "dataUnit": dataset.get('dataUnit'),
+        "index_type": dataset.get('indexType'),
+        "index_unit": dataset.get('indexUnit'),
+        "reference_level": dataset.get('referenceLevel'),
+        "reference_date": dataset.get('referenceDate'),
+        "data_type": dataset.get('dataType'),
+        "data_unit": dataset.get('dataUnit'),
         "color": dataset.get('color'),
-        "lineStyle": dataset.get('lineStyle'),
-        "lineWidth": dataset.get('lineWidth'),
+        "line_style": dataset.get('lineStyle'),
+        "line_width": dataset.get('lineWidth'),
         "symbol": dataset.get('symbol'),
-        "symbolSize": dataset.get('symbolSize'),
-        "hasTextColumn": dataset.get('hasTextColumn'),
-        # "dataRange": dataset.get('dataRange'),
+        "symbol_size": dataset.get('symbolSize'),
+        "has_text_column": dataset.get('hasTextColumn'),
         "data": dataset.get('data'),
-        "dateCreated": dataset.get('dateCreated')
+        "date_created": dataset.get('dateCreated')
     }
 
     return dataset_properties
@@ -1128,13 +1173,10 @@ def update_dataset(dataset_id):
     updated_fields['indexUnit'] = data['index_unit']
     updated_fields['referenceLevel'] = data['reference_level']
     updated_fields['data'] = data['data']
-
-    # Add the updated date
     updated_fields['dateUpdated'] = data.get('date_updated', '')
 
     # Update the project in the database
     try:
-        # print(f"Updating dataset: {dataset_id} with fields: {updated_fields}")
         result = datasets_collection.update_one(
             {"_id": ObjectId(dataset_id)},
             {"$set": updated_fields}
@@ -1219,6 +1261,67 @@ def update_well(well_id):
     except Exception as e:
         print(f"Error while updating well: {e}")
         return jsonify({"success": False, "message": "Failed to update well"}), 500
+    
+@app.route('/api/wellbores/<wellbore_id>', methods=['PUT'])
+def update_wellbore(wellbore_id):
+    print(f"Received request to update wellbore: {wellbore_id}")
+    data = request.json
+
+    # Check if the user is authenticated
+    if 'user_id' not in session:
+        print("User not in session")
+        return jsonify({"success": False, "message": "User not in session"}), 401
+
+    # Fetch the project by ID and verify ownership
+    try:
+        existing_wellbore = wellbores_collection.find_one({"_id": ObjectId(wellbore_id)})
+        if not existing_wellbore:
+            print("Wellbore not found or unauthorized access")
+            return jsonify({"success": False, "message": "Wellbore not found or unauthorized"}), 404
+
+    except Exception as e:
+        print(f"Error while fetching wellbore: {e}")
+        return jsonify({"success": False, "message": "Failed to fetch wellbore"}), 500
+
+    # Update fields if provided in the request
+    updated_fields = {}
+    updated_fields['name'] = data['name']
+    updated_fields['description'] = data['description']
+    updated_fields['uid'] = data['uid']
+    updated_fields['operator'] = data['operator']
+    updated_fields['analyst'] = data['analyst']
+    updated_fields['status'] = data['status']
+    updated_fields['purpose'] = data['purpose']
+    updated_fields['analysisType'] = data['analysis_type']
+    updated_fields['trajectoryShape'] = data['trajectory_shape']
+    updated_fields['rigName'] = data['rig_name']
+    updated_fields['objectiveInformation'] = data['objective_information']
+    updated_fields['airGap'] = data['air_gap']
+    updated_fields['totalMD'] = data['total_md']
+    updated_fields['totalTVD'] = data['total_tvd']
+    updated_fields['spudDate'] = data['spud_date']
+    updated_fields['completionDate'] = data['completion_date']
+    updated_fields['notes'] = data['notes']
+    updated_fields['survey'] = data['survey']
+    updated_fields['dateUpdated'] = data.get('date_updated', '')
+
+    # Update the project in the database
+    try:
+        result = wellbores_collection.update_one(
+            {"_id": ObjectId(wellbore_id)},
+            {"$set": updated_fields}
+        )
+
+        if result.modified_count == 0:
+            print("No changes made to the wellbore")
+            return jsonify({"success": False, "message": "No changes made"}), 200
+
+        print("Wellbore updated successfully")
+        return jsonify({"success": True, "message": "Wellbore updated successfully"})
+
+    except Exception as e:
+        print(f"Error while updating wellbore: {e}")
+        return jsonify({"success": False, "message": "Failed to welbore dataset"}), 500
     
 if __name__ == "__main__":
     app.run(debug=True)

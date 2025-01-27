@@ -194,7 +194,7 @@ $(document).ready(function () {
           withCredentials: true, // Include cookies in the request
         }
       );
-      console.log("Project updated successfully:", response.data);
+      console.log("Well updated successfully:", response.data);
       return response.data;
     } catch (error) {
       // Extract error details
@@ -211,6 +211,26 @@ $(document).ready(function () {
     }
   };
   window.updateWellProperties = updateWellProperties;
+
+  const updateWellboreProperties = async (wellboreId, formData) => {
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/wellbores/${wellboreId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true, // Include cookies in the request
+        }
+      );
+      console.log("Wellbore updated successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  window.updateWellboreProperties = updateWellboreProperties;
   
 
   const setActiveProject = async (project) => {
@@ -324,17 +344,18 @@ $(document).ready(function () {
   };
   
   // WELL
-  const getWells = async (projectId) => {
+  const getWells = async (query) => {
     try {
-      const response = await axios.get(`${config.apiUrl}/api/wells?project_id=${projectId}`, {
-        withCredentials: true,  // Include cookies with the request
-      });
-      return response.data;
+        const response = await axios.get(`${config.apiUrl}/api/wells?${query}`, {
+            withCredentials: true,
+        });
+        return response.data;
     } catch (error) {
-      console.error("Error get wells:", error.response?.data || error.message);
-      throw error;
+        console.error("Error fetching wells:", error.response?.data || error.message);
+        throw error;
     }
   };
+
 
   const addWell = async (formData) => {
     try {
@@ -465,6 +486,7 @@ $(document).ready(function () {
   };
 
   // DATASET
+  // ADD DATASET
   const addDataset = async (formData) => {
     try {
         const response = await fetch(`${config.apiUrl}/api/datasets`, {
@@ -475,6 +497,20 @@ $(document).ready(function () {
         });
 
         const result = await response.json();
+
+        if (response.status === 409) {
+            // Dataset with the same name exists, ask user for confirmation
+            const userConfirm = confirm(result.message); // Ask user if they want to replace
+            if (userConfirm) {
+                // Resend the request with confirm_replace flag
+                formData.confirm_replace = true;
+                return addDataset(formData); // Recursive call to handle replacement
+            } else {
+                alert("Dataset was not replaced.");
+                return;
+            }
+        }
+
         if (!response.ok) {
             throw new Error(result.message || "Failed to add dataset");
         }
@@ -484,6 +520,7 @@ $(document).ready(function () {
         alert("An error occurred: " + (error.message || "Unknown error"));
     }
   };
+
 
   const getDatasets = async (wellboreId) => {
     try {

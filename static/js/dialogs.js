@@ -6,11 +6,27 @@ $(document).ready(function () {
         return date.getFullYear() + '/' + (date.getMonth() + 1).toString().padStart(2, '0') + '/' + date.getDate().toString().padStart(2, '0');
     };
 
+    // Fetch project to select
+    // const fetchProjectsToSelect = async(projectSelect) => {
+    //     try {
+    //         const projects = await getProjects();
+    //         projectSelect.empty();
+    //         projects.forEach(project => {
+    //             projectSelect.append(`<option value="${project._id}">${project.name}</option>`);
+    //         });
+    //         // if (wellSelect.find('option').length > 0) {
+    //         //     wellSelect.prop('selectedIndex', 0).change();
+    //         // }
+    //     } catch (error) {
+    //         console.error("Error populating projects:", error);
+    //     }
+    // };
+
     // Fetch to select
     const fetchWellsToSelect = async(projectId, wellSelect) => {
         if (projectId) {
             try {
-                const wells = await getWells(projectId);
+                const wells = await getWells(`project_id=${projectId}`);
                 wellSelect.empty();
                 wells.forEach(well => {
                     wellSelect.append(`<option value="${well._id}">${well.name}</option>`);
@@ -56,11 +72,17 @@ $(document).ready(function () {
     };
 
     const fetchWellsWellboresToSelect = async(projectId, wellSelect, wellboreSelect) => {
-        fetchWellsToSelect(projectId, wellSelect);
+        await fetchWellsToSelect(projectId, wellSelect);
         wellSelect.off('change').on('change', async function () {
             const selectedWellId = $(this).val();
-            fetchWellboresToSelect(selectedWellId, wellboreSelect);
+            await fetchWellboresToSelect(selectedWellId, wellboreSelect);
+            if (wellboreSelect.find('option').length > 0) {
+                wellboreSelect.prop('selectedIndex', 0).change(); // Select the first option
+            }
         });
+        if (wellSelect.find('option').length > 0) {
+            wellSelect.prop('selectedIndex', 0).change();
+        }
     };
 
     const fetchWellsWellboresDatasetsToSelect = async(projectId, wellSelect, wellboreSelect, datasetSelect) => {
@@ -342,7 +364,7 @@ $(document).ready(function () {
         scrollCollapse: true,
         scrollY: 200,
         info: false,
-        // order: [[0, 'asc']],
+        // order: [[1, 'asc']],
         // bDestroy: true,
         retrieve: true,
         ordering: false,
@@ -437,7 +459,7 @@ $(document).ready(function () {
         $("#dialog-open-project").dialog("open");
     };
 
-    // Dialog delete project
+    // DELETE PROJECT
     var deleteProjectTable = $('#project-delete-table').DataTable({
         paging: false,
         scrollCollapse: true,
@@ -528,6 +550,7 @@ $(document).ready(function () {
         close: function () {
             deleteProjectTable.$('tr.selected').removeClass('selected');
             deleteProjectTableSelectedProject = null;
+            $('#dialog-delete-project-delete-wells-checkbox').prop('checked', false);
         }
     });
 
@@ -535,8 +558,8 @@ $(document).ready(function () {
     function datasetPropertiesToParametersText(datasetProperties) {
         const parametersText = `Method: ${datasetProperties.method}\n\
         Dataset name: ${datasetProperties.name}\n\
-        Datatype: ${datasetProperties.dataType}\n\
-        Date created: ${datasetProperties.dateCreated}\n\
+        Datatype: ${datasetProperties.data_type}\n\
+        Date created: ${datasetProperties.date_created}\n\
         Min depth: ${Math.min(...datasetProperties.data.index)}\n\
         Max depth: ${Math.max(...datasetProperties.data.index)}\n\
         Min value: ${Math.min(...datasetProperties.data.value)}\n\
@@ -616,11 +639,11 @@ $(document).ready(function () {
         retrieve: true,
         ordering: false,
         columns: [
-            { title: 'Well', data: 'wellName' },
-            { title: 'Wellbore', data: 'wellboreName' },
+            { title: 'Well', data: 'well_name' },
+            { title: 'Wellbore', data: 'wellbore_name' },
             { title: 'Dataset', data: 'name' },
-            { title: 'Datatype', data: 'dataType' },
-            { title: 'Unit', data: 'dataUnit' },
+            { title: 'Datatype', data: 'data_type' },
+            { title: 'Unit', data: 'data_unit' },
         ],
         data: [],
     });
@@ -873,8 +896,8 @@ $(document).ready(function () {
     // DIALOG DELETE WELL
     $("#dialog-delete-well").dialog({
         autoOpen: false,
-        height: 400,
-        width: 400,
+        height: 350,
+        width: 350,
         modal: true,
         buttons: {
             Delete: {
@@ -931,6 +954,176 @@ $(document).ready(function () {
         },
         close: function () {
             $('#dialog-delete-well-select').empty()
+            //pass
+        }
+    });
+
+    // ADD WELL
+    // var dataSet = [];
+    var addWellWellsTable = $('#dialog-add-well-well-list-table').DataTable({
+        paging: false,
+        scrollCollapse: true,
+        scrollY: 200,
+        info: false,
+        // order: [[1, 'asc']],
+        // bDestroy: true,
+        retrieve: true,
+        ordering: false,
+        columns: [
+            { title: 'Name', data: 'name' },
+            { title: 'UID', data: 'uid' },
+            { title: 'Description', data: 'description' }
+        ],
+        data: [],
+    });
+    
+    // var addWellWellsTableSelectedWell;
+    $('#dialog-add-well-well-list-table').on('click', 'tr', function () {
+        // toggleOpenButton();
+        if ($(this).hasClass('selected')) {
+            $(this).removeClass('selected');
+            // openProjectTableSelectedProject=null;
+        }
+        else {
+            openProjectTable.$('tr.selected').removeClass('selected');
+            $(this).addClass('selected');
+            // openProjectTableSelectedProject = openProjectTable.row(this).data();
+            // console.log(openProjectTableSelectedProject._id);
+        }
+        
+    });
+
+    // DIALOG ADD WELL
+    $("#dialog-add-well").dialog({
+        autoOpen: false,
+        height: 500,
+        width: 500,
+        modal: true,
+        buttons: {
+            OK: {
+                text: "OK",
+                async click() {
+                    // // const dialog = $(this);
+                    // const wellSelect = $('#dialog-delete-well-select');
+                    // const wellSelectedName = wellSelect.find("option:selected").text();
+                    // const wellSelectedId = wellSelect.val();
+                    // if (wellSelectedId) {
+                    //     const isConfirmed = window.confirm(`Are you sure you want to delete the well: ${wellSelectedName}?`);
+                    //     if (isConfirmed) {
+                    //         try {
+                    //             const result = await deleteWell(wellSelectedId);
+                    //             console.log("Response:", result);
+                    
+                    //             if (result.success) {
+                    //                 // alert("Well deleted successfully!");
+                    //                 const activeProject = getLocalActiveProject();
+                    //                 const projectId = activeProject._id;
+                    //                 fetchWellsToSelect(projectId, wellSelect);
+                    //                 // dialog.dialog("close");  // Use the stored reference to close the dialog
+                    //                 initializeTree();
+                    //             }
+                    //         } catch (error) {
+                    //             console.error("Failed to delete well:", error.message);
+                    //         }
+                    //     }
+                    // } else {
+                    //     window.alert("Please select a well!")
+                    // }
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        },
+        open: async ()=> {
+            const activeProject = getLocalActiveProject();
+            const projectId = activeProject._id;
+            const projectSelect = $('#dialog-add-well-list-wells-by-project-project-select');
+            const wellsFilterRadio = $('input[name="dialog-add-well-list-wells-radio"]');
+            let wells; // To store fetched wells
+        
+            try {
+                // Fetch all projects except the active one
+                let projects = await getProjects();
+                projects = projects.filter(project => project._id !== projectId);
+        
+                // Populate the project dropdown
+                projectSelect.empty();
+                projects.forEach(project => {
+                    projectSelect.append(`<option value="${project._id}">${project.name}</option>`);
+                });
+        
+                // Automatically select the first project if available
+                if (projectSelect.find('option').length > 0) {
+                    projectSelect.prop('selectedIndex', 0).change();
+                }
+            } catch (error) {
+                console.error("Error populating projects:", error);
+            }
+        
+            // Update project dropdown state based on radio selection
+            const updateProjectSelectState = () => {
+                const radioSelectValue = wellsFilterRadio.filter(':checked').val();
+                if (radioSelectValue !== "list_wells_option_1") {
+                    projectSelect.attr('disabled', true); // Disable project dropdown
+                } else {
+                    projectSelect.removeAttr('disabled'); // Enable project dropdown
+                }
+            };
+        
+            // Add event listener to the radio buttons
+            wellsFilterRadio.off('change').on('change', async function () {
+                updateProjectSelectState(); // Enable/disable the dropdown as needed
+        
+                const selectedRadio = wellsFilterRadio.filter(':checked').val();
+                let query;
+        
+                // Build the query based on the selected filter
+                if (selectedRadio === "list_wells_option_1") {
+                    query = `project_id=${projectSelect.val()}`;
+                } else if (selectedRadio === "list_wells_option_2") {
+                    query = "unassociated=true";
+                } else if (selectedRadio === "list_wells_option_3") {
+                    query = "all_user_wells=true";
+                } else if (selectedRadio === "list_wells_option_4") {
+                    query = "all_wells=true";
+                }
+        
+                try {
+                    wells = await getWells(query);
+                    addWellWellsTable.clear();
+                    addWellWellsTable.rows.add(wells);
+                    addWellWellsTable.columns.adjust().draw();
+                } catch (error) {
+                    console.error("Error fetching wells:", error);
+                }
+            });
+        
+            // Add event listener to the project dropdown
+            projectSelect.off('change').on('change', async function () {
+                const selectedRadio = wellsFilterRadio.filter(':checked').val();
+        
+                if (selectedRadio === "list_wells_option_1") {
+                    const query = `project_id=${projectSelect.val()}`;
+                    try {
+                        wells = await getWells(query);
+                        addWellWellsTable.clear();
+                        addWellWellsTable.rows.add(wells);
+                        addWellWellsTable.columns.adjust().draw();
+                    } catch (error) {
+                        console.error("Error fetching wells on project change:", error);
+                    }
+                }
+            });
+        
+            updateProjectSelectState();
+            wellsFilterRadio.trigger('change'); // Trigger the initial change to fetch wells
+        },
+        close: function () {
+            // $('#dialog-delete-well-select').empty()
             //pass
         }
     });
@@ -1133,58 +1326,167 @@ $(document).ready(function () {
 
 
     // WELLBORE EDIT SURVEY DATA
+    class gridTableSurvey {
+        constructor(element) {
+            this.element = element;
+            this.header = [ { title: "MD" }, { title: "TVD" }, { title: "Inclination" }, { title: "Azimuth" } ];
+            this.surveyInputGrid = null;
+            this.calcTVD = false;
+        }
+        col_to_row(...columns) {
+            let result = [];
+            const numRows = columns[0].length;
+            for (let i = 0; i < numRows; i++) {
+                let row = [];
+                for (let j = 0; j < columns.length; j++) {
+                    row.push(columns[j][i]);
+                }
+                result.push(row);
+            }
+            return result;
+        }
 
-    // WELLBORE TABLE EDIT SURVEY
-    let surveyInputGrid;
-    function renderGridEditSurvey(surveyData) {
-        let data;
-        if(surveyData.md.length==0) {
-            // const rowData = generateEmptyRows(colData);
-            data = DataGridXL.createEmptyData(10, 4)
-        } else {
-            data = col_to_row(surveyData.md, surveyData.tvd, surveyData.inclination, surveyData.azimuth);
-        };
-
-        const headers = [
-            { title: "MD", type: 'number', format: '0,0.00' },
-            { title: "TVD", type: 'number', format: '0,0.00' },
-            { title: "INCLINATION", type: 'number', format: '0,0.00' },
-            { title: "AZIMUTH", type: 'number', format: '0,0.00' } ];
-
-        surveyInputGrid = new DataGridXL("dialog-wellbore-edit-survey-data-grid", {
-            // data: DataGridXL.createEmptyData(20, 4),
-            data: data,
-            columns: headers,
-            allowDeleteCols: false,
-            allowMoveCols: false,
-            allowInsertCols: false,
-            allowHideCols: false,
-            allowHideRows: false,
-            allowMoveRows: false,
-            colHeaderHeight: 16,
-            colHeaderWidth: 30,
-            colHeaderLabelType: "numbers",
-            colHeaderLabelAlign: "center",
-            colAlign: "right",
-            rowHeight: 16,
-            frozenRows: 0,
-            topBar: false,
-            bottomBar: false,
-        });
+        transposeAndConvert(array, skipColumn, skipColumnIndex=null) {
+            const nEmptyRow = 0;
+            // const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow).fill(null));
+            const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow));
+            // If the array is empty or contains only null values, return a 2D null array with 5 columns and n rows
+            if (array.length === 0 || array.every(row => row.every(cell => cell === null))) {
+                return {
+                    ok: true,
+                    message: 'ok',
+                    data: emptyArray
+                };
+            }
+        
+            // Check for mixed null and number in each row (skip specified column if skipColumn is true)
+            for (let rowIndex = 0; rowIndex < array.length; rowIndex++) {
+                let hasNumber = false;
+                let hasNull = false;
+        
+                for (let colIndex = 0; colIndex < array[rowIndex].length; colIndex++) {
+                    if (skipColumn && colIndex === skipColumnIndex) {
+                        continue; // Skip the specified column if skipColumn is true
+                    }
+                    let cell = array[rowIndex][colIndex];
+                    if (cell === null) {
+                        hasNull = true;
+                    } else if (!isNaN(cell)) {
+                        hasNumber = true;
+                    }
+                }
+        
+                if (hasNumber && hasNull) {
+                    alert(`Error at row ${rowIndex + 1}: Row contains both numbers and null values.`);
+                    return {
+                        ok: false,
+                        message: `Error at row ${rowIndex + 1}: Row contains both numbers and null values.`,
+                        data: emptyArray
+                    };
+                }
+            }
+        
+            // Filter out rows that only contain null values
+            let filteredArray = array.filter(row => row.some(cell => cell !== null));
+        
+            // Check if the rows are continuous (i.e., no null rows between non-null rows)
+            let nullRowDetected = false;
+            for (let i = 0; i < array.length; i++) {
+                if (array[i].every(cell => cell === null)) {
+                    if (!nullRowDetected) {
+                        nullRowDetected = true;
+                    }
+                } else if (nullRowDetected) {
+                    alert(`Error: Found gap between filled rows at row ${i + 1}.`);
+                    return {
+                        ok: false,
+                        message: `Error: Found gap between filled rows at row ${i + 1}.`,
+                        data: emptyArray
+                    };
+                }
+            }
+        
+            // Transpose the filtered array (convert rows to columns)
+            let transposed = filteredArray[0].map((_, colIndex) => filteredArray.map(row => row[colIndex]));
+        
+            // Convert all values to float and check for invalid values (skip specified column if skipColumn is true)
+            for (let rowIndex = 0; rowIndex < transposed.length; rowIndex++) {
+                // Skip the specified column index if skipColumn is true
+                if (skipColumn && rowIndex === skipColumnIndex) {
+                    continue; // Skip the conversion and validation for the specified column
+                }
+        
+                for (let colIndex = 0; colIndex < transposed[rowIndex].length; colIndex++) {
+                    let cell = transposed[rowIndex][colIndex];
+        
+                    if (cell === null) {
+                        alert(`Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
+                        return {
+                            ok: false,
+                            message: `Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
+                            data: emptyArray
+                        };
+                    }
+        
+                    let floatValue = parseFloat(cell);
+                    if (isNaN(floatValue)) {
+                        alert(`Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
+                        return {
+                            ok: false,
+                            message: `Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
+                            data: emptyArray
+                        };
+                    }
+                    transposed[rowIndex][colIndex] = floatValue;
+                }
+            }
+            return {
+                ok: true,
+                message: 'ok',
+                data: transposed
+            };
+        }
+    
+        render(surveyData=null) {
+            var data;
+            if(surveyData && surveyData.md.length>0) {
+                data = this.col_to_row(surveyData.md, surveyData.tvd, surveyData.inclination, surveyData.azimuth);
+            } else {
+                data = DataGridXL.createEmptyData(10, 4)
+            };
+            this.surveyInputGrid = new DataGridXL(this.element, {
+                data: data,
+                columns: this.header,
+                allowDeleteCols: false,
+                allowMoveCols: false,
+                allowInsertCols: false,
+                allowHideCols: false,
+                allowHideRows: false,
+                allowMoveRows: false,
+                colHeaderHeight: 16,
+                colHeaderWidth: 5,
+                colHeaderLabelType: "numbers",
+                colHeaderLabelAlign: "center",
+                colAlign: "right",
+                colWidth: 75,
+                rowHeight: 15,
+                frozenRows: 0,
+                topBar: false,
+                bottomBar: false,
+            });
+        }
+        getFormattedData() {
+            var formatted;
+            if (this.calcTVD) {
+                formatted = transposeAndConvert(this.surveyInputGrid.getData(), true, 1)
+            } else {
+                formatted = transposeAndConvert(this.surveyInputGrid.getData(), false, null)
+            }
+            return (formatted);
+        }
     };
 
-    async function renderGridEditSurveyAsync(selectedWellboreId) {
-        try {
-            const result = await getWellboreSurvey(selectedWellboreId);
-            if (result.success) {
-                renderGridEditSurvey(result.survey);
-            } else {
-                throw new Error(response.data.message || "Failed to get survey");
-            };
-        } catch (error) {
-            console.error("Error rendering grid:", error);
-        }
-    }
+    var gridSurveyWellbore = new gridTableSurvey("dialog-wellbore-edit-survey-data-grid");
 
     // DIALOG WELLBORE EDIT SURVEY DATA
     $("#dialog-wellbore-edit-survey-data").dialog({
@@ -1201,46 +1503,42 @@ $(document).ready(function () {
                         _id: wellboreSelect.val(),
                         name: wellboreSelect.find("option:selected").text()
                     }
-                    let calculateTVDchecked = $("#page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox").prop("checked");
-                    const gridData = transposeAndConvert(surveyInputGrid.getData(), calculateTVDchecked, calculateTVDchecked?1:null);
-
                     if (!selectedWellbore._id) {
                         window.alert("Please select a wellbore")
                         return;
                     };
-                    if(gridData.ok===true) {
-                        try {
-                            const formData = {
-                                md: gridData.data[0],
-                                inclination: gridData.data[2],
-                                azimuth: gridData.data[3],
-                                calculate_tvd_checked: calculateTVDchecked
-                            };
-                            if (!calculateTVDchecked) {
-                                formData.tvd = gridData.data[1];
-                            };
-                            console.log(formData);
-                            const result = await setWellboreSurvey(selectedWellbore._id, formData);
-                            if (result.success) {
-                                if (calculateTVDchecked) {
-                                    const newSurveyData = {
-                                        md: formData.md,
-                                        tvd: result.survey.tvd,
-                                        inclination: formData.inclination,
-                                        azimuth: formData.azimuth,
-                                    }
-                                    renderGridEditSurvey(newSurveyData);
-                                }
-                            } else {
-                                throw new Error(response.data.message || "Failed to add wellbore");
-                            }
-                        } catch (error) {
-                            console.error("Error:", error);
-                            alert("An error occurred: " + error.message);
-                        }
-                    } else {
-                        console.log(gridData.message);
+                    let calculateTVDchecked = $("#page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox").prop("checked");
+                    gridSurveyWellbore.calcTVD = calculateTVDchecked;
+                    const gridData = gridSurveyWellbore.getFormattedData();
+
+                    if(!gridData.ok) {
+                        console.error(gridData.message);
+                        return;
                     }
+                    const surveyData = {
+                        md: gridData.data[0],
+                        inclination: gridData.data[2],
+                        azimuth: gridData.data[3]
+                    }
+                    if (calculateTVDchecked) {
+                        const tvd = calculateTVD(gridData.data[0], gridData.data[2]);
+                        surveyData["tvd"] = tvd;
+                        gridSurveyWellbore.render(surveyData);
+                    } else {
+                        surveyData["tvd"] = gridData.data[1];
+                    }
+
+                    try {
+                        const result = await setWellboreSurvey(selectedWellbore._id, formData=surveyData);
+                        if (result.success) {
+                            console.log("set survey success");
+                        } else {
+                            throw new Error(response.data.message || "Failed to add wellbore");
+                        }
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert("An error occurred: " + error.message);
+                    };
                 }
             },
             Cancel: {
@@ -1251,7 +1549,7 @@ $(document).ready(function () {
             }
         },
         open: async ()=> {
-            renderGridEditSurvey({md: []})
+            gridSurveyWellbore.render(surveyData=null);
             try {
                 const activeProject = getLocalActiveProject();
                 const projectId = activeProject._id;
@@ -1265,12 +1563,17 @@ $(document).ready(function () {
                     selectedWellId = $(this).val();
                     fetchWellboresToSelect(selectedWellId, wellboreSelect);
                     selectedWellboreId = null;
-                    renderGridEditSurvey({md: []})
+                    gridSurveyWellbore.render(surveyData=null);
                 });
                 wellboreSelect.off('change').on('change', async function () {
-                    console.log("wellbore select changed");
                     selectedWellboreId = $(this).val();
-                    renderGridEditSurveyAsync(selectedWellboreId);
+                    const wellboreSurveyResult = await getWellboreSurvey(selectedWellboreId);
+                    if (wellboreSurveyResult.success) {
+                        gridSurveyWellbore.render(wellboreSurveyResult.survey);
+                    } else {
+                        throw new Error(response.data.message || "Failed to get survey");
+                    };
+                    
                 });
         
             } catch (error) {
@@ -1280,6 +1583,7 @@ $(document).ready(function () {
         close: function () {
             $('#dialog-wellbore-edit-survey-data-well-select').empty();
             $('#dialog-wellbore-edit-survey-data-wellbore-select').empty();
+            $('#page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox').prop('checked', false);
         }
     });
 
@@ -1347,6 +1651,178 @@ $(document).ready(function () {
             dataTypeSelect.val(matchedType).change();
         });
     }
+
+    // GRID DATASET
+    class gridTableDataset {
+        constructor(element) {
+            this.element = element;
+            this.datasetInputGrid = null;
+        }
+        col_to_row(...columns) {
+            let result = [];
+            const numRows = columns[0].length;
+            for (let i = 0; i < numRows; i++) {
+                let row = [];
+                for (let j = 0; j < columns.length; j++) {
+                    row.push(columns[j][i]);
+                }
+                result.push(row);
+            }
+            return result;
+        }
+
+        transposeAndConvert(array, skipColumn, skipColumnIndex=null) {
+            const nEmptyRow = 0;
+            const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow));
+            if (array.length === 0 || array.every(row => row.every(cell => cell === null))) {
+                return {
+                    ok: true,
+                    message: 'ok',
+                    data: emptyArray
+                };
+            }
+        
+            for (let rowIndex = 0; rowIndex < array.length; rowIndex++) {
+                let hasNumber = false;
+                let hasNull = false;
+        
+                for (let colIndex = 0; colIndex < array[rowIndex].length; colIndex++) {
+                    if (skipColumn && colIndex === skipColumnIndex) {
+                        continue; // Skip the specified column if skipColumn is true
+                    }
+                    let cell = array[rowIndex][colIndex];
+                    if (cell === null) {
+                        hasNull = true;
+                    } else if (!isNaN(cell)) {
+                        hasNumber = true;
+                    }
+                }
+        
+                if (hasNumber && hasNull) {
+                    alert(`Error at row ${rowIndex + 1}: Row contains both numbers and null values.`);
+                    return {
+                        ok: false,
+                        message: `Error at row ${rowIndex + 1}: Row contains both numbers and null values.`,
+                        data: emptyArray
+                    };
+                }
+            }
+        
+            // Filter out rows that only contain null values
+            let filteredArray = array.filter(row => row.some(cell => cell !== null));
+        
+            // Check if the rows are continuous (i.e., no null rows between non-null rows)
+            let nullRowDetected = false;
+            for (let i = 0; i < array.length; i++) {
+                if (array[i].every(cell => cell === null)) {
+                    if (!nullRowDetected) {
+                        nullRowDetected = true;
+                    }
+                } else if (nullRowDetected) {
+                    alert(`Error: Found gap between filled rows at row ${i + 1}.`);
+                    return {
+                        ok: false,
+                        message: `Error: Found gap between filled rows at row ${i + 1}.`,
+                        data: emptyArray
+                    };
+                }
+            }
+        
+            // Transpose the filtered array (convert rows to columns)
+            let transposed = filteredArray[0].map((_, colIndex) => filteredArray.map(row => row[colIndex]));
+        
+            // Convert all values to float and check for invalid values (skip specified column if skipColumn is true)
+            for (let rowIndex = 0; rowIndex < transposed.length; rowIndex++) {
+                // Skip the specified column index if skipColumn is true
+                if (skipColumn && rowIndex === skipColumnIndex) {
+                    continue; // Skip the conversion and validation for the specified column
+                }
+        
+                for (let colIndex = 0; colIndex < transposed[rowIndex].length; colIndex++) {
+                    let cell = transposed[rowIndex][colIndex];
+        
+                    if (cell === null) {
+                        alert(`Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
+                        return {
+                            ok: false,
+                            message: `Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
+                            data: emptyArray
+                        };
+                    }
+        
+                    let floatValue = parseFloat(cell);
+                    if (isNaN(floatValue)) {
+                        alert(`Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
+                        return {
+                            ok: false,
+                            message: `Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
+                            data: emptyArray
+                        };
+                    }
+                    transposed[rowIndex][colIndex] = floatValue;
+                }
+            }
+            return {
+                ok: true,
+                message: 'ok',
+                data: transposed
+            };
+        }
+    
+        render(dataset=null, hasTextColumn) {
+            this.hasTextColumn = hasTextColumn;
+            if (hasTextColumn) {
+                this.header = [ { title: "Index" }, { title: "Value" },  {title: "Description" } ];
+            } else {
+                this.header = [ { title: "Index" }, { title: "Value" } ];
+            };
+            var data;
+            if(dataset && dataset.index.length>0) {
+                if (hasTextColumn) {
+                    data = this.col_to_row(dataset.index, dataset.value, dataset.description);
+                } else {
+                    data = this.col_to_row(dataset.index, dataset.value);
+                };
+            } else {
+                if (hasTextColumn) {
+                    data = DataGridXL.createEmptyData(20, 3);
+                } else {
+                    data = DataGridXL.createEmptyData(20, 2);
+                }
+            };
+            this.datasetInputGrid = new DataGridXL(this.element, {
+                data: data,
+                columns: this.header,
+                allowDeleteCols: false,
+                allowMoveCols: false,
+                allowInsertCols: false,
+                allowHideCols: false,
+                allowHideRows: false,
+                allowMoveRows: false,
+                colHeaderHeight: 16,
+                colHeaderWidth: 5,
+                colHeaderLabelType: "numbers",
+                colHeaderLabelAlign: "center",
+                colAlign: "right",
+                colWidth: 75,
+                rowHeight: 15,
+                frozenRows: 0,
+                topBar: false,
+                bottomBar: false,
+            });
+        }
+        getFormattedData() {
+            var formatted;
+            if (this.hasTextColumn) {
+                formatted = transposeAndConvert(this.datasetInputGrid.getData(), true, 2)
+            } else {
+                formatted = transposeAndConvert(this.datasetInputGrid.getData(), false, null)
+            }
+            return (formatted);
+        }
+    };
+
+    var gridDatasetCreate = new gridTableDataset("dialog-create-dataset-data-grid");
     
     let dialogDatasetCreateCurrentPage = 1;
     const dialogDatasetCreatetotalPages = 3;
@@ -1398,22 +1874,21 @@ $(document).ready(function () {
                     $("#dialog-create-dataset-review-data-unit").val($("#dialog-create-dataset-data-unit-select").val());
                     
                     const hasTextColumnChecked = $('#dialog-create-dataset-has-text-column-checkbox').prop('checked');
-                    renderGridCreateDataset(hasTextColumnChecked);
+                    gridDatasetCreate.render(dataset=null, hasTextColumn=hasTextColumnChecked);
                 };
             },
             Finish: {
                 text: "Finish",
                 async click() {
                     const hasTextColumnChecked = $('#dialog-create-dataset-has-text-column-checkbox').prop('checked');
-                    const gridData = transposeAndConvert(
-                        datasetInputGrid.getData(),
-                        hasTextColumnChecked,
-                        hasTextColumnChecked ? 2 : null
-                    );
-                    let datasetGridData = { index: gridData.data[0], value: gridData.data[1] };
-                    if (hasTextColumnChecked) {
-                        datasetGridData.description = gridData.data[2];
+                    const gridData = gridDatasetCreate.getFormattedData();
+                    if(!gridData.ok) {
+                        console.error(gridData.message);
+                        return;
                     }
+                    var datasetGridData = { index: gridData.data[0], value: gridData.data[1] };
+                    if (hasTextColumnChecked) { datasetGridData.description = gridData.data[2]; };
+
                     // Collect form data
                     const formData = {
                         wellbore_id: $("#dialog-create-dataset-wellbore-select").val(),
@@ -1509,37 +1984,6 @@ $(document).ready(function () {
             $('#dialog-create-dataset-wellbore-select').empty();
         }
     });
-
-    let datasetInputGrid;
-    function renderGridCreateDataset(hasTextColumn) {
-
-        // data = col_to_row(surveyData.md, surveyData.tvd, surveyData.inclination, surveyData.azimuth);
-        headers = [
-            { title: "Index", type: 'number', format: '0,0.00' },
-            { title: "Value", type: 'number', format: '0,0.00' } ];
-        if (hasTextColumn) { headers.push( { title: "Description", type: 'text', format: '0,0.00' }) };
-        
-        datasetInputGrid = new DataGridXL("dialog-create-dataset-data-grid", {
-            data: DataGridXL.createEmptyData(20, 3),
-            // data: data,
-            columns: headers,
-            allowDeleteCols: false,
-            allowMoveCols: false,
-            allowInsertCols: false,
-            allowHideCols: false,
-            allowHideRows: false,
-            allowMoveRows: false,
-            colHeaderHeight: 16,
-            colHeaderWidth: 30,
-            colHeaderLabelType: "numbers",
-            colHeaderLabelAlign: "center",
-            colAlign: "right",
-            rowHeight: 16,
-            frozenRows: 0,
-            topBar: false,
-            bottomBar: false,
-        });
-    };
 
     // DIALOG DELETE DATASET
     $("#dialog-delete-dataset").dialog({
@@ -1645,6 +2089,8 @@ $(document).ready(function () {
             bottomBar: false,
         });
     };
+
+    var gridDatasetProperties = new gridTableDataset("dialog-properties-dataset-data-grid");
 
     // DIALOG PROPERTIES DATASET
     $("#dialog-properties-dataset").dialog({
@@ -1767,24 +2213,28 @@ $(document).ready(function () {
                             console.log(result.dataset_properties);
                             $('#dialog-properties-dataset-name').val(result.dataset_properties.name);
                             $('#dialog-properties-dataset-description').val(result.dataset_properties.description);
-                            $('#dialog-properties-dataset-data-type').val(result.dataset_properties.dataType);
-                            $('#dialog-properties-dataset-data-unit').val(result.dataset_properties.dataUnit);
-                            $('#dialog-properties-dataset-index-type').val(result.dataset_properties.indexType);
-                            $('#dialog-properties-dataset-index-unit').val(result.dataset_properties.indexUnit);
-                            $('#dialog-properties-dataset-reference-level').val(result.dataset_properties.referenceLevel);
-                            $('#dialog-properties-dataset-reference-date').val(result.dataset_properties.referenceDate);
+                            $('#dialog-properties-dataset-data-type').val(result.dataset_properties.data_type);
+                            $('#dialog-properties-dataset-data-unit').val(result.dataset_properties.data_unit);
+                            $('#dialog-properties-dataset-index-type').val(result.dataset_properties.index_type);
+                            $('#dialog-properties-dataset-index-unit').val(result.dataset_properties.index_unit);
+                            $('#dialog-properties-dataset-reference-level').val(result.dataset_properties.reference_level);
+                            $('#dialog-properties-dataset-reference-date').val(result.dataset_properties.reference_date);
 
-                            renderGridDatasetPropertiesData(result.dataset_properties.hasTextColumn, result.dataset_properties.data, empty=false);
-                            datasetPropertiesDataHasTextColumn = result.dataset_properties.hasTextColumn;
+                            // renderGridDatasetPropertiesData(result.dataset_properties.has_text_column, result.dataset_properties.data, empty=false);
+                            gridDatasetProperties.render(result.dataset_properties.data, result.dataset_properties.has_text_column);
+                            datasetPropertiesDataHasTextColumn = result.dataset_properties.has_text_column;
 
                             $("#dialog-properties-dataset-tabs").tabs({
                                 activate: function (event, ui) {
                                     const activeTabId = ui.newPanel.attr("id"); // Get the ID of the activated tab
                                     if (activeTabId==="dialog-properties-dataset-tabs-2") {
                                         if (datasetSelect.val()) {
-                                            renderGridDatasetPropertiesData(result.dataset_properties.hasTextColumn, result.dataset_properties.data, empty=false);
+                                            // renderGridDatasetPropertiesData(result.dataset_properties.has_text_column, result.dataset_properties.data, empty=false);
+                                            gridDatasetProperties.render(result.dataset_properties.data, result.dataset_properties.has_text_column);
                                         } else {
-                                            renderGridDatasetPropertiesData(false, null, empty=true);
+                                            // renderGridDatasetPropertiesData(false, null, empty=true);
+                                            gridDatasetProperties.render(dataset=null, result.dataset_properties.has_text_column);
+
                                         }
                                     };
                                 },
@@ -1799,10 +2249,10 @@ $(document).ready(function () {
                             // set tab advanced
                             const dataTypeSelect = $("#dialog-properties-dataset-advanced-data-type-select");
                             const dataUnitSelect = $("#dialog-properties-dataset-advanced-data-unit-select");
-                            addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, result.dataset_properties.dataType, result.dataset_properties.dataUnit)
-                            $('#dialog-properties-dataset-advanced-index-type-select').val(result.dataset_properties.indexType);
-                            $('#dialog-properties-dataset-advanced-index-unit-select').val(result.dataset_properties.indexUnit);
-                            $('#dialog-properties-dataset-advanced-reference-level-select').val(result.dataset_properties.referenceLevel);
+                            addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, result.dataset_properties.data_type, result.dataset_properties.data_unit)
+                            $('#dialog-properties-dataset-advanced-index-type-select').val(result.dataset_properties.index_type);
+                            $('#dialog-properties-dataset-advanced-index-unit-select').val(result.dataset_properties.index_unit);
+                            $('#dialog-properties-dataset-advanced-reference-level-select').val(result.dataset_properties.reference_level);
                         };
                     } catch(error) {
                         console.error("Error get datasets:", error);
@@ -1831,10 +2281,10 @@ $(document).ready(function () {
         retrieve: true,
         ordering: false,
         columns: [
-            { title: 'Wellbore', data: 'wellboreName' },
+            { title: 'Wellbore', data: 'wellbore_name' },
             { title: 'Dataset', data: 'name' },
-            { title: 'Datatype', data: 'dataType' },
-            { title: 'Unit', data: 'dataUnit' },
+            { title: 'Datatype', data: 'data_type' },
+            { title: 'Unit', data: 'data_unit' },
         ],
         data: [],
     });
@@ -2000,11 +2450,223 @@ $(document).ready(function () {
                         console.error("Error get well properties:", error);
                     };
                 });
-            } catch (error) {};
+            } catch (error) {
+                console.error("Error fetch wells:", error);
+            };
 
         },
         close: function () {
             $('#dialog-properties-well-well-select').empty();
+        }
+    });
+
+    // PROPERTIES WELLBORE
+    var propertiesWellboreDatasetTable = $('#dialog-properties-wellbore-dataset-table').DataTable({
+        searching: false,
+        paging: false,
+        scrollCollapse: true,
+        scrollY: 150,
+        info: false,
+        retrieve: true,
+        ordering: false,
+        columns: [
+            { title: 'Dataset', data: 'name' },
+            { title: 'Datatype', data: 'data_type' },
+            { title: 'Unit', data: 'data_unit' },
+        ],
+        data: [],
+    });
+
+    $('#dialog-properties-wellbore-dataset-table').on('click', 'tr', function () {
+        if ($(this).hasClass('selected')) {
+            $(this).removeClass('selected');
+        }
+        else {
+            propertiesWellboreDatasetTable.$('tr.selected').removeClass('selected');
+            $(this).addClass('selected');
+        }
+        $("#dialog-properties-wellbore-dataset-parameters-btn").prop("disabled", !propertiesWellboreDatasetTable.row('.selected').data());
+    });
+
+    $("#dialog-properties-wellbore-dataset-parameters-btn").click(function () {
+        openDialogDatasetParameters(propertiesWellboreDatasetTable.row('.selected').data()._id);
+    });
+
+    // EDIT SURVEY PROPERTIES WELLBORE
+    // WELLBORE TABLE EDIT SURVEY
+    var gridSurveyWellboreProperties = new gridTableSurvey("dialog-wellbore-properties-edit-survey-data-grid");
+
+
+    // DIALOG PROPERTIES WELLBORE
+    $("#dialog-properties-wellbore").dialog({
+        autoOpen: false,
+        height: 450,
+        width: 680,
+        modal: true,
+        buttons: {
+            Apply: {
+                text: "Apply",
+                async click() {
+                    const activeProject = getLocalActiveProject();
+                    const projectId = activeProject._id;
+                    const wellboreSelect = $("#dialog-properties-wellbore-wellbore-select");
+                    var selectedWellbore = {
+                        _id: wellboreSelect.val(),
+                        name: wellboreSelect.find("option:selected").text()
+                    }
+                    if (!selectedWellbore._id) {
+                        window.alert("Please select a wellbore")
+                        return;
+                    };
+                    let calculateTVDchecked = $("#dialog-wellbore-properties-edit-survey-data-calculate-tvd-checkbox").prop("checked");
+                    gridSurveyWellboreProperties.calcTVD = calculateTVDchecked;
+                    const gridData = gridSurveyWellboreProperties.getFormattedData();
+                    console.log(gridData);
+                    if(gridData.ok!==true) {
+                        console.log(gridData.message);
+                        return;
+                    }
+                    const surveyData = {
+                        md: gridData.data[0],
+                        inclination: gridData.data[2],
+                        azimuth: gridData.data[3]
+                    }
+                    if (calculateTVDchecked) {
+                        const tvd = calculateTVD(gridData.data[0], gridData.data[2]);
+                        surveyData["tvd"] = tvd;
+                        gridSurveyWellboreProperties.render(surveyData);
+                    } else {
+                        surveyData["tvd"] = gridData.data[1];
+                    }
+                    try {
+                        const activeProject = getLocalActiveProject();
+                        const projectId = activeProject._id;
+                
+                        const formData = {
+                            project_id: projectId,
+                            well_id: $("#dialog-properties-wellbore-well-select").val(),
+                            name: $("#dialog-properties-wellbore-name").val(),
+                            description: $("#dialog-properties-wellbore-description").val(),
+                            uid: $("#dialog-properties-wellbore-uid").val(),
+                            operator: $("#dialog-properties-wellbore-operator").val(),
+                            analyst: $("#dialog-properties-wellbore-analyst").val(),
+                            status: $("#dialog-properties-wellbore-status-select").val(),
+                            purpose: $("#dialog-properties-wellbore-purpose-select").val(),
+                            analysis_type: $("#dialog-properties-wellbore-analysis-type-select").val(),
+                            trajectory_shape: $("#dialog-properties-wellbore-trajectory-shape-select").val(),
+                            rig_name: $("#dialog-properties-wellbore-rig-name").val(),
+                            objective_information: $("#dialog-properties-wellbore-objective-information").val(),
+                            air_gap: parseFloat($("#dialog-properties-wellbore-air-gap").val()),
+                            total_md: parseFloat($("#dialog-properties-wellbore-total-md").val()),
+                            total_tvd: parseFloat($("#dialog-properties-wellbore-total-tvd").val()),
+                            spud_date: $("#dialog-properties-wellbore-spud-date").val(),
+                            completion_date: $("#dialog-properties-wellbore-completion-date").val(),
+                            notes: $("#dialog-properties-wellbore-notes").val(),
+                            survey: surveyData
+                        };
+                
+                        // Validate required fields
+                        if (!formData.name) {
+                            alert("Please enter a well name!");
+                            return;
+                        }
+                        if (!formData.uid) {
+                            alert("Please enter a well UID!");
+                            return;
+                        }
+                
+                        console.log("Updating a wellbore:", formData);
+
+                        const result = await updateWellboreProperties(selectedWellbore._id, formData);
+                        if (result.success) {
+                            initializeTree();
+                        } else {
+                            throw new Error(response.data.message || "Failed to update wellbore");
+                        }
+                        
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert("An error occurred: " + error.message);
+                    }
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close")
+                }
+            }
+        },
+        open: async ()=> {
+            $('#dialog-properties-wellbore-tabs').tabs({ active: 0 });
+            const activeProject = getLocalActiveProject();
+            const projectId = activeProject._id;
+            const wellSelect = $("#dialog-properties-wellbore-well-select");
+            const wellboreSelect = $("#dialog-properties-wellbore-wellbore-select");
+            gridSurveyWellboreProperties.render(surveyData=null);
+
+            try {
+                await fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
+                wellboreSelect.off('change').on('change', async function () {
+                    const selectedWellboreId = $(this).val();
+                    const result = await getWellboreProperties(selectedWellboreId, mode="full");
+                    const wellboreSurvey = await getWellboreSurvey(selectedWellboreId);
+                    if (result.success && wellboreSurvey.success ) {
+                        console.log(result.wellbore_properties);
+
+                        // tab general
+                        $('#dialog-properties-wellbore-name').val(result.wellbore_properties.name);
+                        $('#dialog-properties-wellbore-description').val(result.wellbore_properties.description);
+                        $('#dialog-properties-wellbore-uid').val(result.wellbore_properties.uid);
+                        $('#dialog-properties-wellbore-operator').val(result.wellbore_properties.operator);
+                        $('#dialog-properties-wellbore-analyst').val(result.wellbore_properties.analyst);
+                        $('#dialog-properties-wellbore-status-select').val(result.wellbore_properties.status);
+                        $('#dialog-properties-wellbore-purpose-select').val(result.wellbore_properties.purpose);
+                        $('#dialog-properties-wellbore-analysis-type-select').val(result.wellbore_properties.analysis_type);
+                        $('#dialog-properties-wellbore-trajectory-shape-select').val(result.wellbore_properties.trajectory_shape);
+                        $('#dialog-properties-wellbore-rig-name').val(result.wellbore_properties.rig_name);
+                        $('#dialog-properties-wellbore-objective-information').val(result.wellbore_properties.objective_information);
+                        $('#dialog-properties-wellbore-air-gap').val(result.wellbore_properties.air_gap);
+                        $('#dialog-properties-wellbore-total-md').val(result.wellbore_properties.total_md);
+                        $('#dialog-properties-wellbore-total-tvd').val(result.wellbore_properties.total_tvd);
+                        $('#dialog-properties-wellbore-spud-date').val(result.wellbore_properties.spud_date);
+                        $('#dialog-properties-wellbore-completion-date').val(result.wellbore_properties.completion_date);
+
+                        $("#dialog-properties-wellbore-notes").val(result.wellbore_properties.notes);
+                        gridSurveyWellboreProperties.render(wellboreSurvey.survey);
+
+                        // tab location
+                        $("#dialog-properties-wellbore-tabs").tabs({
+                            activate: function (event, ui) {
+                                handleTabActivation(ui.newPanel.attr("id"));
+                            },
+                        });
+                        
+                        const activeTabId = $("#dialog-properties-wellbore-tabs .ui-tabs-active").attr("aria-controls");
+                        handleTabActivation(activeTabId);
+                        
+                        function handleTabActivation(tabId) {
+                            if (tabId === "dialog-properties-wellbore-tabs-3") {
+                                propertiesWellboreDatasetTable.clear();
+                                propertiesWellboreDatasetTable.rows.add(result.wellbore_properties.datasets_properties);
+                                propertiesWellboreDatasetTable.columns.adjust().draw();
+                            };
+
+                            if (tabId === "dialog-properties-wellbore-tabs-2" ) {
+                                gridSurveyWellboreProperties.render(wellboreSurvey.survey);
+                            };
+                        }
+                    };
+                });
+            } catch (error) {
+                console.error("Error fetch wellbores:", error);
+            };
+
+        },
+        close: function () {
+            $('#dialog-properties-wellbore-well-select').empty();
+            $('#dialog-properties-wellbore-wellbore-select').empty();
+            $('#dialog-wellbore-properties-edit-survey-data-calculate-tvd-checkbox').prop('checked', false);
         }
     });
 

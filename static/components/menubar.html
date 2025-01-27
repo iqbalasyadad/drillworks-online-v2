@@ -43,8 +43,8 @@
               Well
               <ul>
               <li class="" id="menubar-well-create-li"><a href="javascript:void(0)">Create...<span></span></a></li>
-              <li class="disabled">Add</li>
-              <li class="disabled">Remove</li>
+              <li class="" id="menubar-well-add-li">Add...</li>
+              <li class="disabled">Remove...</li>
               <li class="" id="menubar-well-delete-li"><a href="javascript:void(0)">Delete...<span></span></a></li>
               <li class="" id="menubar-well-properties-li"><a href="javascript:void(0)">Properties...<span></span></a></li>
               <li class="separator"></li>
@@ -58,7 +58,7 @@
               <ul>
                   <li class="" id="menubar-wellbore-create-li"><a href="javascript:void(0)">Create...<span></span></a></li>
                   <li class="" id="menubar-wellbore-delete-li"><a href="javascript:void(0)">Delete...<span></span></a></li>
-                  <li class=""><a href="javascript:void(0)">Properties...<span></span></a></li>
+                  <li class="" id="menubar-wellbore-properties-li"><a href="javascript:void(0)">Properties...<span></span></a></li>
                   <li class="separator"></li>
                   <li class="" id="menubar-wellbore-edit-survey-data-li"><a href="javascript:void(0)">Edit Survey Data....<span></span></a></li>
                   <li class="disabled">Import Survey Data....</li>
@@ -827,7 +827,7 @@
               <div style="width: 30%; margin-right: 10px;">
                 <div style="margin-bottom:10px">
                   <p>Select a well:</p>
-                  <select id="dialog-properties-well-well-select" size="19" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+                  <select id="dialog-properties-well-well-select" size="19" style="width: 100%; font-size: 9pt;"></select>
                 </div>
               </div>
               <div id="dialog-properties-well-tabs" style="width: 70%;">
@@ -1078,6 +1078,39 @@
           </form>
         </div>
 
+        <!-- DIALOG ADD WELL -->
+        <div id="dialog-add-well" title="Add Well" style="display: none;">
+          <form>
+            <fieldset>
+              <legend>Well list option:</legend>
+
+                <table style="width: 100%;">
+                  <colgroup id="colgroup">
+                    <col style="width: 50%;">
+                    <col style="width: 50%;">
+                  </colgroup>
+                  <tbody>
+                    <tr class="dialog-input-table-tr">
+                      <td><label><input type="radio" name="dialog-add-well-list-wells-radio" value="list_wells_option_1" checked="checked"/> List wells by project</label></td>
+                      <td><select class="dialog-select-input" id="dialog-add-well-list-wells-by-project-project-select" size="1" disabled></select></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td colspan="2"><label><input type="radio" name="dialog-add-well-list-wells-radio" value="list_wells_option_2"/> List all wells not associated with a project</label></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td colspan="2"><label><input type="radio" name="dialog-add-well-list-wells-radio" value="list_wells_option_3"/> List all wells in user database</label></td>
+                    </tr>
+                    <tr class="dialog-input-table-tr">
+                      <td colspan="2"><label><input type="radio" name="dialog-add-well-list-wells-radio" value="list_wells_option_4"/> List all wells in network database</label></td>
+                    </tr>
+                  </tbody>
+                </table>
+
+            </fieldset>
+            <table id="dialog-add-well-well-list-table" class="display compact" width="100%"></table>
+          </form>
+        </div>
+
         <!-- DIALOG CREATE WELLBORE -->
         <div id="dialog-create-wellbore" title="Create a Wellbore" style="display: none;">
           <form id="dialog-form-create-wellbore">
@@ -1085,7 +1118,7 @@
     
               <!-- {/* Page 1 */} -->
                 <div class="page-dialog-create-wellbore" data-page="1" style="display:none">
-                  <table>
+                  <table style="width: 100%;">
                     <colgroup id="colgroup">
                       <col style="width: 30%;">
                       <col style="width: 70%;">
@@ -1223,11 +1256,11 @@
           <form>
             <div style="margin-bottom:10px">
               <p>Select a well:</p>
-              <select id="dialog-delete-wellbore-well-select" size="8" style="width: 100%; height: 100px; font-size: 9pt; padding: 2px;"></select>
+              <select id="dialog-delete-wellbore-well-select" size="8" style="width: 100%; height: 100px; font-size: 9pt;"></select>
             </div>
             <div>
               <p>Select a wellbore:</p>
-              <select id="dialog-delete-wellbore-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 9pt; padding: 2px;"></select>
+              <select id="dialog-delete-wellbore-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 9pt;"></select>
             </div>
           </form>
         </div>
@@ -1237,23 +1270,164 @@
           <form>
             <div style="margin-bottom:10px">
               <p>Select a well:</p>
-              <select id="dialog-wellbore-edit-survey-data-well-select" size="3" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+              <select id="dialog-wellbore-edit-survey-data-well-select" size="3" style="width: 100%; font-size: 9pt;"></select>
             </div>
             <div style="margin-bottom:10px">
               <p>Select a wellbore:</p>
-              <select id="dialog-wellbore-edit-survey-data-wellbore-select" size="3" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+              <select id="dialog-wellbore-edit-survey-data-wellbore-select" size="3" style="width: 100%; font-size: 9pt;"></select>
             </div>
-            <!-- <div style="margin-bottom:10px">
-              <p>Select datasets:</p>
-              <select id="dialog-delete-dataset-dataset-select" size="8" style="width: 100%; font-size: 9pt; padding: 2px;" multiple></select>
-            </div> -->
             <div class="dialog-wellbore-edit-survey-data-grid-container">
               <div class="dialog-datagridxl-input" id="dialog-wellbore-edit-survey-data-grid" style="width:100%;height:280px;"></div>
             </div>
-            <input type="checkbox" id="page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox" value="delete-wells" style="margin-top: 5px;"></input>
+            <input type="checkbox" id="page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox" style="margin-top: 5px;"></input>
             <label for="page-dialog-wellbore-edit-survey-data-calculate-tvd-checkbox">Calculate TVD by MD and Inclination</label>
           </form>
         </div>
+
+        <!-- DIALOG PROPERTIES WELLBORE -->
+        <div id="dialog-properties-wellbore" title="Wellbore Properties" style="display: none;">
+          <form>
+            <div style="display: flex; flex-direction: row;">
+              <div style="width: 20%; margin-right: 10px;">
+                <div style="margin-bottom:10px">
+                  <p>Select a well:</p>
+                  <select id="dialog-properties-wellbore-well-select" size="1" style="width: 100%; font-size: 9pt;"></select>
+                </div>
+                <div style="margin-bottom:10px">
+                  <p>Select a wellbore:</p>
+                  <select id="dialog-properties-wellbore-wellbore-select" size="15" style="width: 100%; font-size: 9pt;"></select>
+                </div>
+              </div>
+              <div id="dialog-properties-wellbore-tabs" style="width: 80%;">
+                <ul>
+                  <li><a href="#dialog-properties-wellbore-tabs-1">General</a></li>
+                  <li><a href="#dialog-properties-wellbore-tabs-2">Survey</a></li>
+                  <li><a href="#dialog-properties-wellbore-tabs-3">Datasets</a></li>
+                  <li><a href="#dialog-properties-wellbore-tabs-4">Notes</a></li>
+                </ul>
+                <div id="dialog-properties-wellbore-tabs-1">
+                  <table>
+                    <colgroup id="colgroup">
+                      <col style="width: 35%;">
+                      <col style="width: 10%;">
+                      <col style="width: 5%;">
+                      <col style="width: 25%;">
+                      <col style="width: 5%;">
+                    </colgroup>
+                    <tbody>
+                      <tr class="dialog-input-table-tr">
+                        <td><label class="dialog-label-input" for="dialog-properties-wellbore-name">Wellbore name:</label></td>
+                        <td colspan="4"><input type="text" name="dialog-properties-wellbore-name" class="dialog-text-input" id="dialog-properties-wellbore-name" required></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr"> 
+                        <td><label for="dialog-properties-wellbore-description" class="dialog-label-input">Description:</label></td>
+                        <td colspan="4"><input type="text" name="dialog-properties-wellbore-description" class="dialog-text-input" id="dialog-properties-wellbore-description"/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-wellbore-uid" class="dialog-label-input">Unique wellbore identifier:</label></td>
+                        <td><input type="text" name="dialog-properties-wellbore-uid" class="dialog-text-input" id="dialog-properties-wellbore-uid"/></td>
+                        <td></td>
+                        <td><label for="dialog-properties-wellbore-air-gap" class="dialog-label-input">Air gap:</label></td>
+                        <td><input type="number" name="dialog-properties-wellbore-air-gap" class="dialog-text-input" id="dialog-properties-wellbore-air-gap" value='0'/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-wellbore-operator" class="dialog-label-input">Operator:</label></td>
+                        <td><input type="text" name="dialog-properties-wellbore-operator" class="dialog-text-input" id="dialog-properties-wellbore-operator"/></td>
+                        <td></td>
+                        <td><label for="dialog-properties-wellbore-total-md" class="dialog-label-input">Total MD:</label></td>
+                        <td><input type="number" name="dialog-properties-wellbore-total-md" class="dialog-text-input" id="dialog-properties-wellbore-total-md" value='0'/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-wellbore-analyst" class="dialog-label-input">Analyst:</label></td>
+                        <td><input type="text" name="dialog-properties-wellbore-analyst" class="dialog-text-input" id="dialog-properties-wellbore-analyst"/></td>                       
+                        <td></td>
+                        <td><label for="dialog-properties-wellbore-total-tvd" class="dialog-label-input">Total TVD:</label></td>
+                        <td><input type="number" name="dialog-properties-wellbore-total-tvd" class="dialog-text-input" id="dialog-properties-wellbore-total-tvd" value='0'/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-wellbore-status-select" class="dialog-label-input">Wellbore status:</label></td>
+                        <td>
+                          <select name="dialog-properties-wellbore-status-select" class="dialog-select-input" id="dialog-properties-wellbore-status-select">
+                            <option value="abandoned">Abandoned</option>
+                            <option value="production">Production</option>
+                          </select>
+                        </td>                       
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-wellbore-purpose-select" class="dialog-label-input">Wellbore purpose:</label></td>
+                        <td>
+                          <select name="dialog-properties-wellbore-purpose-select" id="dialog-properties-wellbore-purpose-select">
+                            <option value="development">Development</option>
+                            <option value="exploration">Exploration</option>
+                          </select>
+                        </td>                     
+                        <td></td>
+                        <td><label for="dialog-properties-wellbore-spud-date" class="dialog-label-input">Spud date:</label></td>
+                        <td><input type="date" name="dialog-properties-wellbore-spud-date" class="dialog-text-input" id="dialog-properties-wellbore-spud-date" value="1980-07-22"/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-wellbore-analysis-type-select" class="dialog-label-input">Analysis type:</label></td>
+                        <td>
+                          <select name="dialog-properties-wellbore-analysis-type-select" class="dialog-select-input" id="dialog-properties-wellbore-analysis-type-select">
+                            <option value="post-mortem">Post-mortem</option>
+                            <option value="pre-drill">Pre-drill</option>
+                          </select>
+                        </td>                   
+                        <td></td>
+                        <td><label for="dialog-properties-wellbore-completion-date" class="dialog-label-input">Completion date:</label></td>
+                        <td><input type="date" name="dialog-properties-wellbore-completion-date" class="dialog-text-input" id="dialog-properties-wellbore-completion-date"/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-wellbore-trajectory-shape-select" class="dialog-label-input">Trajectory shape:</label></td>
+                        <td>
+                          <select name="dialog-properties-wellbore-trajectory-shape-select" class="dialog-select-input" id="dialog-properties-wellbore-trajectory-shape-select">
+                            <option value="s-shape">S-shape</option>
+                            <option value="j-shape">J-shape</option>
+                          </select>
+                        </td>                       
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-wellbore-rig-name" class="dialog-label-input">Rig name:</label></td>
+                        <td><input type="text" name="dialog-properties-wellbore-rig-name" class="dialog-text-input" id="dialog-properties-wellbore-rig-name"/></td>                     
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label for="dialog-properties-wellbore-objective-information" class="dialog-label-input">Objective information:</label></td>
+                        <td><input type="text" name="dialog-properties-wellbore-objective-information" class="dialog-text-input" id="dialog-properties-wellbore-objective-information"/></td>                     
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div id="dialog-properties-wellbore-tabs-2">
+                  <div class="dialog-wellbore-properties-edit-survey-data-grid-container">
+                    <div class="dialog-datagridxl-input" id="dialog-wellbore-properties-edit-survey-data-grid" style="width:100%;height:280px;"></div>
+                  </div>
+                  <input type="checkbox" id="dialog-wellbore-properties-edit-survey-data-calculate-tvd-checkbox" style="margin-top: 5px;"></input>
+                  <label for="dialog-wellbore-properties-edit-survey-data-calculate-tvd-checkbox">Calculate TVD by MD and Inclination</label>
+                </div>
+                <div id="dialog-properties-wellbore-tabs-3">
+                  <input id="dialog-properties-wellbore-dataset-parameters-btn" type="button" value="Parameters" disabled>
+                  <table id="dialog-properties-wellbore-dataset-table" class="display compact" width="100%"></table>
+                </div>
+                <div id="dialog-properties-wellbore-tabs-4">
+                  <textarea id="dialog-properties-wellbore-notes" name="dialog-properties-wellbore-notes" rows="15" style="width:100%"></textarea>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
 
         <!-- DIALOG CREATE DATASET -->
         <div id="dialog-create-dataset" title="Create a Dataset" style="display: none;">
@@ -1264,11 +1438,11 @@
               <div class="page-dialog-create-dataset" data-page="1" style="display:none">
                 <div style="margin-bottom:10px">
                   <p>Select a well:</p>
-                  <select id="dialog-create-dataset-well-select" size="8" style="width: 100%; height: 100px; font-size: 9pt; padding: 2px;"></select>
+                  <select id="dialog-create-dataset-well-select" size="8" style="width: 100%; height: 100px; font-size: 9pt;"></select>
                 </div>
                 <div>
                   <p>Select a wellbore:</p>
-                  <select id="dialog-create-dataset-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 9pt; padding: 2px;"></select>
+                  <select id="dialog-create-dataset-wellbore-select" size="8" style="width: 100%; height: 100px; font-size: 9pt;"></select>
                 </div>
               </div>
       
@@ -1481,15 +1655,15 @@
           <form>
             <div style="margin-bottom:10px">
               <p>Select a well:</p>
-              <select id="dialog-delete-dataset-well-select" size="3" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+              <select id="dialog-delete-dataset-well-select" size="3" style="width: 100%; font-size: 9pt;"></select>
             </div>
             <div style="margin-bottom:10px">
               <p>Select a wellbore:</p>
-              <select id="dialog-delete-dataset-wellbore-select" size="3" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+              <select id="dialog-delete-dataset-wellbore-select" size="3" style="width: 100%; font-size: 9pt;"></select>
             </div>
             <div style="margin-bottom:10px">
               <p>Select datasets:</p>
-              <select id="dialog-delete-dataset-dataset-select" size="8" style="width: 100%; font-size: 9pt; padding: 2px;" multiple></select>
+              <select id="dialog-delete-dataset-dataset-select" size="8" style="width: 100%; font-size: 9pt;" multiple></select>
             </div>
           </form>
         </div>
@@ -1501,15 +1675,15 @@
               <div style="width: 30%; margin-right: 10px;">
                 <div style="margin-bottom:10px">
                   <p>Select a well:</p>
-                  <select id="dialog-properties-dataset-well-select" size="1" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+                  <select id="dialog-properties-dataset-well-select" size="1" style="width: 100%; font-size: 9pt;"></select>
                 </div>
                 <div style="margin-bottom:10px">
                   <p>Select a wellbore:</p>
-                  <select id="dialog-properties-dataset-wellbore-select" size="1" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+                  <select id="dialog-properties-dataset-wellbore-select" size="1" style="width: 100%; font-size: 9pt;"></select>
                 </div>
                 <div style="margin-bottom:10px">
                   <p>Select datasets:</p>
-                  <select id="dialog-properties-dataset-dataset-select" size="12" style="width: 100%; font-size: 9pt; padding: 2px;"></select>
+                  <select id="dialog-properties-dataset-dataset-select" size="12" style="width: 100%; font-size: 9pt;"></select>
                 </div>
               </div>
               <div id="dialog-properties-dataset-tabs" style="width: 70%;">
@@ -1709,6 +1883,9 @@
             $("li#menubar-well-create-li").click(function () {
               $("#dialog-create-well").dialog("open");
             });
+            $("li#menubar-well-add-li").click(function () {
+              $("#dialog-add-well").dialog("open");
+            });
             $("li#menubar-well-delete-li").click(function () {
               $("#dialog-delete-well").dialog("open");
             });
@@ -1726,9 +1903,11 @@
             $("li#menubar-wellbore-delete-li").click(function () {
               $("#dialog-delete-wellbore").dialog("open");
             });
-            
             $("li#menubar-wellbore-edit-survey-data-li").click(function () {
               $("#dialog-wellbore-edit-survey-data").dialog("open");
+            });
+            $("li#menubar-wellbore-properties-li").click(function () {
+              $("#dialog-properties-wellbore").dialog("open");
             });
 
             // DATASET
@@ -1745,6 +1924,7 @@
             $( function() { $( "#dialog-properties-project-tabs" ).tabs(); } );
             $( function() { $( "#dialog-global-dataset-parameters-tabs" ).tabs(); } );
             $( function() { $( "#dialog-properties-well-tabs" ).tabs(); } );
+            $( function() { $( "#dialog-properties-wellbore-tabs" ).tabs(); } );
             $( function() { $( "#dialog-properties-dataset-tabs" ).tabs(); } );
 
           });
