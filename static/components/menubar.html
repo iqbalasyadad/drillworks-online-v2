@@ -28,7 +28,7 @@
               <ul>
                 <li class="" id="menubar-project-create-li"><a href="javascript:void(0)">Create...<span></span></a></li>
                 <li class="" id="menubar-project-open-li"><a href="javascript:void(0)" >Open...<span></span></a></li>
-                <li class=""><a href="javascript:void(0)">Save<span>Ctrl+S</span></a></li>
+                <li class="disabled"><a href="javascript:void(0)">Save<span>Ctrl+S</span></a></li>
                 <li class="" id="menubar-project-close-li"><a href="javascript:void(0)">Close<span></span></a></li>
                 <li class="" id="menubar-project-delete-li"><a href="javascript:void(0)">Delete....<span></span></a></li>
                 <li class="" id="menubar-project-refresh-li"><a href="javascript:void(0)">Refresh<span></span></a></li>
@@ -44,7 +44,7 @@
               <ul>
               <li class="" id="menubar-well-create-li"><a href="javascript:void(0)">Create...<span></span></a></li>
               <li class="" id="menubar-well-add-li">Add...</li>
-              <li class="disabled">Remove...</li>
+              <li class="" id="menubar-well-remove-li">Remove...</li>
               <li class="" id="menubar-well-delete-li"><a href="javascript:void(0)">Delete...<span></span></a></li>
               <li class="" id="menubar-well-properties-li"><a href="javascript:void(0)">Properties...<span></span></a></li>
               <li class="separator"></li>
@@ -816,21 +816,28 @@
         <!-- DIALOG DELETE WELL -->
         <div id="dialog-delete-well" title="Delete a Well" style="display: none;">
           <form>
-            <select class="dialog-select-input" id="dialog-delete-well-select" size="8"></select>
+            <select class="dialog-select-input" id="dialog-delete-well-select" size="15"></select>
+          </form>
+        </div>
+
+        <!-- DIALOG REMOVE WELL -->
+        <div id="dialog-remove-well" title="Remove Well" style="display: none;">
+          <form>
+            <select class="dialog-select-input" id="dialog-remove-well-select" size="15" multiple></select>
           </form>
         </div>
 
         <!-- DIALOG PROPERTIES WELL -->
         <div id="dialog-properties-well" title="Well Properties" style="display: none;">
-          <form>
+          <form id="dialog-properties-well-form">
             <div style="display: flex; flex-direction: row;">
-              <div style="width: 30%; margin-right: 10px;">
+              <div style="width: 25%; margin-right: 10px;">
                 <div style="margin-bottom:10px">
                   <p>Select a well:</p>
                   <select id="dialog-properties-well-well-select" size="19" style="width: 100%; font-size: 9pt;"></select>
                 </div>
               </div>
-              <div id="dialog-properties-well-tabs" style="width: 70%;">
+              <div id="dialog-properties-well-tabs" style="width: 75%;">
                 <ul>
                   <li><a href="#dialog-properties-well-tabs-1">General</a></li>
                   <li><a href="#dialog-properties-well-tabs-2">Location</a></li>
@@ -935,16 +942,16 @@
                       <tr class="dialog-input-table-tr">
                         <td>&nbsp;</td>
                         <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td colspan="2"><label for="dialog-properties-well-included-in-project-select" class="dialog-label-input">Inlcuded in peoject(s):</label></td>
                         <td></td>
                       </tr>
                       <tr class="dialog-input-table-tr">
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td></td>
-                      </tr>
-                      <tr class="dialog-input-table-tr">
-                        <td></td>
-                        <td></td>
+                        <td colspan="2" rowspan="3">
+                          <select name="dialog-properties-well-included-in-project-select" class="dialog-select-input" id="dialog-properties-well-included-in-project-select" size="4"></select>
+                        </td>
                         <td></td>
                         <td colspan="2" rowspan="3">
                           <fieldset>
@@ -978,12 +985,8 @@
                       </tr>
                       <tr class="dialog-input-table-tr">
                         <td></td>
-                        <td></td>
-                        <td></td>
                       </tr>
                       <tr class="dialog-input-table-tr">
-                        <td></td>
-                        <td></td>
                         <td></td>
                       </tr>
                     </tbody>
@@ -1507,17 +1510,7 @@
                           </tr>
                           <tr class="dialog-input-table-tr">
                             <td>
-                              <select name="dialog-create-dataset-data-type-select" class="dialog-select-input" id="dialog-create-dataset-data-type-select" size="10">
-                                <option value="GR">GR - Gamma Ray</option>
-                                <option value="DT">DT - Sonic</option>
-                                <option value="RT">RT - Resistivity</option>
-                                <option value="RHOB">RHOB - Density</option>
-                                <option value="PP">PP - Pore Pressure Gradient</option>
-                                <option value="FG">FG - Fracture Gradient</option>
-                                <option value="OBG">OBG - Overburden Gradient</option>
-                                <option value="POISSON">POISSON - Poisson Ratio</option>
-                                <option value="Unknown">UNKNOWN</option>
-                              </select>
+                              <select name="dialog-create-dataset-data-type-select" class="dialog-select-input" id="dialog-create-dataset-data-type-select" size="10"></select>
                             </td>
                             <td>
                               <select name="dialog-create-dataset-data-unit-select" class="dialog-select-input" id="dialog-create-dataset-data-unit-select" size="10"></select>
@@ -1888,6 +1881,9 @@
             });
             $("li#menubar-well-delete-li").click(function () {
               $("#dialog-delete-well").dialog("open");
+            });
+            $("li#menubar-well-remove-li").click(function () {
+              $("#dialog-remove-well").dialog("open");
             });
             $("li#menubar-well-properties-li").click(function () {
               $("#dialog-properties-well").dialog("open");

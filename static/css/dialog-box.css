@@ -29,7 +29,10 @@ table.dataTable td {
 #dt-search-0, #dt-search-1 {
     padding: 2px !important;
 }
-/* table td {
+/* table {
+    border: 1px solid;
+}
+table td {
   border: 1px solid;
 } */
 .dialog-text-input, .dialog-td-text {

@@ -847,13 +847,13 @@ $(document).ready(function () {
                 
                         console.log("Creating a new well with the following data:", formData);
 
-                        const result = await addWell(formData);
+                        const result = await createWell(formData);
                         if (result.success) {
-                            console.log("Add well: success: ", result);
+                            console.log("Create well: success: ", result);
                             $(this).dialog("close");
                             initializeTree();
                         } else {
-                            throw new Error(response.data.message || "Failed to add well");
+                            throw new Error(response.data.message || "Failed to creaete well");
                         }
                         
                     } catch (error) {
@@ -959,40 +959,77 @@ $(document).ready(function () {
     });
 
     // ADD WELL
-    // var dataSet = [];
-    var addWellWellsTable = $('#dialog-add-well-well-list-table').DataTable({
-        paging: false,
-        scrollCollapse: true,
-        scrollY: 200,
-        info: false,
-        // order: [[1, 'asc']],
-        // bDestroy: true,
-        retrieve: true,
-        ordering: false,
-        columns: [
-            { title: 'Name', data: 'name' },
-            { title: 'UID', data: 'uid' },
-            { title: 'Description', data: 'description' }
-        ],
-        data: [],
-    });
+    class AddWelldataTable {
+        constructor(dataTableSelector, tableId) {
+            this.dataTableSelector = dataTableSelector;
+            this.tableId = tableId;
+            this.tableInstance = $(dataTableSelector).DataTable({
+                paging: false,
+                scrollCollapse: true,
+                scrollY: 200,
+                info: false,
+                retrieve: true,
+                ordering: false,
+                columns: [
+                    {
+                        title: `<input type="checkbox" class="select-all-checkbox" data-table-id="${tableId}" />`, // Class-based selector
+                        data: null,
+                        render: function () {
+                            return '<input type="checkbox" class="row-checkbox" />';
+                        },
+                        orderable: false,
+                        searchable: false,
+                        width: '10%' // Optional: Adjust the width
+                    },
+                    { title: 'Name', data: 'name' },
+                    { title: 'UID', data: 'uid' },
+                    { title: 'Description', data: 'description' }
+                ],
+                data: [],
+            });
     
-    // var addWellWellsTableSelectedWell;
-    $('#dialog-add-well-well-list-table').on('click', 'tr', function () {
-        // toggleOpenButton();
-        if ($(this).hasClass('selected')) {
-            $(this).removeClass('selected');
-            // openProjectTableSelectedProject=null;
+            this.bindEventListeners();
         }
-        else {
-            openProjectTable.$('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-            // openProjectTableSelectedProject = openProjectTable.row(this).data();
-            // console.log(openProjectTableSelectedProject._id);
+    
+        // Render data into the table
+        render(wells) {
+            this.tableInstance.clear();
+            this.tableInstance.rows.add(wells);
+            this.tableInstance.columns.adjust().draw();
         }
-        
-    });
-
+    
+        // Bind checkbox-related event listeners
+        bindEventListeners() {
+            const tableId = this.tableId;
+    
+            // Handle "select all" checkbox
+            $(document).on('click', `.select-all-checkbox[data-table-id="${tableId}"]`, (event) => {
+                const isChecked = event.target.checked;
+                const rows = this.tableInstance.rows({ search: 'applied' }).nodes();
+                $('input.row-checkbox', rows).prop('checked', isChecked);
+            });
+    
+            // Handle individual row checkbox change
+            $(this.dataTableSelector).on('change', 'input.row-checkbox', () => {
+                const allCheckboxes = $('input.row-checkbox', this.tableInstance.rows({ search: 'applied' }).nodes());
+                const allChecked = allCheckboxes.length === allCheckboxes.filter(':checked').length;
+    
+                $(`.select-all-checkbox[data-table-id="${tableId}"]`).prop('checked', allChecked);
+            });
+        }
+    
+        // Get data of all checked rows
+        getCheckedRows() {
+            const checkedRows = [];
+            $(`${this.dataTableSelector} tbody input.row-checkbox:checked`).each((_, checkbox) => {
+                const row = $(checkbox).closest('tr'); // Get the closest row
+                const rowData = this.tableInstance.row(row).data(); // Retrieve row data
+                checkedRows.push(rowData); // Add row data to the array
+            });
+            return checkedRows; // Return the array of checked rows
+        }
+    }
+    const addWellWellsTable = new AddWelldataTable('#dialog-add-well-well-list-table');
     // DIALOG ADD WELL
     $("#dialog-add-well").dialog({
         autoOpen: false,
@@ -1003,32 +1040,33 @@ $(document).ready(function () {
             OK: {
                 text: "OK",
                 async click() {
-                    // // const dialog = $(this);
-                    // const wellSelect = $('#dialog-delete-well-select');
-                    // const wellSelectedName = wellSelect.find("option:selected").text();
-                    // const wellSelectedId = wellSelect.val();
-                    // if (wellSelectedId) {
-                    //     const isConfirmed = window.confirm(`Are you sure you want to delete the well: ${wellSelectedName}?`);
-                    //     if (isConfirmed) {
-                    //         try {
-                    //             const result = await deleteWell(wellSelectedId);
-                    //             console.log("Response:", result);
+                    const activeProject = getLocalActiveProject();
+                    const projectId = activeProject._id;
+                    const chekcedWells = addWellWellsTable.getCheckedRows();
+                    console.log(chekcedWells);
                     
-                    //             if (result.success) {
-                    //                 // alert("Well deleted successfully!");
-                    //                 const activeProject = getLocalActiveProject();
-                    //                 const projectId = activeProject._id;
-                    //                 fetchWellsToSelect(projectId, wellSelect);
-                    //                 // dialog.dialog("close");  // Use the stored reference to close the dialog
-                    //                 initializeTree();
-                    //             }
-                    //         } catch (error) {
-                    //             console.error("Failed to delete well:", error.message);
-                    //         }
-                    //     }
-                    // } else {
-                    //     window.alert("Please select a well!")
-                    // }
+                    if (!chekcedWells) { return };
+
+                    const formData = {
+                        project_id: projectId,
+                        well_ids: chekcedWells.map(well => well._id),
+                        well_uids: chekcedWells.map(well => well.uid)
+                    };
+                    console.log(formData);
+                
+                    try {
+                        const response = await addProjectWells(formData);
+                        console.log(response);
+                        if (response.success) {
+                            initializeTree();
+                        } else {
+                            throw new Error(response.message || "Failed to add well(s)");
+                        }
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert(error.message); 
+                    }
+
                 }
             },
             Cancel: {
@@ -1043,20 +1081,17 @@ $(document).ready(function () {
             const projectId = activeProject._id;
             const projectSelect = $('#dialog-add-well-list-wells-by-project-project-select');
             const wellsFilterRadio = $('input[name="dialog-add-well-list-wells-radio"]');
-            let wells; // To store fetched wells
+            let wells;
         
             try {
-                // Fetch all projects except the active one
                 let projects = await getProjects();
                 projects = projects.filter(project => project._id !== projectId);
         
-                // Populate the project dropdown
                 projectSelect.empty();
                 projects.forEach(project => {
                     projectSelect.append(`<option value="${project._id}">${project.name}</option>`);
                 });
         
-                // Automatically select the first project if available
                 if (projectSelect.find('option').length > 0) {
                     projectSelect.prop('selectedIndex', 0).change();
                 }
@@ -1077,11 +1112,9 @@ $(document).ready(function () {
             // Add event listener to the radio buttons
             wellsFilterRadio.off('change').on('change', async function () {
                 updateProjectSelectState(); // Enable/disable the dropdown as needed
-        
                 const selectedRadio = wellsFilterRadio.filter(':checked').val();
                 let query;
         
-                // Build the query based on the selected filter
                 if (selectedRadio === "list_wells_option_1") {
                     query = `project_id=${projectSelect.val()}`;
                 } else if (selectedRadio === "list_wells_option_2") {
@@ -1094,9 +1127,7 @@ $(document).ready(function () {
         
                 try {
                     wells = await getWells(query);
-                    addWellWellsTable.clear();
-                    addWellWellsTable.rows.add(wells);
-                    addWellWellsTable.columns.adjust().draw();
+                    addWellWellsTable.render(wells);
                 } catch (error) {
                     console.error("Error fetching wells:", error);
                 }
@@ -1110,9 +1141,7 @@ $(document).ready(function () {
                     const query = `project_id=${projectSelect.val()}`;
                     try {
                         wells = await getWells(query);
-                        addWellWellsTable.clear();
-                        addWellWellsTable.rows.add(wells);
-                        addWellWellsTable.columns.adjust().draw();
+                        addWellWellsTable.render(wells);
                     } catch (error) {
                         console.error("Error fetching wells on project change:", error);
                     }
@@ -1123,8 +1152,67 @@ $(document).ready(function () {
             wellsFilterRadio.trigger('change'); // Trigger the initial change to fetch wells
         },
         close: function () {
-            // $('#dialog-delete-well-select').empty()
-            //pass
+            $("input[name='dialog-add-well-list-wells-radio'][value='list_wells_option_1']").prop("checked",true);
+
+        }
+    });
+
+    // REMOVE WELL
+    // DIALOG REMOVE WELL
+    $("#dialog-remove-well").dialog({
+        autoOpen: false,
+        height: 350,
+        width: 350,
+        modal: true,
+        buttons: {
+            Delete: {
+                text: "Remove",
+                async click() {
+                    const activeProject = getLocalActiveProject();
+                    const projectId = activeProject._id;
+                    const wellSelect = $('#dialog-remove-well-select');
+                    const wellSelectedNames = wellSelect.find("option:selected").text();
+                    const wellSelectedIds = wellSelect.val();
+                    console.log(wellSelectedIds);
+                    if (!wellSelectedIds) {
+                        alert('Select a well to remove!');
+                        return
+                    }
+                    try {
+                        const result = await removeWellsFromProject(projectId, wellSelectedIds);
+                        console.log("Response:", result);
+                        if (result.success) {
+                            fetchWellsToSelect(projectId, wellSelect);
+                            initializeTree();
+                            console.log("removed wells: ", wellSelectedNames);
+                        }
+                    } catch (error) {
+                        console.error("Failed to remove well:", error.message);
+                    }
+
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        },
+        open: async ()=> {
+            try {
+                const activeProject = getLocalActiveProject();
+                const projectId = activeProject._id;
+                const wellSelect = $('#dialog-remove-well-select');
+                fetchWellsToSelect(projectId, wellSelect);
+        
+            } catch (error) {
+                console.error("Failed to fetch wells:", error.message);
+            }
+            
+        },
+        close: function () {
+            $('#dialog-remove-well-select').empty()
         }
     });
 
@@ -1589,7 +1677,10 @@ $(document).ready(function () {
 
 
     // DATASET
-    function addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, dataTypeDefault, dataUnitDefault) {
+    async function addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, dataTypeDefault, dataUnitDefault) {
+        if (!window.userConfig) {
+            await initConfig();
+        };
         const dataTypes = window.userConfig.data_types;
         const unitGroups = window.userConfig.unit_groups;
 
@@ -1942,7 +2033,7 @@ $(document).ready(function () {
                 $(this).dialog("close");
             },
         },
-        open: ()=> {
+        open: async ()=> {
             dialogDatasetCreateCurrentPage=1;
             dialogDatasetCreateShowPage(dialogDatasetCreateCurrentPage);
 
@@ -1953,7 +2044,7 @@ $(document).ready(function () {
             fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
             const dataTypeSelect = $("#dialog-create-dataset-data-type-select");
             const dataUnitSelect = $("#dialog-create-dataset-data-unit-select");
-            addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, "GR", "GAPI");
+            await addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, "GR", "GAPI");
             parseDatasetNameAndSelectType('#dialog-create-dataset-name', dataTypeSelect);
 
             wellSelect.on('change', async function () {
@@ -2390,6 +2481,8 @@ $(document).ready(function () {
             const activeProject = getLocalActiveProject();
             const projectId = activeProject._id;
             const wellSelect = $("#dialog-properties-well-well-select");
+            const includedInProjectSelect = $("#dialog-properties-well-included-in-project-select");
+            
             try {
                 await fetchWellsToSelect(projectId, wellSelect);
                 wellSelect.off('change').on('change', async function () {
@@ -2428,6 +2521,12 @@ $(document).ready(function () {
                             $('#dialog-properties-well-location-northing').val(result.well_properties.northing);
                             $('#dialog-properties-well-location-easting').val(result.well_properties.easting);
 
+                            // fetch included in project names
+                            includedInProjectSelect.empty();
+                            result.well_properties.projects_name.forEach(projectName => {
+                                includedInProjectSelect.append(`<option value="">${projectName}</option>`);
+                            });
+
                             $("#dialog-properties-well-tabs").tabs({
                                 activate: function (event, ui) {
                                     handleTabActivation(ui.newPanel.attr("id"));
@@ -2450,6 +2549,9 @@ $(document).ready(function () {
                         console.error("Error get well properties:", error);
                     };
                 });
+                if (wellSelect.find('option').length > 0) {
+                    wellSelect.prop('selectedIndex', 0).change();
+                }
             } catch (error) {
                 console.error("Error fetch wells:", error);
             };
@@ -2457,6 +2559,8 @@ $(document).ready(function () {
         },
         close: function () {
             $('#dialog-properties-well-well-select').empty();
+            $('#dialog-properties-well-included-in-project-select').empty();
+            $("#dialog-properties-well-form")[0].reset();
         }
     });
 

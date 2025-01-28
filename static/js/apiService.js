@@ -258,16 +258,14 @@ $(document).ready(function () {
       const response = await axios.get(`${config.apiUrl}/api/get-active-project`, {
         withCredentials: true, // Include cookies with the request
       });
-      // localStorage.setItem('activeProject', JSON.stringify(response.data));
-      setLocalActiveProject(response.data);
+      if (response.data.success) {
+        console.log("active project: ", response.data);
+        setLocalActiveProject(response.data);
+      };
       return response.data;
     } catch (error) {
         console.error("Error fetching projects:", error.response?.data || error.message);
-        // localStorage.setItem('activeProject', JSON.stringify({}));
-        setLocalActiveProject(JSON.stringify({
-          _id: '',
-          name: ''
-        }));
+        setLocalActiveProject(JSON.stringify({ _id: '', name: '' }));
         throw error;
     }
   };
@@ -357,7 +355,7 @@ $(document).ready(function () {
   };
 
 
-  const addWell = async (formData) => {
+  const createWell = async (formData) => {
     try {
       const response = await fetch(`${config.apiUrl}/api/wells`, {
           method: "POST",
@@ -368,7 +366,7 @@ $(document).ready(function () {
 
       const result = await response.json();
       if (!response.ok) {
-          throw new Error(result.message || "Failed to add well");
+          throw new Error(result.message || "Failed to create well");
       }
       return result;
     } catch (error) {
@@ -376,6 +374,24 @@ $(document).ready(function () {
         alert("An error occurred: " + error.message);
     }
   };
+
+  const addProjectWells = async (formData) => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/add_project_wells`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+          credentials: "include",
+      });
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred: " + error.message);
+    }
+  };
+  window.addProjectWells = addProjectWells;
 
   const deleteWell = async (wellId) => {
     try {
@@ -397,8 +413,31 @@ $(document).ready(function () {
       alert(error.message);
     }
   };
-  
 
+  const removeWellsFromProject = async (projectId, wellIds) => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/wells/remove`, {
+        method: "POST",
+        credentials: "include", // Include cookies for session management
+        headers: { 'Content-Type': 'application/json' }, // Specify content type
+        body: JSON.stringify({ project_id: projectId, well_ids: wellIds }), // Send project_id and well_ids
+      });
+  
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to remove wells from project");
+      }
+  
+      console.log(result.message);
+      return result;
+  
+    } catch (error) {
+      console.error("Error:", error);
+      alert(error.message);
+    }
+  };
+  window.removeWellsFromProject = removeWellsFromProject;
+  
   // WELLBORE
   const addWellbore = async (formData) => {
     try {
@@ -646,7 +685,7 @@ $(document).ready(function () {
 
   // Well
   window.getWells = getWells;
-  window.addWell = addWell;
+  window.createWell = createWell;
   window.deleteWell = deleteWell;
 
   // Wellbore
