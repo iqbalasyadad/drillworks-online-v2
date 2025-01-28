@@ -209,7 +209,7 @@
             <li>
               Tool
               <ul>
-                <li class=""><a href="javascript:void(0)">Datatype<span></span></a></li>
+                <li class="" id="menubar-tool-datatype-li"><a href="javascript:void(0)">Datatype<span></span></a></li>
                 <li class=""><a href="javascript:void(0)">Unit Group<span></span></a></li>
                 <!-- <li class=""><a href="javascript:void(0)">Properties...<span></span></a></li>
                 <li class="separator"></li>
@@ -540,7 +540,7 @@
                   <p>Views</p>
                 </div>
                 <div id="dialog-properties-project-tabs-7">
-                  <input id="dialog-properties-project-dataset-parameters-btn" type="button" value="Parameters" disabled>
+                  <input id="dialog-properties-project-dataset-parameters-btn" type="button" value="Parameters">
                   <table id="dialog-properties-project-dataset-table" class="display compact" width="100%"></table>
                 </div>
               </div>
@@ -1070,7 +1070,7 @@
                   </table>
                 </div>
                 <div id="dialog-properties-well-tabs-3">
-                  <input id="dialog-properties-well-dataset-parameters-btn" type="button" value="Parameters" disabled>
+                  <input id="dialog-properties-well-dataset-parameters-btn" type="button" value="Parameters">
                   <table id="dialog-properties-well-dataset-table" class="display compact" width="100%"></table>
                 </div>
                 <div id="dialog-properties-well-tabs-4">
@@ -1420,7 +1420,7 @@
                   <label for="dialog-wellbore-properties-edit-survey-data-calculate-tvd-checkbox">Calculate TVD by MD and Inclination</label>
                 </div>
                 <div id="dialog-properties-wellbore-tabs-3">
-                  <input id="dialog-properties-wellbore-dataset-parameters-btn" type="button" value="Parameters" disabled>
+                  <input id="dialog-properties-wellbore-dataset-parameters-btn" type="button" value="Parameters">
                   <table id="dialog-properties-wellbore-dataset-table" class="display compact" width="100%"></table>
                 </div>
                 <div id="dialog-properties-wellbore-tabs-4">
@@ -1789,6 +1789,140 @@
           </form>
         </div>
 
+        <!-- DIALOG TOOL DATATYPE -->
+        <div id="dialog-tool-datatype" title="Datatype" style="display: none;">
+          <form id="dialog-tool-datatype-form">
+            <div style="display: flex; flex-direction: row;">
+              <div style="width: 60%; margin-right: 10px;">
+                <div style="margin-bottom:10px">
+                  <p>Select a datatype:</p>
+                   <table id="dialog-tool-data-type-table" class="display compact" width="100%" style="border: solid 1px gray;"></table>
+                </div>
+              </div>
+              <div style="width: 40%">
+                <fieldset>
+                  <legend>Selected datatype attributes:</legend>
+                  <table style="width: 100%;">
+                    <colgroup id="colgroup">
+                      <col style="width: 30%;">
+                      <col style="width: 10%;">
+                      <col style="width: 35%;">
+                      <col style="width: 20%;">
+                    </colgroup>
+                    <tbody>
+                      <tr class="dialog-input-table-tr">
+                        <td><label class="dialog-label-input" for="dialog-tool-datatype-name">Name:</label></td>
+                        <td colspan="3"><input type="text" name="dialog-tool-datatype-name" class="dialog-text-input" id="dialog-tool-datatype-name" disabled/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label class="dialog-label-input" for="dialog-tool-datatype-description">Description:</label></td>
+                        <td colspan="3"><input type="text" name="dialog-tool-datatype-description" class="dialog-text-input" id="dialog-tool-datatype-description"/></td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td colspan="2"><label class="dialog-label-input" for="dialog-tool-datatype-display-attributes">Display attributes:</label></td>
+                        <td><input type="text" name="dialog-tool-datatype-display-attributes" class="dialog-text-input" id="dialog-tool-datatype-display-attributes"/></td>
+                        <td>
+                          <input id="dialog-tool-datatype-display-attributes-change-btn" type="button" value="Change...">
+                        </td>
+                        
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td><label class="dialog-label-input" for="dialog-tool-datatype-unit-group-select">Unit group:</label></td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>                      
+                      </tr>
+                      <tr class="dialog-input-table-tr">
+                        <td colspan="4">
+                          <select id="dialog-tool-datatype-unit-group-select" size="10" style="width: 100%; font-size: 9pt;"></select>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                </fieldset>
+
+
+              </div>
+            </div>
+          </form>
+        </div>
+
+
+        <!-- DIALOG TOOL DATATYPE CHANGE DISPLAY ATTRIBUTE -->
+        <div id="dialog-tool-datatype-attributes" title="Attributes" style="display: none;">
+          <form id="dialog-tool-datatype-attributes-form">
+            <fieldset>
+              <legend>Display attributes:</legend>
+              <table style="width: 100%;">
+                <colgroup id="colgroup">
+                  <col style="width: 24%;">
+                  <col style="width: 24%;">
+                  <col style="width: 4%;">
+                  <col style="width: 24%;">
+                  <col style="width: 24%;">
+                </colgroup>
+                <tbody>
+                  <tr class="dialog-input-table-tr">
+                    <td><label class="dialog-label-input" for="dialog-tool-datatype-attributes-color-select">Color:</label></td>
+                    <td><input type="color" name="dialog-tool-datatype-attributes-color-select" class="dialog-text-input" id="dialog-tool-datatype-attributes-color-select"/></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                  <tr class="dialog-input-table-tr">
+                    <td><label class="dialog-label-input" for="dialog-tool-datatype-attributes-line-style-select">Line style:</label></td>
+                    <td>
+                      <select name="dialog-tool-datatype-attributes-line-style-select" class="dialog-select-input" id="dialog-tool-datatype-attributes-line-style-select">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                      </select>
+                    </td>
+                    <td></td>
+                    <td><label class="dialog-label-input" for="dialog-tool-datatype-attributes-symbol-select">Symbol:</label></td>
+                    <td>
+                      <select name="dialog-tool-datatype-attributes-symbol-select" class="dialog-select-input" id="dialog-tool-datatype-attributes-symbol-select">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                      </select>
+                    </td>                  
+                  </tr>
+                  <tr class="dialog-input-table-tr">
+                    <td><label class="dialog-label-input" for="dialog-tool-datatype-attributes-line-width-select">Line width:</label></td>
+                    <td>
+                      <select name="dialog-tool-datatype-attributes-line-width-select" class="dialog-select-input" id="dialog-tool-datatype-attributes-line-width-select">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                      </select>
+                    </td>
+                    <td></td>
+                    <td><label class="dialog-label-input" for="dialog-tool-datatype-attributes-symbol-size-select">Symbol size:</label></td>
+                    <td>
+                      <select name="dialog-tool-datatype-attributes-symbol-size-select" class="dialog-select-input" id="dialog-tool-datatype-attributes-symbol-size-select">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                      </select>
+                    </td>                     
+                  </tr>
+                </tbody>
+              </table>
+
+            </fieldset>
+          </form>
+        </div>
+
 
         <script>
           $(document).ready(function () {
@@ -1917,6 +2051,15 @@
               $("#dialog-properties-dataset").dialog("open");
             });
 
+            // TOOL
+            $("li#menubar-tool-datatype-li").click(function () {
+              $("#dialog-tool-datatype").dialog("open");
+              console.log(window.userDataConfig);
+            });
+            $("#dialog-tool-datatype-display-attributes-change-btn").click(function () {
+              $("#dialog-tool-datatype-attributes").dialog("open");
+            });
+            
             $( function() { $( "#dialog-properties-project-tabs" ).tabs(); } );
             $( function() { $( "#dialog-global-dataset-parameters-tabs" ).tabs(); } );
             $( function() { $( "#dialog-properties-well-tabs" ).tabs(); } );

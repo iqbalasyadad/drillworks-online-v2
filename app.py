@@ -29,7 +29,7 @@ projects_collection = db['projects']
 wells_collection = db['wells']
 wellbores_collection = db['wellbores']
 datasets_collection = db['datasets']
-users_config_collection = db['users_config']
+users_data_config_collection = db['users_data_config']
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -122,19 +122,19 @@ def get_user_config(user_id):
     
     try:
         # Use find_one() to get a single document
-        config = users_config_collection.find_one({"user_id": ObjectId(user_id)})
+        config = users_data_config_collection.find_one({"user_id": ObjectId(user_id)})
         
         if not config:
             print("Config not found")
             return jsonify({"success": False, "message": "Config not found"}), 404
         
         # Build the response
-        config_properties = {
+        data_config_properties = {
             '_id': str(config['_id']),
             'data_types': config['data_types'],
             'unit_groups': config.get('unit_groups'),
         }
-        return jsonify({"success": True, "config_properties": config_properties}), 200
+        return jsonify({"success": True, "data_config_properties": data_config_properties}), 200
 
     except Exception as e:
         print(f"Error retrieving config properties: {e}")
@@ -1295,8 +1295,8 @@ def update_well(well_id):
         "defaultUnitDepth": data.get('default_unit_depth'),
         "defaultUnitDensity": data.get('default_unit_density'),
         "notes": data.get('notes'),
-        "projects_id": [ObjectId(project_id)],
-        "wellbores_id": [],
+        # "projects_id": [ObjectId(project_id)],
+        # "wellbores_id": [],
         "worldLocation": data.get('world_location'),
         "area": data.get('area'),
         "country": data.get('country'),
@@ -1317,7 +1317,7 @@ def update_well(well_id):
 
         if result.modified_count == 0:
             print("No changes made to the well")
-            return jsonify({"success": False, "message": "No changes made"}), 200
+            return jsonify({"success": True, "message": "No changes made"}), 200
 
         print("Well updated successfully")
         return jsonify({"success": True, "message": "Well updated successfully"})

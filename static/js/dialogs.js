@@ -1,237 +1,6 @@
 $(document).ready(function () {
 
-    // Function to format the date as YYYY/MM/DD
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.getFullYear() + '/' + (date.getMonth() + 1).toString().padStart(2, '0') + '/' + date.getDate().toString().padStart(2, '0');
-    };
-
-    // Fetch project to select
-    // const fetchProjectsToSelect = async(projectSelect) => {
-    //     try {
-    //         const projects = await getProjects();
-    //         projectSelect.empty();
-    //         projects.forEach(project => {
-    //             projectSelect.append(`<option value="${project._id}">${project.name}</option>`);
-    //         });
-    //         // if (wellSelect.find('option').length > 0) {
-    //         //     wellSelect.prop('selectedIndex', 0).change();
-    //         // }
-    //     } catch (error) {
-    //         console.error("Error populating projects:", error);
-    //     }
-    // };
-
-    // Fetch to select
-    const fetchWellsToSelect = async(projectId, wellSelect) => {
-        if (projectId) {
-            try {
-                const wells = await getWells(`project_id=${projectId}`);
-                wellSelect.empty();
-                wells.forEach(well => {
-                    wellSelect.append(`<option value="${well._id}">${well.name}</option>`);
-                });
-                // if (wellSelect.find('option').length > 0) {
-                //     wellSelect.prop('selectedIndex', 0).change();
-                // }
-            } catch (error) {
-                console.error("Error populating wells:", error);
-            }
-        }
-    };
-
-    const fetchWellboresToSelect = async(selectedWellId, wellboreSelect) => {
-        if (selectedWellId) {
-            try {
-                const wellbores = await getWellbores(selectedWellId);
-                wellboreSelect.empty();
-                wellbores.forEach(wellbore => {
-                    wellboreSelect.append(`<option value="${wellbore._id}">${wellbore.name}</option>`);
-                });
-                // if (wellboreSelect.find('option').length > 0) {
-                //     wellboreSelect.prop('selectedIndex', 0).change(); // Select the first option
-                // }
-            } catch (error) {
-                console.error("Error populating wellbores:", error);
-            }
-        }
-    };
-
-    const fetchDatasetsToSelect = async(selectedWellboreId, datasetSelect) => {
-        if (selectedWellboreId) {
-            try {
-                const datasets = await getDatasets(selectedWellboreId);
-                datasetSelect.empty();
-                datasets.forEach(dataset => {
-                    datasetSelect.append(`<option value="${dataset._id}">${dataset.name}</option>`);
-                });
-            } catch (error) {
-                console.error("Error populating datasets:", error);
-            }
-        }
-    };
-
-    const fetchWellsWellboresToSelect = async(projectId, wellSelect, wellboreSelect) => {
-        await fetchWellsToSelect(projectId, wellSelect);
-        wellSelect.off('change').on('change', async function () {
-            const selectedWellId = $(this).val();
-            await fetchWellboresToSelect(selectedWellId, wellboreSelect);
-            if (wellboreSelect.find('option').length > 0) {
-                wellboreSelect.prop('selectedIndex', 0).change(); // Select the first option
-            }
-        });
-        if (wellSelect.find('option').length > 0) {
-            wellSelect.prop('selectedIndex', 0).change();
-        }
-    };
-
-    const fetchWellsWellboresDatasetsToSelect = async(projectId, wellSelect, wellboreSelect, datasetSelect) => {
-        
-        wellboreSelect.off('change').on('change', async function () {
-            const selectedWellboreId = $(this).val();
-            await fetchDatasetsToSelect(selectedWellboreId, datasetSelect);
-            if (datasetSelect.find('option').length > 0) {
-                datasetSelect.prop('selectedIndex', 0).change(); // Select the first option
-            }
-        });
-
-        await fetchWellsToSelect(projectId, wellSelect);
-        wellSelect.off('change').on('change', async function () {
-            const selectedWellId = $(this).val();
-            await fetchWellboresToSelect(selectedWellId, wellboreSelect);
-            if (wellboreSelect.find('option').length > 0) {
-                wellboreSelect.prop('selectedIndex', 0).change(); // Select the first option
-            }
-            datasetSelect.empty();
-        });
-        if (wellSelect.find('option').length > 0) {
-            wellSelect.prop('selectedIndex', 0).change();
-        }
-    };
-
-    function col_to_row(...columns) {
-        let result = [];
-        
-        // Get the length of the first column to loop through
-        const numRows = columns[0].length;
-        
-        // Loop through each row
-        for (let i = 0; i < numRows; i++) {
-            let row = [];
-            
-            // For each column, push the corresponding value at index 'i' into the row
-            for (let j = 0; j < columns.length; j++) {
-                row.push(columns[j][i]);
-            }
-            // Add the row to the result
-            result.push(row);
-        }
-    
-        return result;
-    }
-
-    function transposeAndConvert(array, skipColumn, skipColumnIndex=null) {
-        const nEmptyRow = 0;
-        // const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow).fill(null));
-        const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow));
-        // If the array is empty or contains only null values, return a 2D null array with 5 columns and n rows
-        if (array.length === 0 || array.every(row => row.every(cell => cell === null))) {
-            return {
-                ok: true,
-                message: 'ok',
-                data: emptyArray
-            };
-        }
-    
-        // Check for mixed null and number in each row (skip specified column if skipColumn is true)
-        for (let rowIndex = 0; rowIndex < array.length; rowIndex++) {
-            let hasNumber = false;
-            let hasNull = false;
-    
-            for (let colIndex = 0; colIndex < array[rowIndex].length; colIndex++) {
-                if (skipColumn && colIndex === skipColumnIndex) {
-                    continue; // Skip the specified column if skipColumn is true
-                }
-                let cell = array[rowIndex][colIndex];
-                if (cell === null) {
-                    hasNull = true;
-                } else if (!isNaN(cell)) {
-                    hasNumber = true;
-                }
-            }
-    
-            if (hasNumber && hasNull) {
-                alert(`Error at row ${rowIndex + 1}: Row contains both numbers and null values.`);
-                return {
-                    ok: false,
-                    message: `Error at row ${rowIndex + 1}: Row contains both numbers and null values.`,
-                    data: emptyArray
-                };
-            }
-        }
-    
-        // Filter out rows that only contain null values
-        let filteredArray = array.filter(row => row.some(cell => cell !== null));
-    
-        // Check if the rows are continuous (i.e., no null rows between non-null rows)
-        let nullRowDetected = false;
-        for (let i = 0; i < array.length; i++) {
-            if (array[i].every(cell => cell === null)) {
-                if (!nullRowDetected) {
-                    nullRowDetected = true;
-                }
-            } else if (nullRowDetected) {
-                alert(`Error: Found gap between filled rows at row ${i + 1}.`);
-                return {
-                    ok: false,
-                    message: `Error: Found gap between filled rows at row ${i + 1}.`,
-                    data: emptyArray
-                };
-            }
-        }
-    
-        // Transpose the filtered array (convert rows to columns)
-        let transposed = filteredArray[0].map((_, colIndex) => filteredArray.map(row => row[colIndex]));
-    
-        // Convert all values to float and check for invalid values (skip specified column if skipColumn is true)
-        for (let rowIndex = 0; rowIndex < transposed.length; rowIndex++) {
-            // Skip the specified column index if skipColumn is true
-            if (skipColumn && rowIndex === skipColumnIndex) {
-                continue; // Skip the conversion and validation for the specified column
-            }
-    
-            for (let colIndex = 0; colIndex < transposed[rowIndex].length; colIndex++) {
-                let cell = transposed[rowIndex][colIndex];
-    
-                if (cell === null) {
-                    alert(`Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
-                    return {
-                        ok: false,
-                        message: `Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
-                        data: emptyArray
-                    };
-                }
-    
-                let floatValue = parseFloat(cell);
-                if (isNaN(floatValue)) {
-                    alert(`Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
-                    return {
-                        ok: false,
-                        message: `Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
-                        data: emptyArray
-                    };
-                }
-                transposed[rowIndex][colIndex] = floatValue;
-            }
-        }
-        return {
-            ok: true,
-            message: 'ok',
-            data: transposed
-        };
-    }
-
-    // GLOBAL DIALOG: DATASET PARAMETERS
+    // DIALOG: DATASET PARAMETERS
     async function openDialogDatasetParameters(datasetId) {
         $("#dialog-global-dataset-parameters").dialog({
             autoOpen: false,
@@ -269,7 +38,7 @@ $(document).ready(function () {
     let dialogProjectCreateCurrentPage = 1;
     const dialogProjectCreateTotalPages = 3;
 
-    function showPage(page) {
+    function dialogProjectCreateShowPage(page) {
         $(".page-dialog-create-project").hide();
         $(`.page-dialog-create-project[data-page="${page}"]`).show();
 
@@ -279,10 +48,10 @@ $(document).ready(function () {
             3: "Step 3: Project Notes"
         };
         $("#dialog-create-project").dialog("option", "title", stepTitles[page]);
-        updateButtonStates();
+        dialogProjectCreateUpdateButtonStates();
     }
 
-    function updateButtonStates() {
+    function dialogProjectCreateUpdateButtonStates() {
         $(".ui-dialog-buttonpane button:contains('< Back')").button("option", "disabled", dialogProjectCreateCurrentPage === 1);
         $(".ui-dialog-buttonpane button:contains('Next >')").button("option", "disabled", dialogProjectCreateCurrentPage === dialogProjectCreateTotalPages);
         $(".ui-dialog-buttonpane button:contains('Finish')").button("option", "disabled", dialogProjectCreateCurrentPage < dialogProjectCreateTotalPages-1);
@@ -299,13 +68,13 @@ $(document).ready(function () {
             "< Back": function () {
                 if (dialogProjectCreateCurrentPage > 1) {
                     dialogProjectCreateCurrentPage--;
-                    showPage(dialogProjectCreateCurrentPage);
+                    dialogProjectCreateShowPage(dialogProjectCreateCurrentPage);
                 }
             },
             "Next >": function () {
                 if (dialogProjectCreateCurrentPage < dialogProjectCreateTotalPages) {
                     dialogProjectCreateCurrentPage++;
-                    showPage(dialogProjectCreateCurrentPage);
+                    dialogProjectCreateShowPage(dialogProjectCreateCurrentPage);
                 }
             },
             Finish: async function () {
@@ -351,46 +120,14 @@ $(document).ready(function () {
         },
         open: ()=> {
             dialogProjectCreateCurrentPage=1;
-            showPage(dialogProjectCreateCurrentPage);
+            dialogProjectCreateShowPage(dialogProjectCreateCurrentPage);
         },
         close: () => {
             $("#form-create-project")[0].reset();
         }
     });
 
-    // var dataSet = [];
-    var openProjectTable = $('#project-open-table').DataTable({
-        paging: false,
-        scrollCollapse: true,
-        scrollY: 200,
-        info: false,
-        // order: [[1, 'asc']],
-        // bDestroy: true,
-        retrieve: true,
-        ordering: false,
-        columns: [
-            { title: 'Name', data: 'name' },
-            { title: 'Analyst', data: 'analyst' },
-            { title: 'Date Created', data: 'date_created' }
-        ],
-        data: [],
-    });
-    
-    var openProjectTableSelectedProject;
-    $('#project-open-table').on('click', 'tr', function () {
-        // toggleOpenButton();
-        if ($(this).hasClass('selected')) {
-            $(this).removeClass('selected');
-            openProjectTableSelectedProject=null;
-        }
-        else {
-            openProjectTable.$('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-            openProjectTableSelectedProject = openProjectTable.row(this).data();
-            console.log(openProjectTableSelectedProject._id);
-        }
-        
-    });
+    const openProjectTable = new ProjectDataTable('#project-open-table');
 
     // DIALOG OPEN PROJECT
     $("#dialog-open-project").dialog({
@@ -400,18 +137,16 @@ $(document).ready(function () {
         modal: true,
         buttons: {
             Open: {
-                // id: "menubar-project-open-dialog-open-btn",
                 text: "Open",
-                // disabled: true,
                 async click() {
-                    const dialog = $(this);
-                    if (openProjectTableSelectedProject) {
+                    const selectedProject = openProjectTable.getSelectedRows();
+                    if (selectedProject) {
                         try {
-                            const result = await setActiveProject(openProjectTableSelectedProject);
+                            const result = await setActiveProject(selectedProject);
                             console.log("Save result:", result);
                 
                             if (result.statusText === "OK") {
-                                dialog.dialog("close");
+                                $(this).dialog("close");
                             }
                         } catch (error) {
                             console.error("Failed to save project:", error.message);
@@ -429,7 +164,7 @@ $(document).ready(function () {
             }
         },
         open: async ()=> {
-            openProjectTable.columns.adjust().draw();
+            // openProjectTable.columns.adjust().draw();
             try {
                 const projectsArray = await getProjects();
                 const formattedData = projectsArray.map(item => {
@@ -438,19 +173,14 @@ $(document).ready(function () {
                         date_created: formatDate(item.date_created)
                     };
                 });
-                console.log(formattedData);
-                openProjectTable.clear();
-                openProjectTable.rows.add(formattedData);
-                openProjectTable.draw();
+                openProjectTable.render(formattedData);
             } catch(error) {
                 console.error("Failed to fetch projects:", error.message);
             }
-            openProjectTable.columns.adjust().draw();
-            
         },
         close: function () {
-            openProjectTable.$('tr.selected').removeClass('selected');
-            openProjectTableSelectedProject = null;
+            // openProjectTable.$('tr.selected').removeClass('selected');
+            // openProjectTableSelectedProject = null;
         }
     });
 
@@ -460,34 +190,7 @@ $(document).ready(function () {
     };
 
     // DELETE PROJECT
-    var deleteProjectTable = $('#project-delete-table').DataTable({
-        paging: false,
-        scrollCollapse: true,
-        scrollY: 170,
-        info: false,
-        retrieve: true,
-        ordering: false,
-        columns: [
-            { title: 'Name', data: 'name' },
-            { title: 'Analyst', data: 'analyst' },
-            { title: 'Date Created', data: 'date_created' }
-        ],
-        data: [],
-    });
-
-    var deleteProjectTableSelectedProject;
-    $('#project-delete-table').on('click', 'tr', function () {
-        // toggleOpenButton();
-        if ($(this).hasClass('selected')) {
-            $(this).removeClass('selected');
-            deleteProjectTableSelectedProject=null;
-        }
-        else {
-            deleteProjectTable.$('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-            deleteProjectTableSelectedProject = deleteProjectTable.row(this).data();
-        }        
-    });
+    const deleteProjectTable = new ProjectDataTable('#project-delete-table');
 
     // DIALOG DELETE PROJECT
     $("#dialog-delete-project").dialog({
@@ -499,18 +202,17 @@ $(document).ready(function () {
             Delete: {
                 text: "Delete",
                 async click() {
-                    const dialog = $(this);
-                    if (deleteProjectTableSelectedProject) {
-                        const isConfirmed = window.confirm(`Are you sure you want to delete the project: ${deleteProjectTableSelectedProject.name}?`);
+                    const selectedProject = deleteProjectTable.getSelectedRows();
+                    if (selectedProject) {
+                        const isConfirmed = window.confirm(`Are you sure you want to delete the project: ${selectedProject.name}?`);
                         if (isConfirmed) {
                             var deleteWellsChecked = $("#dialog-delete-project-delete-wells-checkbox").prop("checked");
                             try {
-                                const response = await deleteProject(deleteProjectTableSelectedProject, deleteWellsChecked);
+                                const response = await deleteProject(selectedProject, deleteWellsChecked);
                                 console.log("Response:", response);
                     
                                 if (response.success) {
-                                    // alert("Project deleted successfully!");
-                                    dialog.dialog("close");  // Use the stored reference to close the dialog
+                                    $(this).dialog("close");
                                 }
                             } catch (error) {
                                 console.error("Failed to delete project:", error.message);
@@ -529,7 +231,6 @@ $(document).ready(function () {
             }
         },
         open: async ()=> {
-            deleteProjectTable.columns.adjust().draw();
             try {
                 const projectsArray = await getProjects();
                 const formattedData = projectsArray.map(item => {
@@ -538,129 +239,24 @@ $(document).ready(function () {
                         date_created: formatDate(item.date_created)
                     };
                 });
-                deleteProjectTable.clear();
-                deleteProjectTable.rows.add(formattedData);
-                deleteProjectTable.draw();
+                deleteProjectTable.render(formattedData);
             } catch(error) {
                 console.error("Failed to fetch projects:", error.message);
-            }
-            deleteProjectTable.columns.adjust().draw();
-            
+            }            
         },
         close: function () {
-            deleteProjectTable.$('tr.selected').removeClass('selected');
-            deleteProjectTableSelectedProject = null;
             $('#dialog-delete-project-delete-wells-checkbox').prop('checked', false);
         }
     });
 
     // PROPERTIES PROJECT
-    function datasetPropertiesToParametersText(datasetProperties) {
-        const parametersText = `Method: ${datasetProperties.method}\n\
-        Dataset name: ${datasetProperties.name}\n\
-        Datatype: ${datasetProperties.data_type}\n\
-        Date created: ${datasetProperties.date_created}\n\
-        Min depth: ${Math.min(...datasetProperties.data.index)}\n\
-        Max depth: ${Math.max(...datasetProperties.data.index)}\n\
-        Min value: ${Math.min(...datasetProperties.data.value)}\n\
-        Max value: ${Math.max(...datasetProperties.data.value)}`;
-        return parametersText;
-    };
+    const propertiesProjectWellTable = new WellDataTable('#dialog-properties-project-well-table');
+    const propertiesProjectWellboreTable = new WellboreDataTable('#dialog-properties-project-wellbore-table');
+    const propertiesProjectDatasetTable = new DatasetDataTable('#dialog-properties-project-dataset-table');
 
-    var propertiesProjectWellTable = $('#dialog-properties-project-well-table').DataTable({
-        searching: false,
-        paging: false,
-        scrollCollapse: true,
-        scrollY: 150,
-        info: false,
-        retrieve: true,
-        ordering: false,
-        columns: [
-            { title: 'Name', data: 'name' },
-            { title: 'WD', data: 'water_depth' },
-            { title: 'ID', data: 'uid' }
-        ],
-        data: [],
-    });
-
-    var propertiesProjectWellTableSelectedWell;
-    $('#dialog-properties-project-well-table').on('click', 'tr', function () {
-        if ($(this).hasClass('selected')) {
-            $(this).removeClass('selected');
-            propertiesProjectWellTableSelectedWell=null;
-        }
-        else {
-            propertiesProjectWellTable.$('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-            propertiesProjectWellTableSelectedWell = propertiesProjectWellTable.row(this).data();
-        }
-    });
-
-    var propertiesProjectWellboreTable = $('#dialog-properties-project-wellbore-table').DataTable({
-        searching: false,
-        paging: false,
-        scrollCollapse: true,
-        scrollY: 150,
-        info: false,
-        retrieve: true,
-        ordering: false,
-        columns: [
-            { title: 'Well', data: 'well_name' },
-            { title: 'Wellbore', data: 'name' },
-            { title: 'AG', data: 'air_gap' },
-            { title: 'WD', data: 'water_depth' },
-            { title: 'TVD', data: 'total_tvd' },
-            { title: 'MD', data: 'total_md' }
-        ],
-        data: [],
-    });
-
-    // var propertiesProjectWellboreTableSelectedWellbore;
-    $('#dialog-properties-project-wellbore-table').on('click', 'tr', function () {
-        // toggleOpenButton();
-        if ($(this).hasClass('selected')) {
-            $(this).removeClass('selected');
-            // propertiesProjectWellboreTableSelectedWellbore=null;
-        }
-        else {
-            propertiesProjectWellboreTable.$('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-            propertiesProjectWellboreTableSelectedWellbore = propertiesProjectWellboreTable.row(this).data();
-            // console.log(propertiesProjectWellboreTableSelectedWellbore._id);
-        }
-    });
-
-    var propertiesProjectDatasetTable = $('#dialog-properties-project-dataset-table').DataTable({
-        searching: false,
-        paging: false,
-        scrollCollapse: true,
-        scrollY: 150,
-        info: false,
-        retrieve: true,
-        ordering: false,
-        columns: [
-            { title: 'Well', data: 'well_name' },
-            { title: 'Wellbore', data: 'wellbore_name' },
-            { title: 'Dataset', data: 'name' },
-            { title: 'Datatype', data: 'data_type' },
-            { title: 'Unit', data: 'data_unit' },
-        ],
-        data: [],
-    });
-
-    $('#dialog-properties-project-dataset-table').on('click', 'tr', function () {
-        if ($(this).hasClass('selected')) {
-            $(this).removeClass('selected');
-        }
-        else {
-            propertiesProjectDatasetTable.$('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-        }
-        $("#dialog-properties-project-dataset-parameters-btn").prop("disabled", !propertiesProjectDatasetTable.row('.selected').data());
-    });
-
+    // $("#dialog-properties-project-dataset-parameters-btn").prop("disabled", !propertiesProjectDatasetTable.getSelectedRows());
     $("#dialog-properties-project-dataset-parameters-btn").click(function () {
-        openDialogDatasetParameters(propertiesProjectDatasetTable.row('.selected').data()._id);
+        openDialogDatasetParameters(propertiesProjectDatasetTable.getSelectedRows()._id);
     });
 
     // DIALOG PROPERTIES PROJECT
@@ -717,7 +313,6 @@ $(document).ready(function () {
             $('#dialog-properties-project-tabs').tabs({ active: 0 });
             const activeProject = getLocalActiveProject();
             const projectId = activeProject._id;
-            propertiesProjectWellTable.columns.adjust().draw();
             try {
                 const result = await getProjectProperties(projectId, mode="full");
                 if (result.success) {
@@ -729,19 +324,13 @@ $(document).ready(function () {
                     $("#dialog-properties-project-default-depth-unit-select").val(result.project_properties.default_depth_unit);
                     $("#dialog-properties-project-tabs").tabs({
                         activate: function (event, ui) {
-                            const activeTabId = ui.newPanel.attr("id"); // Get the ID of the activated tab
+                            const activeTabId = ui.newPanel.attr("id");
                             if (activeTabId==="dialog-properties-project-tabs-4") {
-                                propertiesProjectWellTable.clear();
-                                propertiesProjectWellTable.rows.add(result.project_properties.wells_properties);
-                                propertiesProjectWellTable.columns.adjust().draw();
+                                propertiesProjectWellTable.render(result.project_properties.wells_properties);
                             } else if (activeTabId==="dialog-properties-project-tabs-5") {
-                                propertiesProjectWellboreTable.clear();
-                                propertiesProjectWellboreTable.rows.add(result.project_properties.wellbores_properties);
-                                propertiesProjectWellboreTable.columns.adjust().draw();
+                                propertiesProjectWellboreTable.render(result.project_properties.wellbores_properties);
                             } else if (activeTabId==="dialog-properties-project-tabs-7") {
-                                propertiesProjectDatasetTable.clear();
-                                propertiesProjectDatasetTable.rows.add(result.project_properties.datasets_properties);
-                                propertiesProjectDatasetTable.columns.adjust().draw();
+                                propertiesProjectDatasetTable.render(result.project_properties.datasets_properties);
                             }
                         },
                     });
@@ -959,76 +548,6 @@ $(document).ready(function () {
     });
 
     // ADD WELL
-    class AddWelldataTable {
-        constructor(dataTableSelector, tableId) {
-            this.dataTableSelector = dataTableSelector;
-            this.tableId = tableId;
-            this.tableInstance = $(dataTableSelector).DataTable({
-                paging: false,
-                scrollCollapse: true,
-                scrollY: 200,
-                info: false,
-                retrieve: true,
-                ordering: false,
-                columns: [
-                    {
-                        title: `<input type="checkbox" class="select-all-checkbox" data-table-id="${tableId}" />`, // Class-based selector
-                        data: null,
-                        render: function () {
-                            return '<input type="checkbox" class="row-checkbox" />';
-                        },
-                        orderable: false,
-                        searchable: false,
-                        width: '10%' // Optional: Adjust the width
-                    },
-                    { title: 'Name', data: 'name' },
-                    { title: 'UID', data: 'uid' },
-                    { title: 'Description', data: 'description' }
-                ],
-                data: [],
-            });
-    
-            this.bindEventListeners();
-        }
-    
-        // Render data into the table
-        render(wells) {
-            this.tableInstance.clear();
-            this.tableInstance.rows.add(wells);
-            this.tableInstance.columns.adjust().draw();
-        }
-    
-        // Bind checkbox-related event listeners
-        bindEventListeners() {
-            const tableId = this.tableId;
-    
-            // Handle "select all" checkbox
-            $(document).on('click', `.select-all-checkbox[data-table-id="${tableId}"]`, (event) => {
-                const isChecked = event.target.checked;
-                const rows = this.tableInstance.rows({ search: 'applied' }).nodes();
-                $('input.row-checkbox', rows).prop('checked', isChecked);
-            });
-    
-            // Handle individual row checkbox change
-            $(this.dataTableSelector).on('change', 'input.row-checkbox', () => {
-                const allCheckboxes = $('input.row-checkbox', this.tableInstance.rows({ search: 'applied' }).nodes());
-                const allChecked = allCheckboxes.length === allCheckboxes.filter(':checked').length;
-    
-                $(`.select-all-checkbox[data-table-id="${tableId}"]`).prop('checked', allChecked);
-            });
-        }
-    
-        // Get data of all checked rows
-        getCheckedRows() {
-            const checkedRows = [];
-            $(`${this.dataTableSelector} tbody input.row-checkbox:checked`).each((_, checkbox) => {
-                const row = $(checkbox).closest('tr'); // Get the closest row
-                const rowData = this.tableInstance.row(row).data(); // Retrieve row data
-                checkedRows.push(rowData); // Add row data to the array
-            });
-            return checkedRows; // Return the array of checked rows
-        }
-    }
     const addWellWellsTable = new AddWelldataTable('#dialog-add-well-well-list-table');
     // DIALOG ADD WELL
     $("#dialog-add-well").dialog({
@@ -1216,6 +735,179 @@ $(document).ready(function () {
         }
     });
 
+    // PROPERTIES WELL
+    const propertiesWellDatasetTable = new DatasetDataTable('#dialog-properties-well-dataset-table');
+
+    $("#dialog-properties-well-dataset-parameters-btn").click(function () {
+        openDialogDatasetParameters(propertiesWellDatasetTable.getSelectedRows()._id);
+    });
+
+    // DIALOG PROPERTIES WELL
+    $("#dialog-properties-well").dialog({
+        autoOpen: false,
+        height: 410,
+        width: 650,
+        modal: true,
+        buttons: {
+            Apply: {
+                text: "Apply",
+                async click() {
+                    const activeProject = getLocalActiveProject();
+                    const projectId = activeProject._id;
+
+                    var selectedWellId  = $("#dialog-properties-well-well-select").val();
+
+                    try {
+                        const formData = {
+                            date_updated: new Date().toISOString(),
+                            project_id: projectId,
+                            name: $("#dialog-properties-well-name").val(),
+                            description: $("#dialog-properties-well-description").val(),
+                            uid: $("#dialog-properties-well-uid").val(),
+                            common_name: $("#dialog-properties-well-common-well-name").val(),
+                            status: $("#dialog-properties-well-status-select").val(),
+                            basin_name: $("#dialog-properties-well-basin-name").val(),
+                            dominant_geology: $("#dialog-properties-well-dominant-geology-select").val(),
+                            water_velocity: parseFloat($("#dialog-properties-well-water-velocity").val()),
+                            ground_elevation: parseFloat($("#dialog-properties-well-ground-elevation").val()),
+                            water_depth: parseFloat($("#dialog-properties-well-water-depth").val()),
+                            water_density: parseFloat($("#dialog-properties-well-water-density").val()) || null,
+                            formation_fluid_density: parseFloat($("#dialog-properties-well-formation-fluid-density").val()) || null,
+                            default_unit_depth: $("#dialog-properties-well-default-unit-depth-select").val(),
+                            default_unit_density: $("#dialog-properties-well-default-unit-density-select").val(),
+                            notes: $("#dialog-properties-well-notes").val(),
+                            world_location: $("#dialog-properties-well-location-world-location").val(),
+                            area: $("#dialog-properties-well-location-area").val(),
+                            country: $("#dialog-properties-well-location-country").val(),
+                            field: $("#dialog-properties-well-location-field").val(),
+                            block_number: $("#dialog-properties-well-location-block-number").val(),
+                            coordinate_system: $("#dialog-properties-well-location-coordinate-system-select").val(),
+                            region: $("#dialog-properties-well-location-region-select").val(),
+                            grid_zone_datum: $("#dialog-properties-well-location-grid-zone-datum-select").val(),
+                            northing: parseFloat($("#dialog-properties-well-location-northing").val()),
+                            easting: parseFloat($("#dialog-properties-well-location-easting").val())
+                        };
+                
+                        // Validate required fields
+                        if (!formData.name) {
+                            alert("Please enter a well name!");
+                            return;
+                        }
+                        if (!formData.uid) {
+                            alert("Please enter a well UID!");
+                            return;
+                        }
+                
+                        console.log("Updating a well with the following data:", formData);
+
+                        const result = await updateWellProperties(selectedWellId, formData);
+                        if (result.success) {
+                            console.log("Update well properties: success: ", result);
+                            // $(this).dialog("close");
+                            initializeTree();
+                        } else {
+                            throw new Error(response.data.message || "Failed to update well properties");
+                        }
+                        
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert("An error occurred: " + error.message);
+                    }
+
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close")
+                }
+            }
+        },
+        open: async ()=> {
+            $('#dialog-properties-well-tabs').tabs({ active: 0 });
+            const activeProject = getLocalActiveProject();
+            const projectId = activeProject._id;
+            const wellSelect = $("#dialog-properties-well-well-select");
+            const includedInProjectSelect = $("#dialog-properties-well-included-in-project-select");
+            
+            try {
+                await fetchWellsToSelect(projectId, wellSelect);
+                wellSelect.off('change').on('change', async function () {
+                    const selectedWellId = $(this).val();
+                    try {
+                        const result = await getWellProperties(selectedWellId, mode="full");
+                        if (result.success) {
+                            console.log(result.well_properties);
+
+                            // tab general
+                            $('#dialog-properties-well-name').val(result.well_properties.name);
+                            $('#dialog-properties-well-description').val(result.well_properties.description);
+                            $('#dialog-properties-well-uid').val(result.well_properties.uid);
+                            $('#dialog-properties-well-common-well-name').val(result.well_properties.common_name);
+                            $('#dialog-properties-well-status-select').val(result.well_properties.status);
+                            $('#dialog-properties-well-basin-name').val(result.well_properties.basin_name);
+                            $('#dialog-properties-well-dominant-geology-select').val(result.well_properties.dominant_geology);
+                            $('#dialog-properties-well-water-velocity').val(result.well_properties.water_velocity);
+                            $('#dialog-properties-well-water-depth').val(result.well_properties.water_depth);
+                            $('#dialog-properties-well-ground-elevation').val(result.well_properties.ground_elevation);
+                            $('#dialog-properties-well-water-density').val(result.well_properties.water_density);
+                            $('#dialog-properties-well-formation-fluid-density').val(result.well_properties.formation_fluid_density);
+                            $("#dialog-properties-well-default-unit-depth-select").val(result.well_properties.default_unit_depth);
+                            $("#dialog-properties-well-default-unit-density-select").val(result.well_properties.default_unit_density);
+                            $("#dialog-properties-well-notes").val(result.well_properties.notes);
+
+                            // tab location
+                            $('#dialog-properties-well-location-world-location').val(result.well_properties.world_location);
+                            $('#dialog-properties-well-location-area').val(result.well_properties.area);
+                            $('#dialog-properties-well-location-country').val(result.well_properties.country);
+                            $('#dialog-properties-well-location-field').val(result.well_properties.field);
+                            $('#dialog-properties-well-location-block-number').val(result.well_properties.block_number);
+                            $('#dialog-properties-well-location-coordinate-system-select').val(result.well_properties.coordinate_system);
+                            $('#dialog-properties-well-location-region-select').val(result.well_properties.region);
+                            $('#dialog-properties-well-location-grid-zone-datum-select').val(result.well_properties.grid_zone_datum);
+                            $('#dialog-properties-well-location-northing').val(result.well_properties.northing);
+                            $('#dialog-properties-well-location-easting').val(result.well_properties.easting);
+
+                            // fetch included in project names
+                            includedInProjectSelect.empty();
+                            result.well_properties.projects_name.forEach(projectName => {
+                                includedInProjectSelect.append(`<option value="">${projectName}</option>`);
+                            });
+
+                            $("#dialog-properties-well-tabs").tabs({
+                                activate: function (event, ui) {
+                                    handleTabActivation(ui.newPanel.attr("id"));
+                                },
+                            });
+                            
+                            const activeTabId = $("#dialog-properties-well-tabs .ui-tabs-active").attr("aria-controls");
+                            handleTabActivation(activeTabId);
+                            
+                            function handleTabActivation(tabId) {
+                                if (tabId === "dialog-properties-well-tabs-3") {
+                                    propertiesWellDatasetTable.render(result.well_properties.datasets_properties);
+                                }
+                            }
+
+                        };
+                    } catch(error) {
+                        console.error("Error get well properties:", error);
+                    };
+                });
+                if (wellSelect.find('option').length > 0) {
+                    wellSelect.prop('selectedIndex', 0).change();
+                }
+            } catch (error) {
+                console.error("Error fetch wells:", error);
+            };
+
+        },
+        close: function () {
+            $('#dialog-properties-well-well-select').empty();
+            $('#dialog-properties-well-included-in-project-select').empty();
+            $("#dialog-properties-well-form")[0].reset();
+        }
+    });
 
     // WELLBORE
     let dialogWellboreCreateCurrentPage = 1;
@@ -1345,7 +1037,6 @@ $(document).ready(function () {
     });
 
     // DELETE WELLBORE
-
     // DIALOG DELETE WELLBORE
     $("#dialog-delete-wellbore").dialog({
         autoOpen: false,
@@ -1414,166 +1105,6 @@ $(document).ready(function () {
 
 
     // WELLBORE EDIT SURVEY DATA
-    class gridTableSurvey {
-        constructor(element) {
-            this.element = element;
-            this.header = [ { title: "MD" }, { title: "TVD" }, { title: "Inclination" }, { title: "Azimuth" } ];
-            this.surveyInputGrid = null;
-            this.calcTVD = false;
-        }
-        col_to_row(...columns) {
-            let result = [];
-            const numRows = columns[0].length;
-            for (let i = 0; i < numRows; i++) {
-                let row = [];
-                for (let j = 0; j < columns.length; j++) {
-                    row.push(columns[j][i]);
-                }
-                result.push(row);
-            }
-            return result;
-        }
-
-        transposeAndConvert(array, skipColumn, skipColumnIndex=null) {
-            const nEmptyRow = 0;
-            // const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow).fill(null));
-            const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow));
-            // If the array is empty or contains only null values, return a 2D null array with 5 columns and n rows
-            if (array.length === 0 || array.every(row => row.every(cell => cell === null))) {
-                return {
-                    ok: true,
-                    message: 'ok',
-                    data: emptyArray
-                };
-            }
-        
-            // Check for mixed null and number in each row (skip specified column if skipColumn is true)
-            for (let rowIndex = 0; rowIndex < array.length; rowIndex++) {
-                let hasNumber = false;
-                let hasNull = false;
-        
-                for (let colIndex = 0; colIndex < array[rowIndex].length; colIndex++) {
-                    if (skipColumn && colIndex === skipColumnIndex) {
-                        continue; // Skip the specified column if skipColumn is true
-                    }
-                    let cell = array[rowIndex][colIndex];
-                    if (cell === null) {
-                        hasNull = true;
-                    } else if (!isNaN(cell)) {
-                        hasNumber = true;
-                    }
-                }
-        
-                if (hasNumber && hasNull) {
-                    alert(`Error at row ${rowIndex + 1}: Row contains both numbers and null values.`);
-                    return {
-                        ok: false,
-                        message: `Error at row ${rowIndex + 1}: Row contains both numbers and null values.`,
-                        data: emptyArray
-                    };
-                }
-            }
-        
-            // Filter out rows that only contain null values
-            let filteredArray = array.filter(row => row.some(cell => cell !== null));
-        
-            // Check if the rows are continuous (i.e., no null rows between non-null rows)
-            let nullRowDetected = false;
-            for (let i = 0; i < array.length; i++) {
-                if (array[i].every(cell => cell === null)) {
-                    if (!nullRowDetected) {
-                        nullRowDetected = true;
-                    }
-                } else if (nullRowDetected) {
-                    alert(`Error: Found gap between filled rows at row ${i + 1}.`);
-                    return {
-                        ok: false,
-                        message: `Error: Found gap between filled rows at row ${i + 1}.`,
-                        data: emptyArray
-                    };
-                }
-            }
-        
-            // Transpose the filtered array (convert rows to columns)
-            let transposed = filteredArray[0].map((_, colIndex) => filteredArray.map(row => row[colIndex]));
-        
-            // Convert all values to float and check for invalid values (skip specified column if skipColumn is true)
-            for (let rowIndex = 0; rowIndex < transposed.length; rowIndex++) {
-                // Skip the specified column index if skipColumn is true
-                if (skipColumn && rowIndex === skipColumnIndex) {
-                    continue; // Skip the conversion and validation for the specified column
-                }
-        
-                for (let colIndex = 0; colIndex < transposed[rowIndex].length; colIndex++) {
-                    let cell = transposed[rowIndex][colIndex];
-        
-                    if (cell === null) {
-                        alert(`Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
-                        return {
-                            ok: false,
-                            message: `Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
-                            data: emptyArray
-                        };
-                    }
-        
-                    let floatValue = parseFloat(cell);
-                    if (isNaN(floatValue)) {
-                        alert(`Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
-                        return {
-                            ok: false,
-                            message: `Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
-                            data: emptyArray
-                        };
-                    }
-                    transposed[rowIndex][colIndex] = floatValue;
-                }
-            }
-            return {
-                ok: true,
-                message: 'ok',
-                data: transposed
-            };
-        }
-    
-        render(surveyData=null) {
-            var data;
-            if(surveyData && surveyData.md.length>0) {
-                data = this.col_to_row(surveyData.md, surveyData.tvd, surveyData.inclination, surveyData.azimuth);
-            } else {
-                data = DataGridXL.createEmptyData(10, 4)
-            };
-            this.surveyInputGrid = new DataGridXL(this.element, {
-                data: data,
-                columns: this.header,
-                allowDeleteCols: false,
-                allowMoveCols: false,
-                allowInsertCols: false,
-                allowHideCols: false,
-                allowHideRows: false,
-                allowMoveRows: false,
-                colHeaderHeight: 16,
-                colHeaderWidth: 5,
-                colHeaderLabelType: "numbers",
-                colHeaderLabelAlign: "center",
-                colAlign: "right",
-                colWidth: 75,
-                rowHeight: 15,
-                frozenRows: 0,
-                topBar: false,
-                bottomBar: false,
-            });
-        }
-        getFormattedData() {
-            var formatted;
-            if (this.calcTVD) {
-                formatted = transposeAndConvert(this.surveyInputGrid.getData(), true, 1)
-            } else {
-                formatted = transposeAndConvert(this.surveyInputGrid.getData(), false, null)
-            }
-            return (formatted);
-        }
-    };
-
     var gridSurveyWellbore = new gridTableSurvey("dialog-wellbore-edit-survey-data-grid");
 
     // DIALOG WELLBORE EDIT SURVEY DATA
@@ -1675,244 +1206,189 @@ $(document).ready(function () {
         }
     });
 
+    // PROPERTIES WELLBORE
+    const propertiesWellboreDatasetTable = new DatasetDataTable('#dialog-properties-wellbore-dataset-table');
+
+    $("#dialog-properties-wellbore-dataset-parameters-btn").click(function () {
+        openDialogDatasetParameters(propertiesWellboreDatasetTable.getSelectedRows()._id);
+    });
+
+    // EDIT SURVEY PROPERTIES WELLBORE
+    var gridSurveyWellboreProperties = new gridTableSurvey("dialog-wellbore-properties-edit-survey-data-grid");
+
+    // DIALOG PROPERTIES WELLBORE
+    $("#dialog-properties-wellbore").dialog({
+        autoOpen: false,
+        height: 450,
+        width: 680,
+        modal: true,
+        buttons: {
+            Apply: {
+                text: "Apply",
+                async click() {
+                    const activeProject = getLocalActiveProject();
+                    const projectId = activeProject._id;
+                    const wellboreSelect = $("#dialog-properties-wellbore-wellbore-select");
+                    var selectedWellbore = {
+                        _id: wellboreSelect.val(),
+                        name: wellboreSelect.find("option:selected").text()
+                    }
+                    if (!selectedWellbore._id) {
+                        window.alert("Please select a wellbore")
+                        return;
+                    };
+                    let calculateTVDchecked = $("#dialog-wellbore-properties-edit-survey-data-calculate-tvd-checkbox").prop("checked");
+                    gridSurveyWellboreProperties.calcTVD = calculateTVDchecked;
+                    const gridData = gridSurveyWellboreProperties.getFormattedData();
+                    console.log(gridData);
+                    if(gridData.ok!==true) {
+                        console.log(gridData.message);
+                        return;
+                    }
+                    const surveyData = {
+                        md: gridData.data[0],
+                        inclination: gridData.data[2],
+                        azimuth: gridData.data[3]
+                    }
+                    if (calculateTVDchecked) {
+                        const tvd = calculateTVD(gridData.data[0], gridData.data[2]);
+                        surveyData["tvd"] = tvd;
+                        gridSurveyWellboreProperties.render(surveyData);
+                    } else {
+                        surveyData["tvd"] = gridData.data[1];
+                    }
+                    try {
+                        const activeProject = getLocalActiveProject();
+                        const projectId = activeProject._id;
+                
+                        const formData = {
+                            project_id: projectId,
+                            well_id: $("#dialog-properties-wellbore-well-select").val(),
+                            name: $("#dialog-properties-wellbore-name").val(),
+                            description: $("#dialog-properties-wellbore-description").val(),
+                            uid: $("#dialog-properties-wellbore-uid").val(),
+                            operator: $("#dialog-properties-wellbore-operator").val(),
+                            analyst: $("#dialog-properties-wellbore-analyst").val(),
+                            status: $("#dialog-properties-wellbore-status-select").val(),
+                            purpose: $("#dialog-properties-wellbore-purpose-select").val(),
+                            analysis_type: $("#dialog-properties-wellbore-analysis-type-select").val(),
+                            trajectory_shape: $("#dialog-properties-wellbore-trajectory-shape-select").val(),
+                            rig_name: $("#dialog-properties-wellbore-rig-name").val(),
+                            objective_information: $("#dialog-properties-wellbore-objective-information").val(),
+                            air_gap: parseFloat($("#dialog-properties-wellbore-air-gap").val()),
+                            total_md: parseFloat($("#dialog-properties-wellbore-total-md").val()),
+                            total_tvd: parseFloat($("#dialog-properties-wellbore-total-tvd").val()),
+                            spud_date: $("#dialog-properties-wellbore-spud-date").val(),
+                            completion_date: $("#dialog-properties-wellbore-completion-date").val(),
+                            notes: $("#dialog-properties-wellbore-notes").val(),
+                            survey: surveyData
+                        };
+                
+                        // Validate required fields
+                        if (!formData.name) {
+                            alert("Please enter a well name!");
+                            return;
+                        }
+                        if (!formData.uid) {
+                            alert("Please enter a well UID!");
+                            return;
+                        }
+                
+                        console.log("Updating a wellbore:", formData);
+
+                        const result = await updateWellboreProperties(selectedWellbore._id, formData);
+                        if (result.success) {
+                            initializeTree();
+                        } else {
+                            throw new Error(response.data.message || "Failed to update wellbore");
+                        }
+                        
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert("An error occurred: " + error.message);
+                    }
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close")
+                }
+            }
+        },
+        open: async ()=> {
+            $('#dialog-properties-wellbore-tabs').tabs({ active: 0 });
+            const activeProject = getLocalActiveProject();
+            const projectId = activeProject._id;
+            const wellSelect = $("#dialog-properties-wellbore-well-select");
+            const wellboreSelect = $("#dialog-properties-wellbore-wellbore-select");
+            gridSurveyWellboreProperties.render(surveyData=null);
+
+            try {
+                await fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
+                wellboreSelect.off('change').on('change', async function () {
+                    const selectedWellboreId = $(this).val();
+                    const result = await getWellboreProperties(selectedWellboreId, mode="full");
+                    const wellboreSurvey = await getWellboreSurvey(selectedWellboreId);
+                    if (result.success && wellboreSurvey.success ) {
+                        console.log(result.wellbore_properties);
+
+                        // tab general
+                        $('#dialog-properties-wellbore-name').val(result.wellbore_properties.name);
+                        $('#dialog-properties-wellbore-description').val(result.wellbore_properties.description);
+                        $('#dialog-properties-wellbore-uid').val(result.wellbore_properties.uid);
+                        $('#dialog-properties-wellbore-operator').val(result.wellbore_properties.operator);
+                        $('#dialog-properties-wellbore-analyst').val(result.wellbore_properties.analyst);
+                        $('#dialog-properties-wellbore-status-select').val(result.wellbore_properties.status);
+                        $('#dialog-properties-wellbore-purpose-select').val(result.wellbore_properties.purpose);
+                        $('#dialog-properties-wellbore-analysis-type-select').val(result.wellbore_properties.analysis_type);
+                        $('#dialog-properties-wellbore-trajectory-shape-select').val(result.wellbore_properties.trajectory_shape);
+                        $('#dialog-properties-wellbore-rig-name').val(result.wellbore_properties.rig_name);
+                        $('#dialog-properties-wellbore-objective-information').val(result.wellbore_properties.objective_information);
+                        $('#dialog-properties-wellbore-air-gap').val(result.wellbore_properties.air_gap);
+                        $('#dialog-properties-wellbore-total-md').val(result.wellbore_properties.total_md);
+                        $('#dialog-properties-wellbore-total-tvd').val(result.wellbore_properties.total_tvd);
+                        $('#dialog-properties-wellbore-spud-date').val(result.wellbore_properties.spud_date);
+                        $('#dialog-properties-wellbore-completion-date').val(result.wellbore_properties.completion_date);
+
+                        $("#dialog-properties-wellbore-notes").val(result.wellbore_properties.notes);
+                        gridSurveyWellboreProperties.render(wellboreSurvey.survey);
+
+                        // tab location
+                        $("#dialog-properties-wellbore-tabs").tabs({
+                            activate: function (event, ui) {
+                                handleTabActivation(ui.newPanel.attr("id"));
+                            },
+                        });
+                        
+                        const activeTabId = $("#dialog-properties-wellbore-tabs .ui-tabs-active").attr("aria-controls");
+                        handleTabActivation(activeTabId);
+                        
+                        function handleTabActivation(tabId) {
+                            if (tabId === "dialog-properties-wellbore-tabs-3") {
+                                propertiesWellboreDatasetTable.render(result.wellbore_properties.datasets_properties);
+                            };
+
+                            if (tabId === "dialog-properties-wellbore-tabs-2" ) {
+                                gridSurveyWellboreProperties.render(wellboreSurvey.survey);
+                            };
+                        }
+                    };
+                });
+            } catch (error) {
+                console.error("Error fetch wellbores:", error);
+            };
+
+        },
+        close: function () {
+            $('#dialog-properties-wellbore-well-select').empty();
+            $('#dialog-properties-wellbore-wellbore-select').empty();
+            $('#dialog-wellbore-properties-edit-survey-data-calculate-tvd-checkbox').prop('checked', false);
+        }
+    });
 
     // DATASET
-    async function addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, dataTypeDefault, dataUnitDefault) {
-        if (!window.userConfig) {
-            await initConfig();
-        };
-        const dataTypes = window.userConfig.data_types;
-        const unitGroups = window.userConfig.unit_groups;
-
-        // Populate DataType Select
-        dataTypeSelect.empty();
-        dataTypes.forEach(dataType => {
-            dataTypeSelect.append(
-                `<option value="${dataType.name}">${dataType.name} - ${dataType.description}</option>`
-            );
-        });
-
-        // Map DataTypes to Units
-        const dataUnitOptions = {};
-        unitGroups.forEach(unitGroup => {
-            unitGroup.unit.forEach(unit => {
-                if (!dataUnitOptions[unitGroup.name]) {
-                    dataUnitOptions[unitGroup.name] = [];
-                }
-                dataUnitOptions[unitGroup.name].push(unit.name);
-            });
-        });
-
-        // Handle DataType Change
-        dataTypeSelect.off('change');
-        dataTypeSelect.on('change', function () {
-            const selectedDataType = $(this).val();
-            const matchedUnitGroup = dataTypes.find(dt => dt.name === selectedDataType)?.unit_group;
-            
-            dataUnitSelect.empty();
-            if (matchedUnitGroup && dataUnitOptions[matchedUnitGroup]) {
-                dataUnitOptions[matchedUnitGroup].forEach(unit => {
-                    dataUnitSelect.append(`<option value="${unit}">${unit}</option>`);
-                });
-            } else {
-                dataUnitSelect.append('<option value="">-</option>');
-            }
-        });
-                        
-        dataTypeSelect.val(dataTypeDefault).change();
-        dataUnitSelect.val(dataUnitDefault).change();
-    };
-
-    function parseDatasetNameAndSelectType(inputSelector, dataTypeSelect) {
-        const datasetTypeMapping = {};
-        window.userConfig.data_types.forEach(dataType => {
-            datasetTypeMapping[dataType.name] = dataType.name; // Map code to name
-        });
-
-        $(inputSelector).off('input').on('input', function () {
-            const inputValue = $(this).val().toUpperCase(); // Convert to uppercase for consistency
-            let matchedType = 'UNKNOWN'; // Default type
-    
-            for (const keyword in datasetTypeMapping) {
-                if (inputValue.includes(keyword)) {
-                    matchedType = datasetTypeMapping[keyword];
-                    break;
-                }
-            }    
-            dataTypeSelect.val(matchedType).change();
-        });
-    }
-
     // GRID DATASET
-    class gridTableDataset {
-        constructor(element) {
-            this.element = element;
-            this.datasetInputGrid = null;
-        }
-        col_to_row(...columns) {
-            let result = [];
-            const numRows = columns[0].length;
-            for (let i = 0; i < numRows; i++) {
-                let row = [];
-                for (let j = 0; j < columns.length; j++) {
-                    row.push(columns[j][i]);
-                }
-                result.push(row);
-            }
-            return result;
-        }
-
-        transposeAndConvert(array, skipColumn, skipColumnIndex=null) {
-            const nEmptyRow = 0;
-            const emptyArray = Array.from({ length: array[0].length }, () => Array(nEmptyRow));
-            if (array.length === 0 || array.every(row => row.every(cell => cell === null))) {
-                return {
-                    ok: true,
-                    message: 'ok',
-                    data: emptyArray
-                };
-            }
-        
-            for (let rowIndex = 0; rowIndex < array.length; rowIndex++) {
-                let hasNumber = false;
-                let hasNull = false;
-        
-                for (let colIndex = 0; colIndex < array[rowIndex].length; colIndex++) {
-                    if (skipColumn && colIndex === skipColumnIndex) {
-                        continue; // Skip the specified column if skipColumn is true
-                    }
-                    let cell = array[rowIndex][colIndex];
-                    if (cell === null) {
-                        hasNull = true;
-                    } else if (!isNaN(cell)) {
-                        hasNumber = true;
-                    }
-                }
-        
-                if (hasNumber && hasNull) {
-                    alert(`Error at row ${rowIndex + 1}: Row contains both numbers and null values.`);
-                    return {
-                        ok: false,
-                        message: `Error at row ${rowIndex + 1}: Row contains both numbers and null values.`,
-                        data: emptyArray
-                    };
-                }
-            }
-        
-            // Filter out rows that only contain null values
-            let filteredArray = array.filter(row => row.some(cell => cell !== null));
-        
-            // Check if the rows are continuous (i.e., no null rows between non-null rows)
-            let nullRowDetected = false;
-            for (let i = 0; i < array.length; i++) {
-                if (array[i].every(cell => cell === null)) {
-                    if (!nullRowDetected) {
-                        nullRowDetected = true;
-                    }
-                } else if (nullRowDetected) {
-                    alert(`Error: Found gap between filled rows at row ${i + 1}.`);
-                    return {
-                        ok: false,
-                        message: `Error: Found gap between filled rows at row ${i + 1}.`,
-                        data: emptyArray
-                    };
-                }
-            }
-        
-            // Transpose the filtered array (convert rows to columns)
-            let transposed = filteredArray[0].map((_, colIndex) => filteredArray.map(row => row[colIndex]));
-        
-            // Convert all values to float and check for invalid values (skip specified column if skipColumn is true)
-            for (let rowIndex = 0; rowIndex < transposed.length; rowIndex++) {
-                // Skip the specified column index if skipColumn is true
-                if (skipColumn && rowIndex === skipColumnIndex) {
-                    continue; // Skip the conversion and validation for the specified column
-                }
-        
-                for (let colIndex = 0; colIndex < transposed[rowIndex].length; colIndex++) {
-                    let cell = transposed[rowIndex][colIndex];
-        
-                    if (cell === null) {
-                        alert(`Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
-                        return {
-                            ok: false,
-                            message: `Null value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
-                            data: emptyArray
-                        };
-                    }
-        
-                    let floatValue = parseFloat(cell);
-                    if (isNaN(floatValue)) {
-                        alert(`Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`);
-                        return {
-                            ok: false,
-                            message: `Invalid value found at row ${rowIndex + 1}, column ${colIndex + 1}`,
-                            data: emptyArray
-                        };
-                    }
-                    transposed[rowIndex][colIndex] = floatValue;
-                }
-            }
-            return {
-                ok: true,
-                message: 'ok',
-                data: transposed
-            };
-        }
-    
-        render(dataset=null, hasTextColumn) {
-            this.hasTextColumn = hasTextColumn;
-            if (hasTextColumn) {
-                this.header = [ { title: "Index" }, { title: "Value" },  {title: "Description" } ];
-            } else {
-                this.header = [ { title: "Index" }, { title: "Value" } ];
-            };
-            var data;
-            if(dataset && dataset.index.length>0) {
-                if (hasTextColumn) {
-                    data = this.col_to_row(dataset.index, dataset.value, dataset.description);
-                } else {
-                    data = this.col_to_row(dataset.index, dataset.value);
-                };
-            } else {
-                if (hasTextColumn) {
-                    data = DataGridXL.createEmptyData(20, 3);
-                } else {
-                    data = DataGridXL.createEmptyData(20, 2);
-                }
-            };
-            this.datasetInputGrid = new DataGridXL(this.element, {
-                data: data,
-                columns: this.header,
-                allowDeleteCols: false,
-                allowMoveCols: false,
-                allowInsertCols: false,
-                allowHideCols: false,
-                allowHideRows: false,
-                allowMoveRows: false,
-                colHeaderHeight: 16,
-                colHeaderWidth: 5,
-                colHeaderLabelType: "numbers",
-                colHeaderLabelAlign: "center",
-                colAlign: "right",
-                colWidth: 75,
-                rowHeight: 15,
-                frozenRows: 0,
-                topBar: false,
-                bottomBar: false,
-            });
-        }
-        getFormattedData() {
-            var formatted;
-            if (this.hasTextColumn) {
-                formatted = transposeAndConvert(this.datasetInputGrid.getData(), true, 2)
-            } else {
-                formatted = transposeAndConvert(this.datasetInputGrid.getData(), false, null)
-            }
-            return (formatted);
-        }
-    };
-
     var gridDatasetCreate = new gridTableDataset("dialog-create-dataset-data-grid");
     
     let dialogDatasetCreateCurrentPage = 1;
@@ -2143,43 +1619,6 @@ $(document).ready(function () {
     // PROPERTIES DATASET
     let datasetPropertiesDataHasTextColumn = false;
     let datasetPropertiesDataGrid;
-    function renderGridDatasetPropertiesData(hasTextColumn=false, datasetData, empty=false) {
-        let data, cols;
-        headers = [
-            { title: "Index", type: 'number', format: '0,0.00' },
-            { title: "Value", type: 'number', format: '0,0.00' } ];
-        if (hasTextColumn) {  headers.push( { title: "Description", type: 'text', format: '0,0.00' }) }
-
-        if(empty || datasetData.index.length==0) {
-            data = DataGridXL.createEmptyData(20, headers.length)
-        } else {
-            if (hasTextColumn) {
-                data = col_to_row(datasetData.index, datasetData.value, datasetData.description);
-            } else {
-                data = col_to_row(datasetData.index, datasetData.value);
-            };
-        };
-        
-        datasetPropertiesDataGrid = new DataGridXL("dialog-properties-dataset-data-grid", {
-            data: data,
-            columns: headers,
-            allowDeleteCols: false,
-            allowMoveCols: false,
-            allowInsertCols: false,
-            allowHideCols: false,
-            allowHideRows: false,
-            allowMoveRows: false,
-            colHeaderHeight: 16,
-            colHeaderWidth: 20,
-            colHeaderLabelType: "numbers",
-            colHeaderLabelAlign: "center",
-            colAlign: "right",
-            rowHeight: 16,
-            frozenRows: 0,
-            topBar: false,
-            bottomBar: false,
-        });
-    };
 
     var gridDatasetProperties = new gridTableDataset("dialog-properties-dataset-data-grid");
 
@@ -2361,418 +1800,121 @@ $(document).ready(function () {
         }
     });
 
+    //////// TOOL ////////
+    // const toolDatatypeDataTable = new DatatypeDataTable('#dialog-tool-data-type-table');
 
-    // PROPERTIES WELL
-    var propertiesWellDatasetTable = $('#dialog-properties-well-dataset-table').DataTable({
-        searching: false,
-        paging: false,
-        scrollCollapse: true,
-        scrollY: 150,
-        info: false,
-        retrieve: true,
-        ordering: false,
-        columns: [
-            { title: 'Wellbore', data: 'wellbore_name' },
-            { title: 'Dataset', data: 'name' },
-            { title: 'Datatype', data: 'data_type' },
-            { title: 'Unit', data: 'data_unit' },
-        ],
-        data: [],
-    });
+    const unitGroupSelect = $("#dialog-tool-datatype-unit-group-select");
+    const selectedDatatypeNameEl =  $("#dialog-tool-datatype-name");
+    const selectedDatatypeDescriptionEl =  $("#dialog-tool-datatype-description");
+    const selectedDatatypeDisplayEl =  $("#dialog-tool-datatype-display-attributes");
 
-    $('#dialog-properties-well-dataset-table').on('click', 'tr', function () {
-        if ($(this).hasClass('selected')) {
-            $(this).removeClass('selected');
-        }
-        else {
-            propertiesWellDatasetTable.$('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-        }
-        $("#dialog-properties-well-dataset-parameters-btn").prop("disabled", !propertiesWellDatasetTable.row('.selected').data());
-    });
+    const toolDatatypeDataTable = new DatatypeDataTable('#dialog-tool-data-type-table', { ordering: true ,}, 
+        unitGroupSelect, selectedDatatypeNameEl, selectedDatatypeDescriptionEl, selectedDatatypeDisplayEl
+    );
 
-    $("#dialog-properties-well-dataset-parameters-btn").click(function () {
-        openDialogDatasetParameters(propertiesWellDatasetTable.row('.selected').data()._id);
-    });
+    // $("#dialog-tool-datatype-display-attributes-change-btn").on('click', function() {
+    //     console.log("change clicked");
+    //     console.log(toolDatatypeDataTable.getSelectedRows());
+    // });
 
-    // DIALOG PROPERTIES WELL
-    $("#dialog-properties-well").dialog({
+    $("#dialog-tool-datatype").dialog({
         autoOpen: false,
-        height: 410,
-        width: 650,
+        height: 400,
+        width: 700,
         modal: true,
         buttons: {
-            Apply: {
-                text: "Apply",
+            Add: {
+                text: "Add New",
                 async click() {
-                    const activeProject = getLocalActiveProject();
-                    const projectId = activeProject._id;
-
-                    var selectedWellId  = $("#dialog-properties-well-well-select").val();
-
-                    try {
-                        const formData = {
-                            date_updated: new Date().toISOString(),
-                            project_id: projectId,
-                            name: $("#dialog-properties-well-name").val(),
-                            description: $("#dialog-properties-well-description").val(),
-                            uid: $("#dialog-properties-well-uid").val(),
-                            common_name: $("#dialog-properties-well-common-well-name").val(),
-                            status: $("#dialog-properties-well-status-select").val(),
-                            basin_name: $("#dialog-properties-well-basin-name").val(),
-                            dominant_geology: $("#dialog-properties-well-dominant-geology-select").val(),
-                            water_velocity: parseFloat($("#dialog-properties-well-water-velocity").val()),
-                            ground_elevation: parseFloat($("#dialog-properties-well-ground-elevation").val()),
-                            water_depth: parseFloat($("#dialog-properties-well-water-depth").val()),
-                            water_density: parseFloat($("#dialog-properties-well-water-density").val()) || null,
-                            formation_fluid_density: parseFloat($("#dialog-properties-well-formation-fluid-density").val()) || null,
-                            default_unit_depth: $("#dialog-properties-well-default-unit-depth-select").val(),
-                            default_unit_density: $("#dialog-properties-well-default-unit-density-select").val(),
-                            notes: $("#dialog-properties-well-notes").val(),
-                            world_location: $("#dialog-properties-well-location-world-location").val(),
-                            area: $("#dialog-properties-well-location-area").val(),
-                            country: $("#dialog-properties-well-location-country").val(),
-                            field: $("#dialog-properties-well-location-field").val(),
-                            block_number: $("#dialog-properties-well-location-block-number").val(),
-                            coordinate_system: $("#dialog-properties-well-location-coordinate-system-select").val(),
-                            region: $("#dialog-properties-well-location-region-select").val(),
-                            grid_zone_datum: $("#dialog-properties-well-location-grid-zone-datum-select").val(),
-                            northing: parseFloat($("#dialog-properties-well-location-northing").val()),
-                            easting: parseFloat($("#dialog-properties-well-location-easting").val())
-                        };
-                
-                        // Validate required fields
-                        if (!formData.name) {
-                            alert("Please enter a well name!");
-                            return;
-                        }
-                        if (!formData.uid) {
-                            alert("Please enter a well UID!");
-                            return;
-                        }
-                
-                        console.log("Updating a well with the following data:", formData);
-
-                        const result = await updateWellProperties(selectedWellId, formData);
-                        if (result.success) {
-                            console.log("Update well properties: success: ", result);
-                            // $(this).dialog("close");
-                            initializeTree();
-                        } else {
-                            throw new Error(response.data.message || "Failed to update well properties");
-                        }
-                        
-                    } catch (error) {
-                        console.error("Error:", error);
-                        alert("An error occurred: " + error.message);
-                    }
-
+                }
+            },
+            Update: {
+                text: "Update",
+                async click() {
+                }
+            },
+            Delete: {
+                text: "Delete",
+                async click() {
                 }
             },
             Cancel: {
                 text: "Cancel",
                 click: function() {
-                    $(this).dialog("close")
+                    $(this).dialog("close");
                 }
             }
         },
         open: async ()=> {
-            $('#dialog-properties-well-tabs').tabs({ active: 0 });
-            const activeProject = getLocalActiveProject();
-            const projectId = activeProject._id;
-            const wellSelect = $("#dialog-properties-well-well-select");
-            const includedInProjectSelect = $("#dialog-properties-well-included-in-project-select");
+            try {
+                console.log('open');
+                fetchUnitGroupSelect(unitGroupSelect);
+                toolDatatypeDataTable.render(window.userDataConfig.data_types);
+
+                // $("#dialog-tool-data-type-table").off('click').on('click', 'tr', function() {
+                //     console.log("clicked tr");
+                // });
+        
+            } catch (error) {
+                console.error("Failed to fetch wells:", error.message);
+            }
             
-            try {
-                await fetchWellsToSelect(projectId, wellSelect);
-                wellSelect.off('change').on('change', async function () {
-                    const selectedWellId = $(this).val();
-                    try {
-                        const result = await getWellProperties(selectedWellId, mode="full");
-                        if (result.success) {
-                            console.log(result.well_properties);
-
-                            // tab general
-                            $('#dialog-properties-well-name').val(result.well_properties.name);
-                            $('#dialog-properties-well-description').val(result.well_properties.description);
-                            $('#dialog-properties-well-uid').val(result.well_properties.uid);
-                            $('#dialog-properties-well-common-well-name').val(result.well_properties.common_name);
-                            $('#dialog-properties-well-status-select').val(result.well_properties.status);
-                            $('#dialog-properties-well-basin-name').val(result.well_properties.basin_name);
-                            $('#dialog-properties-well-dominant-geology-select').val(result.well_properties.dominant_geology);
-                            $('#dialog-properties-well-water-velocity').val(result.well_properties.water_velocity);
-                            $('#dialog-properties-well-water-depth').val(result.well_properties.water_depth);
-                            $('#dialog-properties-well-ground-elevation').val(result.well_properties.ground_elevation);
-                            $('#dialog-properties-well-water-density').val(result.well_properties.water_density);
-                            $('#dialog-properties-well-formation-fluid-density').val(result.well_properties.formation_fluid_density);
-                            $("#dialog-properties-well-default-unit-depth-select").val(result.well_properties.default_unit_depth);
-                            $("#dialog-properties-well-default-unit-density-select").val(result.well_properties.default_unit_density);
-                            $("#dialog-properties-well-notes").val(result.well_properties.notes);
-
-                            // tab location
-                            $('#dialog-properties-well-location-world-location').val(result.well_properties.world_location);
-                            $('#dialog-properties-well-location-area').val(result.well_properties.area);
-                            $('#dialog-properties-well-location-country').val(result.well_properties.country);
-                            $('#dialog-properties-well-location-field').val(result.well_properties.field);
-                            $('#dialog-properties-well-location-block-number').val(result.well_properties.block_number);
-                            $('#dialog-properties-well-location-coordinate-system-select').val(result.well_properties.coordinate_system);
-                            $('#dialog-properties-well-location-region-select').val(result.well_properties.region);
-                            $('#dialog-properties-well-location-grid-zone-datum-select').val(result.well_properties.grid_zone_datum);
-                            $('#dialog-properties-well-location-northing').val(result.well_properties.northing);
-                            $('#dialog-properties-well-location-easting').val(result.well_properties.easting);
-
-                            // fetch included in project names
-                            includedInProjectSelect.empty();
-                            result.well_properties.projects_name.forEach(projectName => {
-                                includedInProjectSelect.append(`<option value="">${projectName}</option>`);
-                            });
-
-                            $("#dialog-properties-well-tabs").tabs({
-                                activate: function (event, ui) {
-                                    handleTabActivation(ui.newPanel.attr("id"));
-                                },
-                            });
-                            
-                            const activeTabId = $("#dialog-properties-well-tabs .ui-tabs-active").attr("aria-controls");
-                            handleTabActivation(activeTabId);
-                            
-                            function handleTabActivation(tabId) {
-                                if (tabId === "dialog-properties-well-tabs-3") {
-                                    propertiesWellDatasetTable.clear();
-                                    propertiesWellDatasetTable.rows.add(result.well_properties.datasets_properties);
-                                    propertiesWellDatasetTable.columns.adjust().draw();
-                                }
-                            }
-
-                        };
-                    } catch(error) {
-                        console.error("Error get well properties:", error);
-                    };
-                });
-                if (wellSelect.find('option').length > 0) {
-                    wellSelect.prop('selectedIndex', 0).change();
-                }
-            } catch (error) {
-                console.error("Error fetch wells:", error);
-            };
-
         },
         close: function () {
-            $('#dialog-properties-well-well-select').empty();
-            $('#dialog-properties-well-included-in-project-select').empty();
-            $("#dialog-properties-well-form")[0].reset();
+            // $('#dialog-delete-wellbore-select').empty()
+            //pass
         }
     });
 
-    // PROPERTIES WELLBORE
-    var propertiesWellboreDatasetTable = $('#dialog-properties-wellbore-dataset-table').DataTable({
-        searching: false,
-        paging: false,
-        scrollCollapse: true,
-        scrollY: 150,
-        info: false,
-        retrieve: true,
-        ordering: false,
-        columns: [
-            { title: 'Dataset', data: 'name' },
-            { title: 'Datatype', data: 'data_type' },
-            { title: 'Unit', data: 'data_unit' },
-        ],
-        data: [],
-    });
+    // DATATYPE ATTRIBUTES
+    const datatypeAttributeColorSelect = $("#dialog-tool-datatype-attributes-color-select");
+    const datatypeAttributeLineStyleSelect = $("#dialog-tool-datatype-attributes-line-style-select");
+    const datatypeAttributeLineWidthSelect = $("#dialog-tool-datatype-attributes-line-width-select");
+    const datatypeAttributeSymbolSelect = $("#dialog-tool-datatype-attributes-symbol-select");
+    const datatypeAttributeSymbolSizeSelect = $("#dialog-tool-datatype-attributes-symbol-size-select");
 
-    $('#dialog-properties-wellbore-dataset-table').on('click', 'tr', function () {
-        if ($(this).hasClass('selected')) {
-            $(this).removeClass('selected');
-        }
-        else {
-            propertiesWellboreDatasetTable.$('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-        }
-        $("#dialog-properties-wellbore-dataset-parameters-btn").prop("disabled", !propertiesWellboreDatasetTable.row('.selected').data());
-    });
-
-    $("#dialog-properties-wellbore-dataset-parameters-btn").click(function () {
-        openDialogDatasetParameters(propertiesWellboreDatasetTable.row('.selected').data()._id);
-    });
-
-    // EDIT SURVEY PROPERTIES WELLBORE
-    // WELLBORE TABLE EDIT SURVEY
-    var gridSurveyWellboreProperties = new gridTableSurvey("dialog-wellbore-properties-edit-survey-data-grid");
-
-
-    // DIALOG PROPERTIES WELLBORE
-    $("#dialog-properties-wellbore").dialog({
+    $("#dialog-tool-datatype-attributes").dialog({
         autoOpen: false,
-        height: 450,
-        width: 680,
+        height: 200,
+        width: 335,
         modal: true,
         buttons: {
-            Apply: {
-                text: "Apply",
+            OK: {
+                text: "OK",
                 async click() {
-                    const activeProject = getLocalActiveProject();
-                    const projectId = activeProject._id;
-                    const wellboreSelect = $("#dialog-properties-wellbore-wellbore-select");
-                    var selectedWellbore = {
-                        _id: wellboreSelect.val(),
-                        name: wellboreSelect.find("option:selected").text()
-                    }
-                    if (!selectedWellbore._id) {
-                        window.alert("Please select a wellbore")
-                        return;
-                    };
-                    let calculateTVDchecked = $("#dialog-wellbore-properties-edit-survey-data-calculate-tvd-checkbox").prop("checked");
-                    gridSurveyWellboreProperties.calcTVD = calculateTVDchecked;
-                    const gridData = gridSurveyWellboreProperties.getFormattedData();
-                    console.log(gridData);
-                    if(gridData.ok!==true) {
-                        console.log(gridData.message);
-                        return;
-                    }
-                    const surveyData = {
-                        md: gridData.data[0],
-                        inclination: gridData.data[2],
-                        azimuth: gridData.data[3]
-                    }
-                    if (calculateTVDchecked) {
-                        const tvd = calculateTVD(gridData.data[0], gridData.data[2]);
-                        surveyData["tvd"] = tvd;
-                        gridSurveyWellboreProperties.render(surveyData);
-                    } else {
-                        surveyData["tvd"] = gridData.data[1];
-                    }
-                    try {
-                        const activeProject = getLocalActiveProject();
-                        const projectId = activeProject._id;
-                
-                        const formData = {
-                            project_id: projectId,
-                            well_id: $("#dialog-properties-wellbore-well-select").val(),
-                            name: $("#dialog-properties-wellbore-name").val(),
-                            description: $("#dialog-properties-wellbore-description").val(),
-                            uid: $("#dialog-properties-wellbore-uid").val(),
-                            operator: $("#dialog-properties-wellbore-operator").val(),
-                            analyst: $("#dialog-properties-wellbore-analyst").val(),
-                            status: $("#dialog-properties-wellbore-status-select").val(),
-                            purpose: $("#dialog-properties-wellbore-purpose-select").val(),
-                            analysis_type: $("#dialog-properties-wellbore-analysis-type-select").val(),
-                            trajectory_shape: $("#dialog-properties-wellbore-trajectory-shape-select").val(),
-                            rig_name: $("#dialog-properties-wellbore-rig-name").val(),
-                            objective_information: $("#dialog-properties-wellbore-objective-information").val(),
-                            air_gap: parseFloat($("#dialog-properties-wellbore-air-gap").val()),
-                            total_md: parseFloat($("#dialog-properties-wellbore-total-md").val()),
-                            total_tvd: parseFloat($("#dialog-properties-wellbore-total-tvd").val()),
-                            spud_date: $("#dialog-properties-wellbore-spud-date").val(),
-                            completion_date: $("#dialog-properties-wellbore-completion-date").val(),
-                            notes: $("#dialog-properties-wellbore-notes").val(),
-                            survey: surveyData
-                        };
-                
-                        // Validate required fields
-                        if (!formData.name) {
-                            alert("Please enter a well name!");
-                            return;
-                        }
-                        if (!formData.uid) {
-                            alert("Please enter a well UID!");
-                            return;
-                        }
-                
-                        console.log("Updating a wellbore:", formData);
-
-                        const result = await updateWellboreProperties(selectedWellbore._id, formData);
-                        if (result.success) {
-                            initializeTree();
-                        } else {
-                            throw new Error(response.data.message || "Failed to update wellbore");
-                        }
-                        
-                    } catch (error) {
-                        console.error("Error:", error);
-                        alert("An error occurred: " + error.message);
-                    }
                 }
             },
             Cancel: {
                 text: "Cancel",
                 click: function() {
-                    $(this).dialog("close")
+                    $(this).dialog("close");
                 }
             }
         },
         open: async ()=> {
-            $('#dialog-properties-wellbore-tabs').tabs({ active: 0 });
-            const activeProject = getLocalActiveProject();
-            const projectId = activeProject._id;
-            const wellSelect = $("#dialog-properties-wellbore-well-select");
-            const wellboreSelect = $("#dialog-properties-wellbore-wellbore-select");
-            gridSurveyWellboreProperties.render(surveyData=null);
+            console.log(toolDatatypeDataTable.getSelectedRows());
+            const selectedDatatypeAttribute = toolDatatypeDataTable.getSelectedRows().display_attributes;
 
             try {
-                await fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
-                wellboreSelect.off('change').on('change', async function () {
-                    const selectedWellboreId = $(this).val();
-                    const result = await getWellboreProperties(selectedWellboreId, mode="full");
-                    const wellboreSurvey = await getWellboreSurvey(selectedWellboreId);
-                    if (result.success && wellboreSurvey.success ) {
-                        console.log(result.wellbore_properties);
-
-                        // tab general
-                        $('#dialog-properties-wellbore-name').val(result.wellbore_properties.name);
-                        $('#dialog-properties-wellbore-description').val(result.wellbore_properties.description);
-                        $('#dialog-properties-wellbore-uid').val(result.wellbore_properties.uid);
-                        $('#dialog-properties-wellbore-operator').val(result.wellbore_properties.operator);
-                        $('#dialog-properties-wellbore-analyst').val(result.wellbore_properties.analyst);
-                        $('#dialog-properties-wellbore-status-select').val(result.wellbore_properties.status);
-                        $('#dialog-properties-wellbore-purpose-select').val(result.wellbore_properties.purpose);
-                        $('#dialog-properties-wellbore-analysis-type-select').val(result.wellbore_properties.analysis_type);
-                        $('#dialog-properties-wellbore-trajectory-shape-select').val(result.wellbore_properties.trajectory_shape);
-                        $('#dialog-properties-wellbore-rig-name').val(result.wellbore_properties.rig_name);
-                        $('#dialog-properties-wellbore-objective-information').val(result.wellbore_properties.objective_information);
-                        $('#dialog-properties-wellbore-air-gap').val(result.wellbore_properties.air_gap);
-                        $('#dialog-properties-wellbore-total-md').val(result.wellbore_properties.total_md);
-                        $('#dialog-properties-wellbore-total-tvd').val(result.wellbore_properties.total_tvd);
-                        $('#dialog-properties-wellbore-spud-date').val(result.wellbore_properties.spud_date);
-                        $('#dialog-properties-wellbore-completion-date').val(result.wellbore_properties.completion_date);
-
-                        $("#dialog-properties-wellbore-notes").val(result.wellbore_properties.notes);
-                        gridSurveyWellboreProperties.render(wellboreSurvey.survey);
-
-                        // tab location
-                        $("#dialog-properties-wellbore-tabs").tabs({
-                            activate: function (event, ui) {
-                                handleTabActivation(ui.newPanel.attr("id"));
-                            },
-                        });
-                        
-                        const activeTabId = $("#dialog-properties-wellbore-tabs .ui-tabs-active").attr("aria-controls");
-                        handleTabActivation(activeTabId);
-                        
-                        function handleTabActivation(tabId) {
-                            if (tabId === "dialog-properties-wellbore-tabs-3") {
-                                propertiesWellboreDatasetTable.clear();
-                                propertiesWellboreDatasetTable.rows.add(result.wellbore_properties.datasets_properties);
-                                propertiesWellboreDatasetTable.columns.adjust().draw();
-                            };
-
-                            if (tabId === "dialog-properties-wellbore-tabs-2" ) {
-                                gridSurveyWellboreProperties.render(wellboreSurvey.survey);
-                            };
-                        }
-                    };
-                });
+                datatypeAttributeColorSelect.val(selectedDatatypeAttribute.color);
+                datatypeAttributeLineStyleSelect.val(selectedDatatypeAttribute.line_style);
+                datatypeAttributeLineWidthSelect.val(selectedDatatypeAttribute.line_width);
+                datatypeAttributeSymbolSelect.val(selectedDatatypeAttribute.symbol);
+                datatypeAttributeSymbolSizeSelect.val(selectedDatatypeAttribute.symbol_size);
+        
             } catch (error) {
-                console.error("Error fetch wellbores:", error);
-            };
-
+                console.error("Failed to fetch wells:", error.message);
+            }
+            
         },
         close: function () {
-            $('#dialog-properties-wellbore-well-select').empty();
-            $('#dialog-properties-wellbore-wellbore-select').empty();
-            $('#dialog-wellbore-properties-edit-survey-data-calculate-tvd-checkbox').prop('checked', false);
+            // $('#dialog-delete-wellbore-select').empty()
+            //pass
         }
     });
+
+
+
 
 
 });

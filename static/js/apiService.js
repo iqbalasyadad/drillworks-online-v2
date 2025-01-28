@@ -84,13 +84,13 @@ $(document).ready(function () {
     });
   };
 
-  const getServerUserConfig = async (userId) => {
+  const getServerUserDataConfig = async (userId) => {
     try {
         const response = await axios.get(`${config.apiUrl}/api/user_config/${userId}`, {
             withCredentials: true,
         });
         if (response.data.success) {
-          window.userConfig = response.data.config_properties;
+          window.userDataConfig = response.data.data_config_properties;
         }
         return response.data;
     } catch (error) {
@@ -98,12 +98,12 @@ $(document).ready(function () {
         throw error;
     }
   };
-  window.getServerUserConfig = getServerUserConfig;
+  window.getServerUserDataConfig = getServerUserDataConfig;
 
   async function initConfig() {
     try {
       const user = await getUserSession();
-      const result = await getServerUserConfig(user.user_id);
+      const result = await getServerUserDataConfig(user.user_id);
     } catch (error) {
         console.error("Error fetching user config:", error.message || error);
     }
