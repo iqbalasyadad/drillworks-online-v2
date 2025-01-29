@@ -50,14 +50,27 @@ $(document).ready(function () {
         const response = await axios.get(`${config.apiUrl}/user-session`, {
             withCredentials: true, // Include cookies in the request
         });
-        console.log(response.data);
-        return response.data;
+        if (response.data.success) {
+          console.log(response.data);
+          const user = { "name": response.data.name, "_id": response.data.user_id }
+          setLocalUser(user);
+          return response.data;
+        }
+
     } catch (error) {
         console.error("Error fetching session:", error.response?.data || error.message);
     }
   };
   window.getUserSession = getUserSession;
 
+  function setLocalUser(user) {
+    window.user = user;
+  };
+
+  function getLocalUser() {
+    return window.user;
+  };
+  window.getLocalUser = getLocalUser;
 
   const checkSession = async () => {
     try {
@@ -666,6 +679,24 @@ $(document).ready(function () {
       }
     }
   };
+
+  async function updateDataType(userId, dataTypeName, updateData) {
+    try {
+        const response = await fetch(`/update_data_type/${userId}/${dataTypeName}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error updating data type:', error);
+    }
+  }
+  window.updateDataType = updateDataType;
+
 
   // Make function as global access
   // Project

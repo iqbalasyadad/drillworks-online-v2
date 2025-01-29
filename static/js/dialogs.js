@@ -1520,10 +1520,9 @@ $(document).ready(function () {
             fetchWellsWellboresToSelect(projectId, wellSelect, wellboreSelect);
             const dataTypeSelect = $("#dialog-create-dataset-data-type-select");
             const dataUnitSelect = $("#dialog-create-dataset-data-unit-select");
-            await addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, "GR", "GAPI");
-            parseDatasetNameAndSelectType('#dialog-create-dataset-name', dataTypeSelect);
 
-            wellSelect.on('change', async function () {
+            wellSelect.off('change').on('change', async function () {
+                console.log("well changed");
                 try {
                     const response  = await getWellProperties(wellSelect.val(), mode="basic");
                     if (response.success) {
@@ -1533,8 +1532,7 @@ $(document).ready(function () {
                     console.error("Failed to fetch well properties:", error);
                 }
             });
-            wellboreSelect.off('change');
-            wellboreSelect.on('change', async function () {
+            wellboreSelect.off('change').on('change', async function () {
                 try {
                     const response  = await getWellboreProperties(wellboreSelect.val(), mode="basic");
                     if (response.success) {
@@ -1544,6 +1542,18 @@ $(document).ready(function () {
                     console.error("Failed to fetch wellbore properties:", error);
                 }
             });
+
+            createDatasetHandleDatasetInput(
+                "#dialog-create-dataset-name",
+                "#dialog-create-dataset-data-type-select",
+                "#dialog-create-dataset-data-unit-select",
+                "#dialog-create-dataset-color-select",
+                "#dialog-create-dataset-line-style-select",
+                "#dialog-create-dataset-line-width-select",
+                "#dialog-create-dataset-symbol-select",
+                "#dialog-create-dataset-symbol-size-select"
+            );
+            
         },
         close: () => {
             $("#dialog-form-create-dataset")[0].reset();
@@ -1569,24 +1579,26 @@ $(document).ready(function () {
                         _ids: datasetSelect.val(),
                         names: datasetSelect.find("option:selected").toArray().map(item => item.text)
                     }
-                    if (selectedDatasets._ids) {
-                        const isConfirmed = window.confirm(`Are you sure you want to delete the dataset?`);
-                        if (isConfirmed) {
-                            try {
-                                const result = await deleteDatasets(wellboreSelect.val(), selectedDatasets._ids);
-                                console.log("Response:", result);
-                    
-                                if (result.success) {
-                                    fetchDatasetsToSelect(wellboreSelect.val(), datasetSelect);
-                                    selectedDatasets = {};
-                                    initializeTree();
-                                }
-                            } catch (error) {
-                                console.error("Failed to delete dataset:", error.message);
+                    console.log(selectedDatasets);
+                    if (selectedDatasets._ids.length===0) {
+                        window.alert("Please select dataset(s)!");
+                        return;
+
+                    }
+                    const isConfirmed = window.confirm(`Are you sure you want to delete the dataset?`);
+                    if (isConfirmed) {
+                        try {
+                            const result = await deleteDatasets(wellboreSelect.val(), selectedDatasets._ids);
+                            console.log("Response:", result);
+                
+                            if (result.success) {
+                                fetchDatasetsToSelect(wellboreSelect.val(), datasetSelect);
+                                selectedDatasets = {};
+                                initializeTree();
                             }
+                        } catch (error) {
+                            console.error("Failed to delete dataset:", error.message);
                         }
-                    } else {
-                        window.alert("Please select dataset(s)!")
                     }
                 }
             },
@@ -1618,7 +1630,7 @@ $(document).ready(function () {
 
     // PROPERTIES DATASET
     let datasetPropertiesDataHasTextColumn = false;
-    let datasetPropertiesDataGrid;
+    // let datasetPropertiesDataGrid;
 
     var gridDatasetProperties = new gridTableDataset("dialog-properties-dataset-data-grid");
 
@@ -1636,27 +1648,27 @@ $(document).ready(function () {
                     const wellboreSelect = $("#dialog-properties-dataset-wellbore-select");
                     const datasetSelect = $("#dialog-properties-dataset-dataset-select");
                     var selectedDatasets = {
-                        _ids: [datasetSelect.val()],
-                        names: datasetSelect.find("option:selected").toArray().map(item => item.text)
+                        _ids: datasetSelect.val(),
+                        names: datasetSelect.find("option:selected").text()
                     }
-                    if (selectedDatasets._ids) {
-                        const isConfirmed = window.confirm(`Are you sure you want to delete the dataset?`);
-                        if (isConfirmed) {
-                            try {
-                                const result = await deleteDatasets(wellboreSelect.val(), selectedDatasets._ids);
-                                console.log("Response:", result);
-                    
-                                if (result.success) {
-                                    fetchDatasetsToSelect(wellboreSelect.val(), datasetSelect);
-                                    selectedDatasets = {};
-                                    initializeTree();
-                                }
-                            } catch (error) {
-                                console.error("Failed to delete dataset:", error.message);
+                    if (!selectedDatasets._ids) {
+                        window.alert("Please select dataset!");
+                        return;
+                    }
+                    const isConfirmed = window.confirm(`Are you sure you want to delete the dataset?`);
+                    if (isConfirmed) {
+                        try {
+                            const result = await deleteDatasets(wellboreSelect.val(), [selectedDatasets._ids]);
+                            console.log("Response:", result);
+                
+                            if (result.success) {
+                                fetchDatasetsToSelect(wellboreSelect.val(), datasetSelect);
+                                selectedDatasets = {};
+                                initializeTree();
                             }
+                        } catch (error) {
+                            console.error("Failed to delete dataset:", error.message);
                         }
-                    } else {
-                        window.alert("Please select dataset(s)!")
                     }
                 }
             },
@@ -1669,17 +1681,20 @@ $(document).ready(function () {
             Apply: {
                 text: "Apply",
                 async click() {
-                    const gridData = transposeAndConvert(
-                        datasetPropertiesDataGrid.getData(),
-                        datasetPropertiesDataHasTextColumn,
-                        datasetPropertiesDataHasTextColumn ? 2 : null
-                    );                
+                    const datasetId = $('#dialog-properties-dataset-dataset-select').val();
+                    if (!datasetId) {
+                        alert("Select a dataset!");
+                    };
+                    const gridData = gridDatasetProperties.getFormattedData();
+                    if(!gridData.ok) {
+                        console.error(gridData.message);
+                        return;
+                    }         
                     let datasetGridData = { index: gridData.data[0], value: gridData.data[1] };
                     if (datasetPropertiesDataHasTextColumn) {
                         datasetGridData.description = gridData.data[2];
                     }
 
-                    const datasetId = $('#dialog-properties-dataset-dataset-select').val();
                     const formData = {
                         name: $("#dialog-properties-dataset-name").val(),
                         description: $("#dialog-properties-dataset-description").val(),
@@ -1726,7 +1741,6 @@ $(document).ready(function () {
         },
         open: async ()=> {
             $('#dialog-properties-dataset-tabs').tabs({ active: 0 });
-            // renderGridDatasetPropertiesData();
             try {
                 const activeProject = getLocalActiveProject();
                 const projectId = activeProject._id;
@@ -1750,7 +1764,6 @@ $(document).ready(function () {
                             $('#dialog-properties-dataset-reference-level').val(result.dataset_properties.reference_level);
                             $('#dialog-properties-dataset-reference-date').val(result.dataset_properties.reference_date);
 
-                            // renderGridDatasetPropertiesData(result.dataset_properties.has_text_column, result.dataset_properties.data, empty=false);
                             gridDatasetProperties.render(result.dataset_properties.data, result.dataset_properties.has_text_column);
                             datasetPropertiesDataHasTextColumn = result.dataset_properties.has_text_column;
 
@@ -1759,10 +1772,8 @@ $(document).ready(function () {
                                     const activeTabId = ui.newPanel.attr("id"); // Get the ID of the activated tab
                                     if (activeTabId==="dialog-properties-dataset-tabs-2") {
                                         if (datasetSelect.val()) {
-                                            // renderGridDatasetPropertiesData(result.dataset_properties.has_text_column, result.dataset_properties.data, empty=false);
                                             gridDatasetProperties.render(result.dataset_properties.data, result.dataset_properties.has_text_column);
                                         } else {
-                                            // renderGridDatasetPropertiesData(false, null, empty=true);
                                             gridDatasetProperties.render(dataset=null, result.dataset_properties.has_text_column);
 
                                         }
@@ -1882,6 +1893,31 @@ $(document).ready(function () {
             OK: {
                 text: "OK",
                 async click() {
+                    const user = getLocalUser();
+                    const selectedDatatypes = toolDatatypeDataTable.getSelectedRows();
+
+                    try {   
+                        const updateData = {
+                            "display_attributes": {
+                                "color": datatypeAttributeColorSelect.val(),
+                                "line_style": datatypeAttributeLineStyleSelect.val(),
+                                "line_width": parseInt(datatypeAttributeLineWidthSelect.val()),
+                                "symbol": datatypeAttributeSymbolSelect.val(),
+                                "symbol_size": parseInt(datatypeAttributeSymbolSizeSelect.val())
+                            }
+                        };
+
+                        const response = await updateDataType(user._id, selectedDatatypes.name, updateData);
+                        if (response.success) {
+                            console.log(response.message);
+                            await initConfig();
+                            toolDatatypeDataTable.render(window.userDataConfig.data_types);
+
+                            $(this).dialog("close");
+                        };
+                    } catch (error) {
+                        console.error(error.message);
+                    }
                 }
             },
             Cancel: {

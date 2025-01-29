@@ -233,70 +233,169 @@ function transposeAndConvert(array, skipColumn, skipColumnIndex=null) {
 }
 
 async function addDataTypeDataUnitOptions(dataTypeSelect, dataUnitSelect, dataTypeDefault, dataUnitDefault) {
-if (!window.userDataConfig) {
-    await initConfig();
-};
-const dataTypes = window.userDataConfig.data_types;
-const unitGroups = window.userDataConfig.unit_groups;
+    if (!window.userDataConfig) {
+        await initConfig();
+    };
+    const dataTypes = window.userDataConfig.data_types;
+    const unitGroups = window.userDataConfig.unit_groups;
 
-// Populate DataType Select
-dataTypeSelect.empty();
-dataTypes.forEach(dataType => {
-    dataTypeSelect.append(
-        `<option value="${dataType.name}">${dataType.name} - ${dataType.description}</option>`
-    );
-});
-
-// Map DataTypes to Units
-const dataUnitOptions = {};
-unitGroups.forEach(unitGroup => {
-    unitGroup.unit.forEach(unit => {
-        if (!dataUnitOptions[unitGroup.name]) {
-            dataUnitOptions[unitGroup.name] = [];
-        }
-        dataUnitOptions[unitGroup.name].push(unit.name);
+    // Populate DataType Select
+    dataTypeSelect.empty();
+    dataTypes.forEach(dataType => {
+        dataTypeSelect.append(
+            `<option value="${dataType.name}">${dataType.name} - ${dataType.description}</option>`
+        );
     });
-});
 
-// Handle DataType Change
-dataTypeSelect.off('change');
-dataTypeSelect.on('change', function () {
-    const selectedDataType = $(this).val();
-    const matchedUnitGroup = dataTypes.find(dt => dt.name === selectedDataType)?.unit_group;
-    
-    dataUnitSelect.empty();
-    if (matchedUnitGroup && dataUnitOptions[matchedUnitGroup]) {
-        dataUnitOptions[matchedUnitGroup].forEach(unit => {
-            dataUnitSelect.append(`<option value="${unit}">${unit}</option>`);
+    // Map DataTypes to Units
+    const dataUnitOptions = {};
+    unitGroups.forEach(unitGroup => {
+        unitGroup.unit.forEach(unit => {
+            if (!dataUnitOptions[unitGroup.name]) {
+                dataUnitOptions[unitGroup.name] = [];
+            }
+            dataUnitOptions[unitGroup.name].push(unit.name);
         });
-    } else {
-        dataUnitSelect.append('<option value="">-</option>');
-    }
-});
-                
-dataTypeSelect.val(dataTypeDefault).change();
-dataUnitSelect.val(dataUnitDefault).change();
-};
-
-function parseDatasetNameAndSelectType(inputSelector, dataTypeSelect) {
-    const datasetTypeMapping = {};
-    window.userDataConfig.data_types.forEach(dataType => {
-        datasetTypeMapping[dataType.name] = dataType.name; // Map code to name
     });
 
+    // Handle DataType Change
+    dataTypeSelect.off('change');
+    dataTypeSelect.on('change', function () {
+        const selectedDataType = $(this).val();
+        const matchedUnitGroup = dataTypes.find(dt => dt.name === selectedDataType)?.unit_group;
+        
+        dataUnitSelect.empty();
+        if (matchedUnitGroup && dataUnitOptions[matchedUnitGroup]) {
+            dataUnitOptions[matchedUnitGroup].forEach(unit => {
+                dataUnitSelect.append(`<option value="${unit}">${unit}</option>`);
+            });
+        } else {
+            dataUnitSelect.append('<option value="">-</option>');
+        }
+    });
+                    
+    dataTypeSelect.val(dataTypeDefault).change();
+    dataUnitSelect.val(dataUnitDefault).change();
+};
+
+async function initConfigIfNeeded() {
+    if (!window.userDataConfig) {
+        await initConfig();
+    }
+}
+
+async function createDatasetHandleDatasetInput(
+    inputSelector,
+    dataTypeSelect,
+    dataUnitSelect,
+    colorSelector,
+    lineStyleSelector,
+    lineWidthSelector,
+    symbolSelector,
+    symbolSizeSelector
+    ) {
+    await initConfigIfNeeded();
+
+    const dataTypes = window.userDataConfig.data_types;
+    const unitGroups = window.userDataConfig.unit_groups;
+
+    // Map data types for easier lookup
+    const datasetTypeMapping = {};
+    dataTypes.forEach(dataType => {
+        datasetTypeMapping[dataType.name.toUpperCase()] = dataType;
+    });
+
+    // Map unit groups to unit options
+    const dataUnitOptions = {};
+    unitGroups.forEach(unitGroup => {
+        dataUnitOptions[unitGroup.name] = unitGroup.unit.map(unit => unit.name);
+    });
+
+    // Populate data type options initially
+    $(dataTypeSelect).empty();
+    dataTypes.forEach(dataType => {
+        $(dataTypeSelect).append(`<option value="${dataType.name}">${dataType.name}</option>`);
+    });
+
+    // Handle dataset name input
     $(inputSelector).off('input').on('input', function () {
-        const inputValue = $(this).val().toUpperCase(); // Convert to uppercase for consistency
-        let matchedType = 'UNKNOWN'; // Default type
+        const inputValue = $(this).val().toUpperCase(); // Normalize input
+        let matchedType = 'UNKNOWN';
+        let matchedDataType = null;
 
         for (const keyword in datasetTypeMapping) {
             if (inputValue.includes(keyword)) {
-                matchedType = datasetTypeMapping[keyword];
+                matchedType = keyword;
+                matchedDataType = datasetTypeMapping[keyword];
+                // console.log("Matched Type:", matchedType);
                 break;
             }
-        }    
-        dataTypeSelect.val(matchedType).change();
+        }
+
+        // Update data type dropdown and trigger change event
+        $(dataTypeSelect).val(matchedType).change();
     });
+
+    // Handle manual selection of data type
+    $(dataTypeSelect).off('change').on('change', function () {
+        const selectedDataType = $(this).val();
+        const matchedDataType = dataTypes.find(dt => dt.name === selectedDataType);
+
+        if (matchedDataType) {
+            // console.log("Manually Selected Type:", selectedDataType);
+
+            // Update unit group dropdown
+            const matchedUnitGroup = matchedDataType.unit_group;
+            $(dataUnitSelect).empty();
+
+            if (matchedUnitGroup && dataUnitOptions[matchedUnitGroup]) {
+                dataUnitOptions[matchedUnitGroup].forEach(unit => {
+                    $(dataUnitSelect).append(`<option value="${unit}">${unit}</option>`);
+                });
+            } else {
+                $(dataUnitSelect).append('<option value="">-</option>');
+            }
+
+            // Set initial unit selection
+            if (dataUnitOptions[matchedUnitGroup].length > 0) {
+                $(dataUnitSelect).val(dataUnitOptions[matchedUnitGroup][0]).change(); // Trigger change event
+            }
+
+            // Apply display attributes
+            if (matchedDataType.display_attributes) {
+                // console.log("Applying Display Attributes:", matchedDataType.display_attributes);
+                createDatasetApplyDisplayAttributes(
+                    colorSelector,
+                    lineStyleSelector,
+                    lineWidthSelector,
+                    symbolSelector,
+                    symbolSizeSelector,
+                    matchedDataType.display_attributes
+                );
+            }
+        }
+    });
+
+    // Set initial selection based on the first data type
+    if (dataTypes.length > 0) {
+        const initialDataType = dataTypes[0];
+        $(dataTypeSelect).val(initialDataType.name).change(); // Trigger change event
+    }
 }
+
+
+function createDatasetApplyDisplayAttributes(colorSelector, lineStyleSelector, lineWidthSelector, symbolSelector, symbolSizeSelector, displayAttributes) {
+    if (!displayAttributes) {
+        console.warn("No display attributes found.");
+        return;
+    }
+    $(colorSelector).val(displayAttributes.color || '');
+    $(lineStyleSelector).val(displayAttributes.line_style || '');
+    $(lineWidthSelector).val(displayAttributes.line_width || '');
+    $(symbolSelector).val(displayAttributes.symbol || '');
+    $(symbolSizeSelector).val(displayAttributes.symbol_size || '');
+}
+
 
 class AddWelldataTable {
 constructor(dataTableSelector, tableId) {

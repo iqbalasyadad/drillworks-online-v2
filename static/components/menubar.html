@@ -1499,7 +1499,7 @@
                     </tr>
                     <tr class="dialog-input-table-tr">
                       <td colspan="2" rowspan="8">
-                        <table>
+                        <table style="width: 100%;">
                           <colgroup id="colgroup">
                             <col style="width: 70%;">
                             <col style="width: 30%;">
@@ -1510,7 +1510,7 @@
                           </tr>
                           <tr class="dialog-input-table-tr">
                             <td>
-                              <select name="dialog-create-dataset-data-type-select" class="dialog-select-input" id="dialog-create-dataset-data-type-select" size="10"></select>
+                              <select name="dialog-create-dataset-data-type-select" class="dialog-select-input" id="dialog-create-dataset-data-type-select" size="10" w></select>
                             </td>
                             <td>
                               <select name="dialog-create-dataset-data-unit-select" class="dialog-select-input" id="dialog-create-dataset-data-unit-select" size="10"></select>
@@ -1538,8 +1538,11 @@
                       <td><label for="dialog-create-dataset-line-style-select" class="dialog-label-input">Line style:</label></td>
                       <td>
                         <select name="dialog-create-dataset-line-style-select" class="dialog-select-input" id="dialog-create-dataset-line-style-select">
-                          <option value="1">1</option>
-                          <option value="2">2</option>
+                          <option value=""></option>
+                          <option value="solid">&#8212;&#8212;&#8212;&#8212;</option>
+                          <option value="dash-1">&#8211; &#8211; &#8211; &#8211; &#8211;</option>
+                          <option value="dotted">&#8230;&#8230;&#8230;&#8230;</option>
+                          <option value="dash2">&#8212; &#8211; &#8212; &#8211;</option>
                         </select>
                       </td>
                     </tr>
@@ -1550,6 +1553,8 @@
                         <select name="dialog-create-dataset-line-width-select" class="dialog-select-input" id="dialog-create-dataset-line-width-select">
                           <option value="1">1</option>
                           <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
                         </select>
                       </td>
                     </tr>
@@ -1558,8 +1563,27 @@
                       <td><label for="dialog-create-dataset-symbol-select" class="dialog-label-input">Symbol:</label></td>
                       <td>                        
                       <select name="dialog-create-dataset-symbol-select" class="dialog-select-input" id="dialog-create-dataset-symbol-select">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
+                        <option value=""></option>
+                        <option value="x25CF">&#x25CF;</option>
+                        <option value="x25CB">&#x25CB;</option>
+                        <option value="8226">&#8226;</option>
+                        <option value="x2612">&#x2612;</option>
+                        <option value="x21AF">&#x21AF;</option>
+                        <option value="x2716">&#x2716;</option>
+                        <option value="x272E">&#x272E;</option>
+                        <option value="x268A">&#x268A;</option>
+                        <option value="x25E2">&#x25E2;</option>
+                        <option value="x25E3">&#x25E3;</option>
+                        <option value="x25E4">&#x25E4;</option>
+                        <option value="x25E5">&#x25E5;</option>
+                        <option value="x1F808">&#x1F808;</option>
+                        <option value="x1F809">&#x1F809;</option>
+                        <option value="x1F80A">&#x1F80A;</option>
+                        <option value="x1F80B">&#x1F80B;</option>
+                        <option value="x2BC5">&#x2BC5;</option>
+                        <option value="x2BC6">&#x2BC6;</option>
+                        <option value="x2BC7">&#x2BC7;</option>
+                        <option value="x2BC8">&#x2BC8;</option>
                       </select></td>
                     </tr>
                     <tr class="dialog-input-table-tr">
@@ -1569,6 +1593,8 @@
                         <select name="dialog-create-dataset-symbol-size-select" class="dialog-select-input" id="dialog-create-dataset-symbol-size-select">
                           <option value="1">1</option>
                           <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
                         </select>
                       </td>
                     </tr>
@@ -1880,18 +1906,38 @@
                     <td><label class="dialog-label-input" for="dialog-tool-datatype-attributes-line-style-select">Line style:</label></td>
                     <td>
                       <select name="dialog-tool-datatype-attributes-line-style-select" class="dialog-select-input" id="dialog-tool-datatype-attributes-line-style-select">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
+                        <option value=""></option>
+                        <option value="solid">&#8212;&#8212;&#8212;&#8212;</option>
+                        <option value="dash-1">&#8211; &#8211; &#8211; &#8211; &#8211;</option>
+                        <option value="dotted">&#8230;&#8230;&#8230;&#8230;</option>
+                        <option value="dash2">&#8212; &#8211; &#8212; &#8211;</option>
                       </select>
                     </td>
                     <td></td>
                     <td><label class="dialog-label-input" for="dialog-tool-datatype-attributes-symbol-select">Symbol:</label></td>
                     <td>
                       <select name="dialog-tool-datatype-attributes-symbol-select" class="dialog-select-input" id="dialog-tool-datatype-attributes-symbol-select">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
+                        <option value=""></option>
+                        <option value="x25CF">&#x25CF;</option>
+                        <option value="x25CB">&#x25CB;</option>
+                        <option value="8226">&#8226;</option>
+                        <option value="x2612">&#x2612;</option>
+                        <option value="x21AF">&#x21AF;</option>
+                        <option value="x2716">&#x2716;</option>
+                        <option value="x272E">&#x272E;</option>
+                        <option value="x268A">&#x268A;</option>
+                        <option value="x25E2">&#x25E2;</option>
+                        <option value="x25E3">&#x25E3;</option>
+                        <option value="x25E4">&#x25E4;</option>
+                        <option value="x25E5">&#x25E5;</option>
+                        <option value="x1F808">&#x1F808;</option>
+                        <option value="x1F809">&#x1F809;</option>
+                        <option value="x1F80A">&#x1F80A;</option>
+                        <option value="x1F80B">&#x1F80B;</option>
+                        <option value="x2BC5">&#x2BC5;</option>
+                        <option value="x2BC6">&#x2BC6;</option>
+                        <option value="x2BC7">&#x2BC7;</option>
+                        <option value="x2BC8">&#x2BC8;</option>
                       </select>
                     </td>                  
                   </tr>

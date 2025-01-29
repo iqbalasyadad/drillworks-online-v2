@@ -98,15 +98,13 @@ def user_session():
 
     try:
         print("Fetching user session")
-        # Convert the session 'user_id' to an ObjectId
         user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
         
         if not user:
             print("User not found in database")
-            return jsonify({"user_id": "", "message": "User not found"}), 404
+            return jsonify({"success": True, "user_id": "", "message": "User not found"}), 404
 
-        # Return user details if found
-        return jsonify({"user_id": str(user['_id']), "name": user['username']}), 200
+        return jsonify({"success": True, "user_id": str(user['_id']), "name": user['username']}), 200
     
     except Exception as e:
         print(f"Error retrieving user session: {e}")
@@ -1386,6 +1384,31 @@ def update_wellbore(wellbore_id):
     except Exception as e:
         print(f"Error while updating wellbore: {e}")
         return jsonify({"success": False, "message": "Failed to welbore dataset"}), 500
+
+
+# TOOL DATATYPE
+@app.route('/update_data_type/<user_id>/<data_type_name>', methods=['PATCH'])
+def update_data_type(user_id, data_type_name):
+    update_data = request.json  # Get update fields from request body
     
+    # Construct update query
+    update_query = {}
+    for key in ['name', 'description', 'unit_group', 'display_attributes']:
+        if key in update_data:
+            update_query[f'data_types.$.{key}'] = update_data[key]
+    
+    if not update_query:
+        return jsonify({"success": False, "message": "No valid fields provided for update"}), 400
+    
+    # Update MongoDB document
+    result = users_data_config_collection.update_one(
+        {"user_id": ObjectId(user_id), "data_types.name": data_type_name},
+        {"$set": update_query}
+    )
+    
+    if result.modified_count:
+        return jsonify({"success": True, "message": "Data type updated successfully"})
+    else:
+        return jsonify({"success": False, "message": "No matching document found or no changes made"}), 404
 if __name__ == "__main__":
     app.run(debug=True)
