@@ -314,7 +314,7 @@ async function createDatasetHandleDatasetInput(
     // Populate data type options initially
     $(dataTypeSelect).empty();
     dataTypes.forEach(dataType => {
-        $(dataTypeSelect).append(`<option value="${dataType.name}">${dataType.name}</option>`);
+        $(dataTypeSelect).append(`<option value="${dataType.name}">${dataType.name} - ${dataType.description}</option>`);
     });
 
     // Handle dataset name input
@@ -357,8 +357,8 @@ async function createDatasetHandleDatasetInput(
             }
 
             // Set initial unit selection
-            if (dataUnitOptions[matchedUnitGroup].length > 0) {
-                $(dataUnitSelect).val(dataUnitOptions[matchedUnitGroup][0]).change(); // Trigger change event
+            if (dataUnitOptions.length > 0) {
+                $(dataUnitSelect).val(dataUnitOptions[0]).change(); // Trigger change event
             }
 
             // Apply display attributes
@@ -942,6 +942,82 @@ class DatatypeDataTable extends DataTableBase {
         // this.selectedDatatypeDisplayEl.val()
     }
 
+}
+
+
+class TreeTable {
+    constructor(tableId) {
+        this.tableId = tableId;
+    }
+
+    renderTable(data) {
+        this.data = data;
+        let tbody = document.getElementById("tree-body");
+        tbody.innerHTML = "";
+
+        this.data.forEach((group, groupIndex) => {
+            // Generate a unique ID for the group
+            let groupId = `group-${groupIndex}`;
+
+            // Add the group row
+            let groupRow = `<tr data-tt-id='${groupId}' data-group-name='${group.name}'>
+                                <td class='dropdown-symbol'>+ ${group.name}</td>
+                                <td>${group.description}</td>
+                                <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                            </tr>`;
+            tbody.innerHTML += groupRow;
+
+            // Add the unit rows
+            group.unit.forEach((unit, unitIndex) => {
+                let unitId = `${groupId}-${unitIndex}`;
+                let unitRow = `<tr data-tt-id='${unitId}' data-tt-parent-id='${groupId}' data-group-name='${group.name}' data-unit-name='${unit.name}'>
+                                    <td>${unit.name}</td>
+                                    <td>${unit.description}</td>
+                                    <td>${unit.min_filter === null ? "" : unit.min_filter}</td>
+                                    <td>${unit.max_filter === null ? "" : unit.max_filter}</td>
+                                    <td>${unit.linear_min}</td>
+                                    <td>${unit.linear_max}</td>
+                                    <td>${unit.log_min}</td>
+                                    <td>${unit.log_max}</td>
+                                    <td>${unit.convert_factor}</td>
+                                    <td>${unit.shift_factor}</td>
+                                </tr>`;
+                tbody.innerHTML += unitRow;
+            });
+        });
+
+        // Initialize the treetable
+        $(`#${this.tableId}`).treetable({ expandable: true });
+
+        // Attach event listeners
+        this.attachEventListeners();
+    }
+
+    attachEventListeners() {
+        let self = this; // Store reference to TreeTable instance
+    
+        $("#tree-body").off("click").on("click", "tr", function () {
+            let groupName = $(this).attr("data-group-name") || null;
+            let unitName = $(this).attr("data-unit-name") || null;
+    
+            // Remove selection from all rows
+            $("#tree-body tr").removeClass("tree-table-selected");
+    
+            // Select the clicked row
+            $(this).addClass("tree-table-selected");
+    
+            // Update selectedRowData in TreeTable instance
+            self.selectedRowData = {
+                groupName: groupName,
+                unitName: unitName
+            };
+            // console.log(self.selectedRowData);
+        });
+    }
+
+    getSelectedRow() {
+        return (this.selectedRowData);
+    };
 }
 
 

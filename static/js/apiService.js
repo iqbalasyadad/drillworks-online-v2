@@ -682,7 +682,7 @@ $(document).ready(function () {
 
   async function updateDataType(userId, dataTypeName, updateData) {
     try {
-        const response = await fetch(`/update_data_type/${userId}/${dataTypeName}`, {
+        const response = await fetch(`${config.apiUrl}/update_data_type/${userId}/${dataTypeName}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'
@@ -696,6 +696,24 @@ $(document).ready(function () {
     }
   }
   window.updateDataType = updateDataType;
+
+  // UNIT GROUP
+  async function addUnitGroup(userId, newUnitGroup) {
+    try {
+        const response = await fetch(`${config.apiUrl}/api/unit_group_add_group/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newUnitGroup)
+        });
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error adding unit group:', error);
+    }
+  }
+  window.addUnitGroup = addUnitGroup;
 
 
   // Make function as global access

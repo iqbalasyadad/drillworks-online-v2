@@ -78,3 +78,11 @@ table td {
     margin: 2px 5px;
     border-radius: 0px;
 }
+
+#dialog-tool-unit-group-tree-table td {
+    border: 1px solid #ccc;
+    text-align: left;
+}
+ .tree-table-selected {
+    background-color: #d3d3d3;
+ }

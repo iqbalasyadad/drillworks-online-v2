@@ -1410,5 +1410,30 @@ def update_data_type(user_id, data_type_name):
         return jsonify({"success": True, "message": "Data type updated successfully"})
     else:
         return jsonify({"success": False, "message": "No matching document found or no changes made"}), 404
+
+# add unit group
+@app.route('/api/unit_group_add_group/<user_id>', methods=["POST"])
+def unit_group_add_group(user_id):
+    print(f"Received request to add unit group")
+
+    data = request.json
+    # user_id = data.get("user_id")
+    new_unit_group = data.get("unit_group")
+    
+    if not user_id or not new_unit_group:
+        return jsonify({"success": False, "error": "Missing user_id or unit group data"}), 400
+    
+    user_config = users_data_config_collection.find_one({"user_id": ObjectId(user_id)})
+    
+    if not user_config:
+        return jsonify({"success": False, "error": "User configuration not found"}), 404
+    
+    users_data_config_collection.update_one(
+        {"user_id": ObjectId(user_id)},
+        {"$push": {"unit_groups": new_unit_group}}
+    )
+    
+    return jsonify({"success": True, "message": "Unit group added successfully"}), 200
+
 if __name__ == "__main__":
     app.run(debug=True)

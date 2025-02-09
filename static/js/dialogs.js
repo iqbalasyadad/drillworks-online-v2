@@ -1812,8 +1812,6 @@ $(document).ready(function () {
     });
 
     //////// TOOL ////////
-    // const toolDatatypeDataTable = new DatatypeDataTable('#dialog-tool-data-type-table');
-
     const unitGroupSelect = $("#dialog-tool-datatype-unit-group-select");
     const selectedDatatypeNameEl =  $("#dialog-tool-datatype-name");
     const selectedDatatypeDescriptionEl =  $("#dialog-tool-datatype-description");
@@ -1823,32 +1821,45 @@ $(document).ready(function () {
         unitGroupSelect, selectedDatatypeNameEl, selectedDatatypeDescriptionEl, selectedDatatypeDisplayEl
     );
 
-    // $("#dialog-tool-datatype-display-attributes-change-btn").on('click', function() {
-    //     console.log("change clicked");
-    //     console.log(toolDatatypeDataTable.getSelectedRows());
-    // });
-
     $("#dialog-tool-datatype").dialog({
         autoOpen: false,
         height: 400,
         width: 700,
         modal: true,
         buttons: {
-            Add: {
-                text: "Add New",
-                async click() {
-                }
-            },
+            // Add: {
+            //     text: "Add New",
+            //     async click() {
+            //     }
+            // },
             Update: {
                 text: "Update",
                 async click() {
+                    const user = getLocalUser();
+                    const selectedDatatype = toolDatatypeDataTable.getSelectedRows();
+                    try {   
+                        const updateData = {
+                            description: selectedDatatypeDescriptionEl.val(),
+                            unit_group: unitGroupSelect.val()
+                        };
+                        console.log(updateData);
+                        const response = await updateDataType(user._id, selectedDatatype.name, updateData);
+                        if (response.success) {
+                            console.log(response.message);
+                            await initConfig();
+                            toolDatatypeDataTable.render(window.userDataConfig.data_types);
+                            // $(this).dialog("close");
+                        };
+                    } catch (error) {
+                        console.error(error.message);
+                    }
                 }
             },
-            Delete: {
-                text: "Delete",
-                async click() {
-                }
-            },
+            // Delete: {
+            //     text: "Delete",
+            //     async click() {
+            //     }
+            // },
             Cancel: {
                 text: "Cancel",
                 click: function() {
@@ -1949,8 +1960,143 @@ $(document).ready(function () {
         }
     });
 
+    // UNIT GROUP
+    const unitGroupTable = new TreeTable("dialog-tool-unit-group-tree-table");
+    $("#dialog-tool-unit-group").dialog({
+        autoOpen: false,
+        height: 400,
+        width: 700,
+        modal: true,
+        buttons: {
+            AddGroup: {
+                text: "Add Group",
+                async click() {
+                    $("#dialog-tool-unit-group-add-group").dialog("open");
+                }
+            },
+            AddUnit: {
+                text: "Add Unit",
+                async click() {
+                    $("#dialog-tool-unit-group-add-unit").dialog("open");
+                }
+            },
+            Update: {
+                text: "Update",
+                async click() {
+                    console.log(unitGroupTable.getSelectedRow());
+
+                }
+            },
+            Delete: {
+                text: "Delete",
+                async click() {
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        },
+        open: async ()=> {
+            // const data = window.userDataConfig.un
+            try {
+                console.log('open');
+                unitGroupTable.renderTable(window.userDataConfig.unit_groups);
+        
+            } catch (error) {
+                console.error("Failed to fetch wells:", error.message);
+            }
+            
+        },
+        close: function () {
+
+        }
+    });
 
 
+    // UNIT GROUP: ADD NEW GROUP
+    $("#dialog-tool-unit-group-add-group").dialog({
+        autoOpen: false,
+        height: 200,
+        width: 335,
+        modal: true,
+        buttons: {
+            OK: {
+                text: "OK",
+                async click() {
+                    const user = getLocalUser();
+                    try {   
+                        const newUnitGroup = {
+                            "unit_group": {
+                                "name": $("#dialog-tool-unit-group-add-group-name").val(),
+                                "description": $("#dialog-tool-unit-group-add-group-description").val(),
+                                "unit": []
+                            }
+                        };
+
+                        const response = await addUnitGroup(user._id, newUnitGroup);
+                        if (response.success) {
+                            console.log(response.message);
+                            await initConfig();
+                            unitGroupTable.renderTable(window.userDataConfig.unit_groups);
+                            $(this).dialog("close");
+                        };
+                    } catch (error) {
+                        console.error(error.message);
+                    }
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        },
+        open: async ()=> {
+
+        },
+        close: function () {
+
+        }
+    });
+
+    // UNIT GROUP: ADD NEW UNIT
+    $("#dialog-tool-unit-group-add-unit").dialog({
+        autoOpen: false,
+        height: 400,
+        width: 300,
+        modal: true,
+        buttons: {
+            OK: {
+                text: "OK",
+                async click() {
+                }
+            },
+            Cancel: {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        },
+        open: async ()=> {
+            let selectedRow = unitGroupTable.getSelectedRow();
+            if (selectedRow && selectedRow.groupName) {
+                console.log(selectedRow.groupName);
+                $("#dialog-tool-unit-group-add-unit-group-name").val(selectedRow.groupName);
+            } else {
+                console.log("No row selected");
+            }
+        },
+        close: function () {
+
+        }
+    });
+
+    // Notes: create API to add data unit
 
 
 });

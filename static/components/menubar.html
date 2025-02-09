@@ -5,12 +5,14 @@
         <link rel="stylesheet" href="static/css/menubar.css">
         <link rel="stylesheet" href="static/css/dialog-box.css">
         <link rel="stylesheet" href="static/css/dataTables.dataTables.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-treetable/3.2.0/css/jquery.treetable.css">
         <link href="static/css/evol-colorpicker.css" rel="stylesheet" type="text/css" />
 
         <script src="/static/js/modules/jquery.menu.js"></script>
         <script src="/static/js/modules/jquery-ui.min.js"></script>
         <script src="/static/js/modules/datagridxl2.js"></script>
         <script src="/static/js/modules/dataTables.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-treetable/3.2.0/jquery.treetable.js"></script>
         <script src="/static/js/modules/evol-colorpicker.min.js" type="text/javascript" charset="utf-8"></script>
 
 
@@ -210,7 +212,7 @@
               Tool
               <ul>
                 <li class="" id="menubar-tool-datatype-li"><a href="javascript:void(0)">Datatype<span></span></a></li>
-                <li class=""><a href="javascript:void(0)">Unit Group<span></span></a></li>
+                <li class="" id="menubar-tool-unit-group-li"><a href="javascript:void(0)">Unit Group<span></span></a></li>
                 <!-- <li class=""><a href="javascript:void(0)">Properties...<span></span></a></li>
                 <li class="separator"></li>
                 <li class="disabled">Import</li>
@@ -1489,7 +1491,8 @@
                       <td><label for="dialog-create-dataset-reference-level-select" class="dialog-label-input">Reference level:</label></td>
                       <td>
                         <select name="dialog-create-dataset-reference-level-select" class="dialog-select-input" id="dialog-create-dataset-reference-level-select">
-                          <option value="MSL">Mean sea level</option>
+                          <option value="GL">Ground level</option>
+                          <option value="MSL" selected="selected">Mean sea level</option>
                           <option value="RT">Kelly bushing level</option>
                         </select>
                       </td>
@@ -1801,7 +1804,8 @@
                       <tr class="dialog-input-table-tr">
                         <td><label for="dialog-properties-dataset-advanced-reference-level-select" class="dialog-label-input">Reference level:</label></td>
                         <td><select name="dialog-properties-dataset-advanced-reference-level-select" class="dialog-select-input" id="dialog-properties-dataset-advanced-reference-level-select" size="1">
-                          <option value="MSL">Mean sea level</option>
+                          <option value="GL">Ground level</option>
+                          <option value="MSL">Mean sea level </option>
                           <option value="RT">Kelly bushing level</option>
                         </select>
                         </td>
@@ -1964,8 +1968,156 @@
                   </tr>
                 </tbody>
               </table>
-
             </fieldset>
+          </form>
+        </div>
+
+        <!-- DIALOG TOOL UNIT GROUP -->
+        <div id="dialog-tool-unit-group" title="Unit Group" style="display: none;">
+          <form>
+            <div style="overflow-x: scroll; ">
+              <table id="dialog-tool-unit-group-tree-table" class="treetable" style="width: 800px; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Min Filter</th>
+                        <th>Max Filter</th>
+                        <th>Linear Min</th>
+                        <th>Linear Max</th>
+                        <th>Log Min</th>
+                        <th>Log Max</th>
+                        <th>Convert Factor</th>
+                        <th>Shift Factor</th>
+                    </tr>
+                </thead>
+                <tbody id="tree-body"></tbody>
+              </table>
+            </div>
+          </form>
+        </div>
+
+        <!-- DIALOG TOOL UNIT GROUP: ADD NEW GROUP -->
+        <div id="dialog-tool-unit-group-add-group" title="Group" style="display: none;">
+          <form>
+            <table style="width: 100%;">
+              <colgroup id="colgroup">
+                <col style="width: 40%;">
+                <col style="width: 60%;">
+              </colgroup>
+              <tbody>
+                <tr class="dialog-input-table-tr">
+                  <td><label class="dialog-label-input" for="dialog-tool-unit-group-add-group-name">Group name:</label></td>
+                  <td><input type="text" name="dialog-tool-unit-group-add-group-name" class="dialog-text-input" id="dialog-tool-unit-group-add-group-name"/></td>
+                </tr>
+                <tr class="dialog-input-table-tr">
+                  <td><label class="dialog-label-input" for="dialog-tool-unit-group-add-group-description">Group description:</label></td>
+                  <td><input type="text" name="dialog-tool-unit-group-add-group-description" class="dialog-text-input" id="dialog-tool-unit-group-add-group-description"/></td>
+                </tr>
+              </tbody>
+            </table>
+          </form>
+        </div>
+
+        <!-- DIALOG TOOL UNIT GROUP: ADD NEW UNIT -->
+        <div id="dialog-tool-unit-group-add-unit" title="Unit" style="display: none;">
+          <form>
+            <table style="width: 100%;">
+              <colgroup id="colgroup">
+                <col style="width: 40%;">
+                <col style="width: 60%;">
+              </colgroup>
+              <tbody>
+                <tr class="dialog-input-table-tr">
+                  <td><label class="dialog-label-input" for="dialog-tool-unit-group-add-unit-group-name">Group name:</label></td>
+                  <td><input type="text" name="dialog-tool-unit-group-add-unit-group-name" class="dialog-text-input" id="dialog-tool-unit-group-add-unit-group-name" disabled/></td>
+                </tr>
+                <tr class="dialog-input-table-tr">
+                  <td><label class="dialog-label-input" for="dialog-tool-unit-group-add-unit-name">Unit name:</label></td>
+                  <td><input type="text" name="dialog-tool-unit-group-add-unit-name" class="dialog-text-input" id="dialog-tool-unit-group-add-unit-name"/></td>
+                </tr>
+              </tbody>
+            </table>
+            <br>
+            <fieldset>
+              <legend>Filter:</legend>
+              <table style="width: 100%;">
+                <colgroup id="colgroup">
+                  <col style="width: 5%;">
+                  <col style="width: 5%;">
+                  <col style="width: 50%;">
+                  <col style="width: 40%;">
+                </colgroup>
+                <tbody>
+                  <tr class="dialog-input-table-tr">
+                    <td><input type="checkbox" id="dialog-tool-unit-group-add-unit-minimum-filter-checkbox" name="dialog-tool-unit-group-add-unit-minimum-filter-checkbox" value="minimum-filter"></td>
+                    <td colspan="3"><label class="dialog-label-input" for="dialog-tool-unit-group-add-unit-minimum-filter-checkbox">Enable minimum filter</label></td>
+                  </tr>
+                  <tr class="dialog-input-table-tr">
+                    <td></td>
+                    <td></td>
+                    <td><label class="dialog-label-input" for="dialog-tool-unit-group-add-unit-minimum-filter">Minimum filter value:</label></td>
+                    <td><input type="text" name="dialog-tool-unit-group-add-unit-minimum-filter" class="dialog-text-input" id="dialog-tool-unit-group-add-unit-minimum-filter"/></td>
+                  </tr>
+                  <tr class="dialog-input-table-tr">
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                  </tr>
+                  <tr class="dialog-input-table-tr">
+                    <td><input type="checkbox" id="dialog-tool-unit-group-add-unit-maximum-filter" name="dialog-tool-unit-group-add-unit-maximum-filter" value="maximum-filter"></td>
+                    <td colspan="3"><label class="dialog-label-input" for="dialog-tool-unit-group-add-unit-maximum-filter">Enable maximum filter</label></td>
+                  </tr>
+                  <tr class="dialog-input-table-tr">
+                    <td></td>
+                    <td></td>
+                    <td><label class="dialog-label-input" for="dialog-tool-unit-group-add-unit-maximum-filter">Maximum filter value:</label></td>
+                    <td><input type="text" name="dialog-tool-unit-group-add-unit-maximum-filter" class="dialog-text-input" id="dialog-tool-unit-group-add-unit-maximum-filter"/></td>
+                  </tr>
+                </tbody>
+              </table>
+            </fieldset>
+            <br>
+            <fieldset>
+              <legend>Default track display range:</legend>
+              <table style="width: 100%;">
+                <colgroup id="colgroup">
+                  <col style="width: 30%;">
+                  <col style="width: 32.5%;">
+                  <col style="width: 5%;">
+                  <col style="width: 32.5%;">
+                </colgroup>
+                <tbody>
+                  <tr class="dialog-input-table-tr">
+                    <td colspan="4"><label><input type="radio" name="dialog-tool-unit-group-add-unit-display-range" value="use-dataset"/> Use dataset limit</label> <br/></td>
+                  </tr>
+                  <tr class="dialog-input-table-tr">
+                    <td colspan="4"><label><input type="radio" name="dialog-tool-unit-group-add-unit-display-range" value="use-specified"/> Use specified limit</label> <br/></td>
+                  </tr>
+                  <tr class="dialog-input-table-tr">
+                    <td></td>
+                    <td>Min</td>
+                    <td></td>
+                    <td>Max</td>
+                  </tr>
+                  <tr class="dialog-input-table-tr">
+                    <td><label class="dialog-label-input" for="dialog-tool-unit-group-add-unit-display-range-linear">Linear:</label></td>
+                    <td><input type="text" name="dialog-tool-unit-group-add-unit-display-range-linear" class="dialog-text-input" id="dialog-tool-unit-group-add-unit-display-range-linear-min"/></td>
+                    <td></td>
+                    <td><input type="text" name="dialog-tool-unit-group-add-unit-display-range-linear" class="dialog-text-input" id="dialog-tool-unit-group-add-unit-display-range-linear-max"/></td>
+                  </tr>
+                  <tr class="dialog-input-table-tr">
+                    <td><label class="dialog-label-input" for="dialog-tool-unit-group-add-unit-display-range-log">Log:</label></td>
+                    <td><input type="text" name="dialog-tool-unit-group-add-unit-display-range-log" class="dialog-text-input" id="dialog-tool-unit-group-add-unit-display-range-log-min"/></td>
+                    <td></td>
+                    <td><input type="text" name="dialog-tool-unit-group-add-unit-display-range-log" class="dialog-text-input" id="dialog-tool-unit-group-add-unit-display-range-log-max"/></td>
+                  </tr>
+                  
+                </tbody>
+              </table>
+            </fieldset>
+
           </form>
         </div>
 
@@ -2104,6 +2256,9 @@
             });
             $("#dialog-tool-datatype-display-attributes-change-btn").click(function () {
               $("#dialog-tool-datatype-attributes").dialog("open");
+            });
+            $("li#menubar-tool-unit-group-li").click(function () {
+              $("#dialog-tool-unit-group").dialog("open");
             });
             
             $( function() { $( "#dialog-properties-project-tabs" ).tabs(); } );
